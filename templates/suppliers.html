@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suppliers - Inventory System</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100">
+    <nav class="bg-purple-800 text-white p-4">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold">
+                <i class="fas fa-truck mr-2"></i>Suppliers
+            </h1>
+            <a href="/admin-dashboard.html" class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded text-sm">Dashboard</a>
+        </div>
+    </nav>
+    <div class="container mx-auto p-6">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-2xl font-bold">Supplier List</h2>
+            <button onclick="showAddSupplierModal()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">
+                <i class="fas fa-plus mr-1"></i>Add Supplier
+            </button>
+        </div>
+        <div class="bg-white rounded-lg shadow p-4 overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead>
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="supplier-table-body">
+                    <!-- Supplier rows will be injected here by JS -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <!-- Add/Edit Supplier Modal (hidden by default) -->
+    <div id="supplier-modal" class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center hidden">
+        <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+            <h3 id="modal-title" class="text-xl font-bold mb-4">Add Supplier</h3>
+            <form id="supplier-form" class="space-y-4">
+                <input type="hidden" id="supplier-id">
+                <div>
+                    <label for="supplier-name" class="block text-sm font-medium text-gray-700">Name</label>
+                    <input id="supplier-name" name="name" type="text" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                </div>
+                <div>
+                    <label for="supplier-contact" class="block text-sm font-medium text-gray-700">Contact</label>
+                    <input id="supplier-contact" name="contact" type="text" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                </div>
+                <div>
+                    <label for="supplier-email" class="block text-sm font-medium text-gray-700">Email</label>
+                    <input id="supplier-email" name="email" type="email" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                </div>
+                <div class="flex justify-end space-x-2">
+                    <button type="button" onclick="hideSupplierModal()" class="bg-gray-300 px-4 py-2 rounded">Cancel</button>
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script>
+        // JS functions for modal and fetching suppliers would go here
+        function showAddSupplierModal() {
+            document.getElementById('modal-title').innerText = 'Add Supplier';
+            document.getElementById('supplier-form').reset();
+            document.getElementById('supplier-id').value = '';
+            document.getElementById('supplier-modal').classList.remove('hidden');
+        }
+        function hideSupplierModal() {
+            document.getElementById('supplier-modal').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>

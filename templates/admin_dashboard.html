@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Inventory System</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100">
+    <!-- Navigation -->
+    <nav class="bg-blue-800 text-white p-4">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold">
+                <i class="fas fa-warehouse mr-2"></i>Inventory System - Admin Dashboard
+            </h1>
+            <div class="flex items-center space-x-4">
+                <span id="user-name" class="text-sm"></span>
+                <button onclick="window.location.href='/dashboard.html'" class="bg-green-600 hover:bg-green-700 px-3 py-1 rounded text-sm">
+                    <i class="fas fa-cash-register mr-1"></i>POS Dashboard
+                </button>
+                <button onclick="logout()" class="bg-red-500 hover:bg-red-600 px-3 py-1 rounded text-sm">
+                    <i class="fas fa-sign-out-alt mr-1"></i>Logout
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mx-auto p-6">
+        <!-- Dashboard Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-blue-100 text-blue-500">
+                        <i class="fas fa-users text-2xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Total Users</p>
+                        <p id="total-users" class="text-2xl font-semibold text-gray-900">-</p>
+                    </div>
+                </div>
+            </div> -->
+
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-green-100 text-green-500">
+                        <i class="fas fa-boxes text-2xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Total Products</p>
+                        <p id="total-products" class="text-2xl font-semibold text-gray-900">-</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-yellow-100 text-yellow-500">
+                        <i class="fas fa-shopping-cart text-2xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Today's Sales</p>
+                        <p id="today-sales" class="text-2xl font-semibold text-gray-900">-</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-red-100 text-red-500">
+                        <i class="fas fa-dollar-sign text-2xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Today's Revenue</p>
+                        <p id="today-revenue" class="text-2xl font-semibold text-gray-900">-</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-indigo-100 text-indigo-500">
+                        <i class="fas fa-money-bill-wave text-2xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Total Revenue</p>
+                        <p id="total-revenue" class="text-2xl font-semibold text-gray-900">-</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-purple-100 text-purple-500">
+                        <i class="fas fa-chart-line text-2xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Total Sales</p>
+                        <p id="total-sales" class="text-2xl font-semibold text-gray-900">-</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-orange-100 text-orange-500">
+                        <i class="fas fa-exclamation-triangle text-2xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Low Stock Items</p>
+                        <p id="low-stock" class="text-2xl font-semibold text-gray-900">-</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-green-100 text-emerald-500">
+                        <i class="fas fa-hand-holding-dollar text-2xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Today's Profit</p>
+                        <p id="today-profit" class="text-2xl font-semibold text-gray-900">-</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-green-100 text-green-500">
+                        <i class="fas fa-hand-holding-dollar text-2xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Total Profit</p>
+                        <p id="total-profit" class="text-2xl font-semibold text-gray-900">-</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-red-100 text-red-500">
+                        <i class="fas fa-clock text-2xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Overdue Sales</p>
+                        <p id="overdue-sales" class="text-2xl font-semibold text-gray-900">-</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-yellow-100 text-yellow-500">
+                        <i class="fas fa-file-invoice-dollar text-2xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Overdue Purchases</p>
+                        <p id="overdue-purchases" class="text-2xl font-semibold text-gray-900">-</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-teal-100 text-teal-500">
+                        <i class="fas fa-clock text-2xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Status</p>
+                        <p class="text-2xl font-semibold text-green-600">Online</p>
+                    </div>
+                </div>
+            </div> -->
+        </div>
+
+        <!-- Charts Row -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <!-- Sales Chart -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-4">Sales Overview (Last 7 Days)</h3>
+                <canvas id="salesChart" width="400" height="200"></canvas>
+            </div>
+
+            <!-- Top Products -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-4">Top Selling Products</h3>
+                <div id="top-products">
+                    <!-- Top products will be loaded here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity and Quick Actions -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Recent Sales -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-4">Recent Sales</h3>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full table-auto">
+                        <thead>
+                            <tr class="bg-gray-50">
+                                <th class="px-4 py-2 text-left text-sm font-medium text-gray-600">Sale #</th>
+                                <th class="px-4 py-2 text-left text-sm font-medium text-gray-600">Customer</th>
+                                <th class="px-4 py-2 text-left text-sm font-medium text-gray-600">Total</th>
+                                <th class="px-4 py-2 text-left text-sm font-medium text-gray-600">Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recent-sales">
+                            <!-- Recent sales will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-4">Quick Actions</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Row 1 -->
+                    <button onclick="window.location.href='/users'" 
+                            class="flex items-center justify-center p-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">
+                        <i class="fas fa-users mr-2"></i>
+                        Manage Users
+                    </button>
+                    
+                    <button onclick="window.location.href='/manage_products'" 
+                            class="flex items-center justify-center p-4 bg-green-500 text-white rounded-lg hover:bg-green-600 transition">
+                        <i class="fas fa-boxes mr-2"></i>
+                        Manage Products
+                    </button>
+                    
+                    <button onclick="window.location.href='/purchase_orders'" 
+                            class="flex items-center justify-center p-4 bg-red-500 text-white rounded-lg hover:bg-red-600 transition">
+                        <i class="fas fa-file-invoice-dollar mr-2 text-white"></i>
+                        <span class="text-white">Purchase Orders</span>
+                    </button>
+                    
+                    <!-- Row 2 -->
+                    <button onclick="window.location.href='/sales_history'" 
+                            class="flex items-center justify-center p-4 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition">
+                        <i class="fas fa-chart-bar mr-2"></i>
+                        View Reports
+                    </button>
+                    
+                    <button onclick="window.location.href='/settings'" 
+                            class="flex items-center justify-center p-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition">
+                        <i class="fas fa-cog mr-2"></i>
+                        System Settings
+                    </button>
+                    
+                    <button onclick="exportData()" 
+                            class="flex items-center justify-center p-4 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition">
+                        <i class="fas fa-download mr-2"></i>
+                        Export Data
+                    </button>
+                    
+                    <!-- Row 3 -->
+                    <button onclick="viewOverdueSales()" 
+                            class="flex items-center justify-center p-4 bg-red-500 text-white rounded-lg hover:bg-red-600 transition">
+                        <i class="fas fa-clock mr-2"></i>
+                        Overdue Sales
+                    </button>
+                    
+                    <button onclick="viewOverduePurchases()" 
+                            class="flex items-center justify-center p-4 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition">
+                        <i class="fas fa-file-invoice-dollar mr-2"></i>
+                        Overdue Purchases
+                    </button>
+                    
+                    <button onclick="backupDatabase()" 
+                            class="flex items-center justify-center p-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition">
+                        <i class="fas fa-database mr-2"></i>
+                        Backup DB
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let salesChart;
+        const API_BASE = '/api/v1';
+        const token = localStorage.getItem('token');
+
+        // Check authentication
+        if (!token) {
+            window.location.href = '/login.html';
+        }
+
+        // Set authorization header for all requests
+        function makeRequest(url, options = {}) {
+            return fetch(url, {
+                ...options,
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                    ...options.headers
+                }
+            });
+        }
+
+        // Load dashboard data
+        async function loadDashboard() {
+            try {
+                const response = await makeRequest(`${API_BASE}/admin/dashboard/stats`);
+                if (!response.ok) {
+                    throw new Error('Failed to load dashboard data');
+                }
+                
+                const result = await response.json();
+                const data = result.data;
+                
+                // Update stats cards
+                // document.getElementById('total-users').textContent = data.total_users;
+                document.getElementById('total-products').textContent = data.total_products;
+                document.getElementById('total-sales').textContent = data.total_sales;
+                document.getElementById('today-sales').textContent = data.today_sales;
+                document.getElementById('total-revenue').textContent = `Rp${data.total_revenue}`;
+                document.getElementById('today-revenue').textContent = `Rp${data.today_revenue}`;
+                document.getElementById('total-profit').textContent = `Rp${data.total_profit}`;
+                document.getElementById('today-profit').textContent = `Rp${data.today_profit}`;
+                document.getElementById('low-stock').textContent = data.low_stock_products;
+                
+                // Load overdue data
+                loadOverdueData();
+                
+                // Load charts
+                loadSalesChart(data.sales_chart);
+                loadTopProducts(data.top_products);
+                loadRecentSales(data.recent_sales);
+                
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+                alert('Failed to load dashboard data');
+            }
+        }
+
+        // Load overdue sales and purchases data
+        async function loadOverdueData() {
+            try {
+                // Load overdue sales
+                const salesResponse = await makeRequest(`${API_BASE}/pos/sales/overdue?limit=1`);
+                if (salesResponse.ok) {
+                    const salesResult = await salesResponse.json();
+                    document.getElementById('overdue-sales').textContent = salesResult.total || 0;
+                }
+
+                // Load overdue purchase orders
+                const purchasesResponse = await makeRequest(`${API_BASE}/purchase-orders/overdue?limit=1`);
+                if (purchasesResponse.ok) {
+                    const purchasesResult = await purchasesResponse.json();
+                    document.getElementById('overdue-purchases').textContent = purchasesResult.total || 0;
+                }
+            } catch (error) {
+                console.error('Error loading overdue data:', error);
+                document.getElementById('overdue-sales').textContent = '0';
+                document.getElementById('overdue-purchases').textContent = '0';
+            }
+        }
+
+        // Load sales chart
+        function loadSalesChart(chartData) {
+            const ctx = document.getElementById('salesChart').getContext('2d');
+            
+            if (salesChart) {
+                salesChart.destroy();
+            }
+            
+            salesChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: chartData.map(item => new Date(item.date).toLocaleDateString()),
+                    datasets: [{
+                        label: 'Sales Count',
+                        data: chartData.map(item => item.sales),
+                        borderColor: 'rgb(59, 130, 246)',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4,
+                        yAxisID: 'y'
+                    }, {
+                        label: 'Revenue (Rp)',
+                        data: chartData.map(item => item.revenue),
+                        borderColor: 'rgb(16, 185, 129)',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        tension: 0.4,
+                        yAxisID: 'y1'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Sales Count'
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: 'Revenue (Rp)'
+                            },
+                            grid: {
+                                drawOnChartArea: false,
+                            },
+                        }
+                    }
+                }
+            });
+        }
+
+        // Load top products
+        function loadTopProducts(products) {
+            const container = document.getElementById('top-products');
+            container.innerHTML = '';
+            
+            products.forEach((product, index) => {
+                const productDiv = document.createElement('div');
+                productDiv.className = 'flex justify-between items-center py-2 border-b border-gray-200';
+                productDiv.innerHTML = `
+                    <div>
+                        <span class="font-medium">${index + 1}. ${product.product_name}</span>
+                        <span class="text-sm text-gray-500 ml-2">(${product.total_sold} sold)</span>
+                    </div>
+                    <span class="font-semibold text-green-600">Rp${product.revenue.toFixed(2)}</span>
+                `;
+                container.appendChild(productDiv);
+            });
+        }
+
+        // Load recent sales
+        function loadRecentSales(sales) {
+            const tbody = document.getElementById('recent-sales');
+            tbody.innerHTML = '';
+            
+            sales.forEach(sale => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-4 py-2 text-sm">${sale.sale_number}</td>
+                    <td class="px-4 py-2 text-sm">${sale.customer_name || 'Walk-in'}</td>
+                    <td class="px-4 py-2 text-sm font-medium text-green-600">Rp${sale.total.toFixed(2)}</td>
+                    <td class="px-4 py-2 text-sm text-gray-500">${new Date(sale.created_at).toLocaleDateString()}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Utility functions
+        function logout() {
+            localStorage.removeItem('token');
+            window.location.href = '/login.html';
+        }
+
+        async function exportData() {
+            try {
+                const response = await makeRequest(`${API_BASE}/admin/dashboard/sales-report?start_date=${new Date(Date.now() - 30*24*60*60*1000).toISOString().split('T')[0]}&end_date=${new Date().toISOString().split('T')[0]}`);
+                const result = await response.json();
+                
+                // Convert to CSV and download
+                const csvContent = "data:text/csv;charset=utf-8," 
+                    + "Date,Sales,Revenue,Items\n"
+                    + result.data.report.map(row => `${row.date},${row.total_sales},${row.total_revenue},${row.total_items}`).join("\n");
+                
+                const encodedUri = encodeURI(csvContent);
+                const link = document.createElement("a");
+                link.setAttribute("href", encodedUri);
+                link.setAttribute("download", "sales_report.csv");
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } catch (error) {
+                console.error('Error exporting data:', error);
+                alert('Failed to export data');
+            }
+        }
+
+        async function backupDatabase() {
+            try {
+                const response = await makeRequest(`${API_BASE}/admin/system/backup`, {
+                    method: 'POST'
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert(`Database backup created: ${result.data.filename}`);
+                } else {
+                    alert('Failed to create backup');
+                }
+            } catch (error) {
+                console.error('Error creating backup:', error);
+                alert('Failed to create backup');
+            }
+        }
+
+        // Navigation functions for overdue pages
+        function viewOverdueSales() {
+            window.location.href = '/sales_history?filter=overdue';
+        }
+
+        function viewOverduePurchases() {
+            window.location.href = '/purchase_orders?filter=overdue';
+        }
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set user name if available
+            const userInfo = JSON.parse(localStorage.getItem('user') || '{}');
+            if (userInfo.name) {
+                document.getElementById('user-name').textContent = userInfo.name;
+            }
+            
+            // Load dashboard data
+            loadDashboard();
+            
+            // Refresh dashboard every 5 minutes
+            setInterval(loadDashboard, 5 * 60 * 1000);
+        });
+    </script>
+</body>
+</html>

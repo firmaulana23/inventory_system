@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - Inventory System</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100">
+    <nav class="bg-gray-800 text-white p-4">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold">
+                <i class="fas fa-cog mr-2"></i>Settings
+            </h1>
+            <a href="/admin-dashboard.html" class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded text-sm">Dashboard</a>
+        </div>
+    </nav>
+    <div class="container mx-auto p-6">
+        <h2 class="text-2xl font-bold mb-4">System Settings</h2>
+        <form class="bg-white rounded-lg shadow p-6 max-w-lg mx-auto space-y-4">
+            <div>
+                <label for="company-name" class="block text-sm font-medium text-gray-700">Company Name</label>
+                <input id="company-name" name="company_name" type="text" class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+            </div>
+            <div>
+                <label for="timezone" class="block text-sm font-medium text-gray-700">Timezone</label>
+                <input id="timezone" name="timezone" type="text" class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+            </div>
+            <div>
+                <label for="currency" class="block text-sm font-medium text-gray-700">Currency</label>
+                <input id="currency" name="currency" type="text" class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+            </div>
+            <div class="flex justify-end">
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">Save Settings</button>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

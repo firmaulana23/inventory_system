@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales History - Inventory System</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100">
+    <nav class="bg-green-800 text-white p-4">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold">
+                <i class="fas fa-receipt mr-2"></i>Sales History
+            </h1>
+            <a href="/admin-dashboard.html" class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded text-sm">Dashboard</a>
+        </div>
+    </nav>
+    <div class="container mx-auto p-6">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-2xl font-bold">Sales Records</h2>
+            <button onclick="refreshSales()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
+                <i class="fas fa-refresh mr-1"></i>Refresh
+            </button>
+        </div>
+
+        <!-- Filters -->
+        <div class="bg-white rounded-lg shadow p-4 mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                    <input type="date" id="start-date-filter" class="w-full p-2 border border-gray-300 rounded-md">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                    <input type="date" id="end-date-filter" class="w-full p-2 border border-gray-300 rounded-md">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Payment Method</label>
+                    <select id="payment-filter" class="w-full p-2 border border-gray-300 rounded-md">
+                        <option value="">All Methods</option>
+                        <option value="cash">Cash</option>
+                        <option value="card">Card</option>
+                        <option value="transfer">Transfer</option>
+                    </select>
+                </div>
+                <div class="flex items-end">
+                    <button onclick="applyFilters()" class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded mr-2">
+                        Apply Filters
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-4 overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead>
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Qty</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cashier</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="sales-table-body">
+                    <!-- Sales rows will be injected here by JS -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        const API_BASE = '/api/v1';
+        const token = localStorage.getItem('token');
+
+        // Check authentication
+        if (!token) {
+            window.location.href = '/login.html';
+        }
+
+        // Set authorization header for all requests
+        function makeRequest(url, options = {}) {
+            return fetch(url, {
+                ...options,
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                    ...options.headers
+                }
+            });
+        }
+
+        // Fetch and display sales
+        async function fetchSales(filters = {}) {
+            try {
+                let url = `${API_BASE}/pos/sales?limit=100`;
+                
+                // Add filters to URL
+                if (filters.start_date) url += `&start_date=${filters.start_date}`;
+                if (filters.end_date) url += `&end_date=${filters.end_date}`;
+                if (filters.payment_method) url += `&payment_method=${filters.payment_method}`;
+
+                const response = await makeRequest(url);
+                if (!response.ok) {
+                    if (response.status === 403) {
+                        alert('Access denied. Please check your permissions.');
+                        return;
+                    } else if (response.status === 401) {
+                        alert('Session expired. Please login again.');
+                        localStorage.removeItem('token');
+                        window.location.href = '/login.html';
+                        return;
+                    }
+                    throw new Error('Failed to fetch sales');
+                }
+
+                const data = await response.json();
+                displaySales(data.sales || []);
+            } catch (error) {
+                console.error('Error fetching sales:', error);
+                alert('Failed to load sales history: ' + error.message);
+            }
+        }
+
+        // Apply filters
+        function applyFilters() {
+            const filters = {
+                start_date: document.getElementById('start-date-filter').value,
+                end_date: document.getElementById('end-date-filter').value,
+                payment_method: document.getElementById('payment-filter').value
+            };
+            fetchSales(filters);
+        }
+
+        // Refresh sales
+        function refreshSales() {
+            // Clear filters
+            document.getElementById('start-date-filter').value = '';
+            document.getElementById('end-date-filter').value = '';
+            document.getElementById('payment-filter').value = '';
+            fetchSales();
+        }
+
+        // Set default dates (last 30 days)
+        function setDefaultDates() {
+            const today = new Date();
+            const thirtyDaysAgo = new Date(today.getTime() - (30 * 24 * 60 * 60 * 1000));
+            
+            document.getElementById('end-date-filter').value = today.toISOString().split('T')[0];
+            document.getElementById('start-date-filter').value = thirtyDaysAgo.toISOString().split('T')[0];
+        }
+
+        // Display sales in table
+        function displaySales(sales) {
+            const tbody = document.getElementById('sales-table-body');
+            tbody.innerHTML = '';
+
+            if (sales.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-4 text-center text-gray-500">No sales found</td></tr>';
+                return;
+            }
+
+            sales.forEach((sale, index) => {
+                // Create a row for each sale item
+                if (sale.items && sale.items.length > 0) {
+                    sale.items.forEach((item, itemIndex) => {
+                        const row = document.createElement('tr');
+                        row.className = itemIndex === 0 ? 'border-t-2 border-gray-300' : '';
+                        
+                        row.innerHTML = `
+                            <td class="px-6 py-4 whitespace-nowrap text-sm">${itemIndex === 0 ? `#${sale.sale_number || sale.id}` : ''}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm">${itemIndex === 0 ? formatDate(sale.created_at) : ''}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm">${item.product ? item.product.name : 'Unknown Product'}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm">${item.quantity}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">${itemIndex === 0 ? `Rp${sale.total.toFixed(2)}` : `$${(item.quantity * item.price).toFixed(2)}`}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm">${itemIndex === 0 ? (sale.user ? sale.user.name : 'Unknown') : ''}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                ${itemIndex === 0 ? `<button onclick="deleteSale(${sale.id}, '${sale.sale_number || sale.id}')" class="text-red-600 hover:text-red-800 hover:underline"><i class="fas fa-trash mr-1"></i>Delete</button>` : ''}
+                            </td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                } else {
+                    // If no items, show basic sale info
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">#${sale.sale_number || sale.id}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">${formatDate(sale.created_at)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">No items</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">0</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">$${sale.total.toFixed(2)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">${sale.user ? sale.user.name : 'Unknown'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            <button onclick="deleteSale(${sale.id}, '${sale.sale_number || sale.id}')" class="text-red-600 hover:text-red-800 hover:underline">
+                                <i class="fas fa-trash mr-1"></i>Delete
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                }
+            });
+        }
+
+        // Delete sale function
+        async function deleteSale(saleId, saleNumber) {
+            // Confirmation dialog
+            if (!confirm(`Are you sure you want to delete sale ${saleNumber}?\n\nThis action cannot be undone and will:\n- Remove the sale record\n- Restore product stock quantities\n- Remove all associated sale items`)) {
+                return;
+            }
+
+            try {
+                const response = await makeRequest(`${API_BASE}/pos/sales/${saleId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    alert(`Sale ${saleNumber} deleted successfully!`);
+                    // Refresh the sales list
+                    applyFilters();
+                } else if (response.status === 403) {
+                    alert('Access denied. You do not have permission to delete sales.');
+                } else if (response.status === 401) {
+                    alert('Session expired. Please login again.');
+                    localStorage.removeItem('token');
+                    window.location.href = '/login.html';
+                } else if (response.status === 404) {
+                    alert('Sale not found. It may have already been deleted.');
+                    applyFilters(); // Refresh to update the list
+                } else {
+                    const error = await response.json();
+                    alert(`Failed to delete sale: ${error.error || 'Unknown error'}`);
+                }
+            } catch (error) {
+                console.error('Error deleting sale:', error);
+                alert('Failed to delete sale: Network error');
+            }
+        }
+
+        // Format date for display
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            setDefaultDates();
+            applyFilters(); // Load sales with default date filters
+        });
+    </script>
+</body>
+</html>

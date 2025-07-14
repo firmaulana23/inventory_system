@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Products - Inventory System</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100">
+    <nav class="bg-blue-800 text-white p-4">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold">
+                <i class="fas fa-boxes mr-2"></i>Manage Products
+            </h1>
+            <a href="/admin-dashboard.html" class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded text-sm">Dashboard</a>
+        </div>
+    </nav>
+    <div class="container mx-auto p-6">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-2xl font-bold">Product List</h2>
+            <button onclick="showAddProductModal()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">
+                <i class="fas fa-plus mr-1"></i>Add Product
+            </button>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow p-4 overflow-x-auto">
+            <!-- Quick Product Search -->
+            
+            <h3 class="text-lg font-semibold mb-4">Quick Product Lookup</h3>
+            <div class="space-y-4">
+                <input type="text" id="product-search" placeholder="Search by name, SKU, or barcode..." 
+                        class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        onkeyup="quickSearch()">
+                <div id="search-results" class="max-h-60 overflow-y-auto">
+                    <!-- Search results will appear here -->
+                </div>
+            </div>
+            
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead>
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">cost</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="product-table-body">
+                    <!-- Product rows will be injected here by JS -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <!-- Add/Edit Product Modal (hidden by default) -->
+    <div id="product-modal" class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center hidden">
+        <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+            <h3 id="modal-title" class="text-xl font-bold mb-4">Add Product</h3>
+            <form id="product-form" class="space-y-4">
+                <input type="hidden" id="product-id">
+                <div>
+                    <label for="product-name" class="block text-sm font-medium text-gray-700">Name</label>
+                    <input id="product-name" name="name" type="text" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                </div>
+                <div>
+                    <label for="product-sku" class="block text-sm font-medium text-gray-700">SKU</label>
+                    <input id="product-sku" name="sku" type="text" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                </div>
+                <div>
+                    <label for="product-category" class="block text-sm font-medium text-gray-700">Category</label>
+                    <input id="product-category" name="category" type="text" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                </div>
+                <div>
+                    <label for="product-stock" class="block text-sm font-medium text-gray-700">Stock</label>
+                    <input id="product-stock" name="stock" type="number" min="0" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                </div>
+                <div>
+                    <label for="product-price" class="block text-sm font-medium text-gray-700">Price</label>
+                    <input id="product-price" name="price" type="number" min="0" step="0.01" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                </div>
+                <div>
+                    <label for="product-cost" class="block text-sm font-medium text-gray-700">cost (Harga Pokok Penjualan)</label>
+                    <input id="product-cost" name="cost" type="number" min="0" step="0.01" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                </div>
+                <div class="flex justify-end space-x-2">
+                    <button type="button" onclick="hideProductModal()" class="bg-gray-300 px-4 py-2 rounded">Cancel</button>
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script>
+        // Global variables
+        const API_BASE = '/api/v1';
+        const token = localStorage.getItem('token');
+
+        // Check authentication
+        if (!token) {
+            window.location.href = '/login.html';
+        }
+
+        // Set authorization header for all requests
+        function makeRequest(url, options = {}) {
+            return fetch(url, {
+                ...options,
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                    ...options.headers
+                }
+            });
+        }
+
+        // Fetch and display products
+        async function fetchProducts() {
+            try {
+                const response = await makeRequest(`${API_BASE}/products`);
+                if (!response.ok) {
+                    throw new Error('Failed to fetch products');
+                }
+                const data = await response.json();
+                const tbody = document.getElementById('product-table-body');
+                tbody.innerHTML = '';
+                (data.products || []).forEach((p, i) => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap">${i+1}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${p.name}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${p.category || ''}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${p.quantity ?? p.stock ?? 0}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">Rp${p.price}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">Rp${p.cost || 0}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <button onclick='editProduct(${JSON.stringify(p)})' class="text-blue-600 hover:underline mr-2">Edit</button>
+                            <button onclick='deleteProduct(${p.id})' class="text-red-600 hover:underline">Delete</button>
+                        </td>
+                    </tr>`;
+                });
+            } catch (error) {
+                console.error('Error fetching products:', error);
+                alert('Failed to load products. Please refresh the page.');
+            }
+        }
+        fetchProducts();
+
+        // Modal logic
+        function showAddProductModal() {
+            document.getElementById('modal-title').innerText = 'Add Product';
+            document.getElementById('product-form').reset();
+            document.getElementById('product-id').value = '';
+            document.getElementById('product-modal').classList.remove('hidden');
+        }
+        function hideProductModal() {
+            document.getElementById('product-modal').classList.add('hidden');
+        }
+        function editProduct(p) {
+            document.getElementById('modal-title').innerText = 'Edit Product';
+            document.getElementById('product-id').value = p.id;
+            document.getElementById('product-name').value = p.name;
+            document.getElementById('product-sku').value = p.sku || '';
+            document.getElementById('product-category').value = p.category || '';
+            document.getElementById('product-stock').value = p.quantity ?? p.stock ?? 0;
+            document.getElementById('product-price').value = p.price;
+            document.getElementById('product-cost').value = p.cost || 0;
+            document.getElementById('product-modal').classList.remove('hidden');
+        }
+        // Add/Edit product submit
+        document.getElementById('product-form').onsubmit = async function(e) {
+            e.preventDefault();
+            const id = document.getElementById('product-id').value;
+            const payload = {
+                name: document.getElementById('product-name').value,
+                sku: document.getElementById('product-sku').value,
+                category: document.getElementById('product-category').value,
+                quantity: +document.getElementById('product-stock').value,
+                price: +document.getElementById('product-price').value,
+                cost: +document.getElementById('product-cost').value
+            };
+            let url = '/api/v1/products', method = 'POST';
+            if (id) {
+                url += '/' + id;
+                method = 'PUT';
+            }
+            try {
+                const response = await makeRequest(url, {
+                    method,
+                    body: JSON.stringify(payload)
+                });
+                if (response.ok) {
+                    hideProductModal();
+                    fetchProducts();
+                } else {
+                    const error = await response.json();
+                    alert(`Failed to save product: ${error.error || 'Unknown error'}`);
+                }
+            } catch (error) {
+                console.error('Error saving product:', error);
+                alert('Failed to save product: Network error');
+            }
+        };
+        // Delete product
+        async function deleteProduct(id) {
+            if (!confirm('Delete this product?')) return;
+            try {
+                const response = await makeRequest(`${API_BASE}/admin/products/${id}`, {
+                    method: 'DELETE'
+                });
+                if (response.ok) {
+                    fetchProducts();
+                } else {
+                    const error = await response.json();
+                    alert(`Failed to delete product: ${error.error || 'Unknown error'}`);
+                }
+            } catch (error) {
+                console.error('Error deleting product:', error);
+                alert('Failed to delete product: Network error');
+            }
+        }
+
+        // Quick search functionality
+        let searchTimeout;
+        async function quickSearch() {
+            const query = document.getElementById('product-search').value;
+            const resultsContainer = document.getElementById('search-results');
+            
+            if (query.length < 2) {
+                resultsContainer.innerHTML = '';
+                return;
+            }
+
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(async () => {
+                try {
+                    const response = await makeRequest(`${API_BASE}/products/search?q=${encodeURIComponent(query)}`);
+                    if (response.ok) {
+                        const results = await response.json();
+                        displaySearchResults(results, resultsContainer);
+                    } else {
+                        resultsContainer.innerHTML = '<div class="p-3 text-red-600">Search failed. Please try again.</div>';
+                    }
+                } catch (error) {
+                    console.error('Search error:', error);
+                    resultsContainer.innerHTML = '<div class="p-3 text-red-600">Search error occurred.</div>';
+                }
+            }, 300);
+        }
+
+        // Display search results
+        function displaySearchResults(results, container) {
+            if (!results || results.length === 0) {
+                container.innerHTML = '<div class="p-3 text-gray-500">No products found.</div>';
+                return;
+            }
+
+            let html = '<div class="border border-gray-200 rounded-lg">';
+            results.forEach((product, index) => {
+                html += `
+                    <div class="p-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0 cursor-pointer" onclick="selectProduct(${JSON.stringify(product).replace(/"/g, '&quot;')})">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <div class="font-medium text-gray-900">${product.name}</div>
+                                <div class="text-sm text-gray-500">SKU: ${product.sku} | Category: ${product.category || 'N/A'}</div>
+                                <div class="text-sm text-gray-600">Stock: ${product.quantity || 0} | Price: Rp${product.price}</div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-sm font-medium text-green-600">Rp${product.cost || 0}</div>
+                                <div class="text-xs text-gray-500">Cost</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        // Select product from search results
+        function selectProduct(product) {
+            editProduct(product);
+            document.getElementById('product-search').value = '';
+            document.getElementById('search-results').innerHTML = '';
+        }
+    </script>
+</body>
+</html>
