@@ -60,7 +60,6 @@
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PO Number</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Supplier</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order Date</th>
-                        <!-- <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Expected Date</th> -->
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -102,10 +101,6 @@
                             <label for="po-order-date" class="block text-sm font-medium text-gray-700">Order Date *</label>
                             <input id="po-order-date" name="order_date" type="date" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
                         </div>
-                        <!-- <div>
-                            <label for="po-expected-date" class="block text-sm font-medium text-gray-700">Expected Date *</label>
-                            <input id="po-expected-date" name="expected_date" type="date" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
-                        </div> -->
                         <div>
                             <label for="po-payment-method" class="block text-sm font-medium text-gray-700">Payment Method</label>
                             <select id="po-payment-method" name="payment_method" class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2" onchange="togglePaymentTerm()">
@@ -299,7 +294,6 @@
             const today = new Date().toISOString().split('T')[0];
             const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
             document.getElementById('po-order-date').value = today;
-            // document.getElementById('po-expected-date').value = nextWeek;
         }
 
         // Toggle payment term and downpayment visibility based on payment method
@@ -580,7 +574,6 @@
                 payment_term: formData.get('payment_term'),
                 down_payment: parseFloat(formData.get('down_payment')) || 0,
                 order_date: formData.get('order_date'),
-                // expected_date: formData.get('expected_date'),
                 notes: formData.get('notes'),
                 items
             };

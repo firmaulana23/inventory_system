@@ -28,7 +28,6 @@ type Product struct {
 	Category    string         `json:"category"`
 	Price       float64        `json:"price" gorm:"not null"`
 	Cost        float64        `json:"cost" gorm:"not null"`
-	HPP         float64        `json:"hpp" gorm:"default:0;comment:Harga Pokok Penjualan"`
 	Quantity    int            `json:"quantity" gorm:"default:0"`
 	MinStock    int            `json:"min_stock" gorm:"default:10"`
 	MaxStock    int            `json:"max_stock" gorm:"default:1000"`
@@ -56,27 +55,27 @@ type StockMovement struct {
 
 // Sale represents a POS transaction
 type Sale struct {
-	ID              uint           `json:"id" gorm:"primaryKey"`
-	SaleNumber      string         `json:"sale_number" gorm:"unique;not null"`
-	UserID          uint           `json:"user_id" gorm:"not null"`
-	User            User           `json:"user" gorm:"foreignKey:UserID"`
-	CustomerName    string         `json:"customer_name"`
-	Subtotal        float64        `json:"subtotal" gorm:"not null"`
-	Tax             float64        `json:"tax" gorm:"default:0"`
-	Discount        float64        `json:"discount" gorm:"default:0"`
-	Total           float64        `json:"total" gorm:"not null"`
-	PaymentMethod   string         `json:"payment_method" gorm:"not null"`     // cash, card, transfer, credit
-	PaymentTerm     string         `json:"payment_term" gorm:"default:cash"`   // cash, net7, net15, net30, net60, net90
-	PaymentStatus   string         `json:"payment_status" gorm:"default:paid"` // paid, pending, overdue
-	DueDate         *time.Time     `json:"due_date"`
-	PaidDate        *time.Time     `json:"paid_date"`
-	AmountPaid      float64        `json:"amount_paid" gorm:"default:0"`
-	AmountDue       float64        `json:"amount_due" gorm:"default:0"`
-	Status          string         `json:"status" gorm:"default:completed"` // pending, completed, cancelled
-	Items           []SaleItem     `json:"items" gorm:"foreignKey:SaleID"`
-	CreatedAt       time.Time      `json:"created_at"`
-	UpdatedAt       time.Time      `json:"updated_at"`
-	DeletedAt       gorm.DeletedAt `json:"-" gorm:"index"`
+	ID            uint           `json:"id" gorm:"primaryKey"`
+	SaleNumber    string         `json:"sale_number" gorm:"unique;not null"`
+	UserID        uint           `json:"user_id" gorm:"not null"`
+	User          User           `json:"user" gorm:"foreignKey:UserID"`
+	CustomerName  string         `json:"customer_name"`
+	Subtotal      float64        `json:"subtotal" gorm:"not null"`
+	Tax           float64        `json:"tax" gorm:"default:0"`
+	Discount      float64        `json:"discount" gorm:"default:0"`
+	Total         float64        `json:"total" gorm:"not null"`
+	PaymentMethod string         `json:"payment_method" gorm:"not null"`     // cash, card, transfer, credit
+	PaymentTerm   string         `json:"payment_term" gorm:"default:cash"`   // cash, net7, net15, net30, net60, net90
+	PaymentStatus string         `json:"payment_status" gorm:"default:paid"` // paid, pending, overdue
+	DueDate       *time.Time     `json:"due_date"`
+	PaidDate      *time.Time     `json:"paid_date"`
+	AmountPaid    float64        `json:"amount_paid" gorm:"default:0"`
+	AmountDue     float64        `json:"amount_due" gorm:"default:0"`
+	Status        string         `json:"status" gorm:"default:completed"` // pending, completed, cancelled
+	Items         []SaleItem     `json:"items" gorm:"foreignKey:SaleID"`
+	CreatedAt     time.Time      `json:"created_at"`
+	UpdatedAt     time.Time      `json:"updated_at"`
+	DeletedAt     gorm.DeletedAt `json:"-" gorm:"index"`
 }
 
 // SaleItem represents items in a sale
@@ -87,6 +86,7 @@ type SaleItem struct {
 	Product   Product `json:"product" gorm:"foreignKey:ProductID"`
 	Quantity  int     `json:"quantity" gorm:"not null"`
 	Price     float64 `json:"price" gorm:"not null"`
+	Cost      float64 `json:"cost" gorm:"not null"`
 	Total     float64 `json:"total" gorm:"not null"`
 }
 
@@ -111,19 +111,17 @@ type PurchaseOrder struct {
 	Supplier      string              `json:"supplier" gorm:"not null"`
 	UserID        uint                `json:"user_id" gorm:"not null"`
 	User          User                `json:"user" gorm:"foreignKey:UserID"`
-	Status        string              `json:"status" gorm:"default:pending"`     // pending, approved, received, cancelled
-	PaymentMethod string              `json:"payment_method" gorm:"default:net30"` // cash, net7, net15, net30, net60, net90, credit
-	PaymentTerm   string              `json:"payment_term" gorm:"default:net30"`   // cash, net7, net15, net30, net60, net90
+	PaymentMethod string              `json:"payment_method" gorm:"default:net30"`   // cash, net7, net15, net30, net60, net90, credit
+	PaymentTerm   string              `json:"payment_term" gorm:"default:net30"`     // cash, net7, net15, net30, net60, net90
 	PaymentStatus string              `json:"payment_status" gorm:"default:pending"` // pending, paid, overdue
 	Total         float64             `json:"total" gorm:"not null"`
-	DownPayment   float64             `json:"down_payment" gorm:"default:0"`         // downpayment amount for credit orders
+	DownPayment   float64             `json:"down_payment" gorm:"default:0"` // downpayment amount for credit orders
 	AmountPaid    float64             `json:"amount_paid" gorm:"default:0"`
 	AmountDue     float64             `json:"amount_due" gorm:"default:0"`
 	DueDate       *time.Time          `json:"due_date"`
 	PaidDate      *time.Time          `json:"paid_date"`
 	Notes         string              `json:"notes"`
 	OrderDate     time.Time           `json:"order_date"`
-	ExpectedDate  time.Time           `json:"expected_date"`
 	ReceivedDate  *time.Time          `json:"received_date"`
 	Items         []PurchaseOrderItem `json:"items" gorm:"foreignKey:PurchaseOrderID"`
 	CreatedAt     time.Time           `json:"created_at"`
@@ -145,16 +143,16 @@ type PurchaseOrderItem struct {
 
 // PurchasePayment represents payment history for purchase orders
 type PurchasePayment struct {
-	ID                uint          `json:"id" gorm:"primaryKey"`
-	PurchaseOrderID   uint          `json:"purchase_order_id" gorm:"not null"`
-	PurchaseOrder     PurchaseOrder `json:"purchase_order" gorm:"foreignKey:PurchaseOrderID"`
-	UserID            uint          `json:"user_id" gorm:"not null"`
-	User              User          `json:"user" gorm:"foreignKey:UserID"`
-	Amount            float64       `json:"amount" gorm:"not null"`
-	PaymentMethod     string        `json:"payment_method" gorm:"not null"`
-	PaymentType       string        `json:"payment_type" gorm:"not null"` // downpayment, payment, adjustment
-	Notes             string        `json:"notes"`
-	CreatedAt         time.Time     `json:"created_at"`
+	ID              uint          `json:"id" gorm:"primaryKey"`
+	PurchaseOrderID uint          `json:"purchase_order_id" gorm:"not null"`
+	PurchaseOrder   PurchaseOrder `json:"purchase_order" gorm:"foreignKey:PurchaseOrderID"`
+	UserID          uint          `json:"user_id" gorm:"not null"`
+	User            User          `json:"user" gorm:"foreignKey:UserID"`
+	Amount          float64       `json:"amount" gorm:"not null"`
+	PaymentMethod   string        `json:"payment_method" gorm:"not null"`
+	PaymentType     string        `json:"payment_type" gorm:"not null"` // downpayment, payment, adjustment
+	Notes           string        `json:"notes"`
+	CreatedAt       time.Time     `json:"created_at"`
 }
 
 // ActivityLog represents system activity logs

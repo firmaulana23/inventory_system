@@ -70,16 +70,14 @@ func GetDashboardStats(c *gin.Context) {
 
 	// Calculate total profit (revenue - cost)
 	database.DB.Raw(`
-		SELECT COALESCE(SUM(si.quantity * (si.price - p.cost)), 0) 
+		SELECT COALESCE(SUM(si.quantity * (si.price - si.cost)), 0) 
 		FROM sale_items si
-		JOIN products p ON si.product_id = p.id
 	`).Scan(&stats.TotalProfit)
 
 	// Calculate today's profit
 	database.DB.Raw(`
-		SELECT COALESCE(SUM(si.quantity * (si.price - p.cost)), 0) 
+		SELECT COALESCE(SUM(si.quantity * (si.price - si.cost)), 0) 
 		FROM sale_items si
-		JOIN products p ON si.product_id = p.id
 		JOIN sales s ON si.sale_id = s.id
 		WHERE s.created_at::date = ?
 	`, today).Scan(&stats.TodayProfit)

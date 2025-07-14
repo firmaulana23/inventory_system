@@ -16,14 +16,13 @@ import (
 
 // CreatePurchaseOrderRequest represents the request body for creating a purchase order
 type CreatePurchaseOrderRequest struct {
-	Supplier      string  `json:"supplier" binding:"required"`
-	PaymentMethod string  `json:"payment_method"`
-	PaymentTerm   string  `json:"payment_term"`
-	DownPayment   float64 `json:"down_payment"`
-	Notes         string  `json:"notes"`
-	OrderDate     string  `json:"order_date" binding:"required"`
-	// ExpectedDate  string                    `json:"expected_date" binding:"required"`
-	Items []CreatePurchaseOrderItem `json:"items" binding:"required,min=1"`
+	Supplier      string                    `json:"supplier" binding:"required"`
+	PaymentMethod string                    `json:"payment_method"`
+	PaymentTerm   string                    `json:"payment_term"`
+	DownPayment   float64                   `json:"down_payment"`
+	Notes         string                    `json:"notes"`
+	OrderDate     string                    `json:"order_date" binding:"required"`
+	Items         []CreatePurchaseOrderItem `json:"items" binding:"required,min=1"`
 }
 
 // CreatePurchaseOrderItem represents an item in the purchase order request
@@ -39,7 +38,6 @@ type CreatePurchaseOrderItem struct {
 // CreatePurchaseOrder creates a new purchase order with SKU-based product handling
 func CreatePurchaseOrder(c *gin.Context) {
 	var req CreatePurchaseOrderRequest
-	var status string = "pending"
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -81,12 +79,6 @@ func CreatePurchaseOrder(c *gin.Context) {
 		return
 	}
 
-	// expectedDate, err := time.Parse("2006-01-02", req.ExpectedDate)
-	// if err != nil {
-	// 	c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid expected date format. Use YYYY-MM-DD"})
-	// 	return
-	// }
-
 	// Generate PO number
 	poNumber := generatePONumber()
 
@@ -113,7 +105,6 @@ func CreatePurchaseOrder(c *gin.Context) {
 		dueDate = &calculatedDueDate
 	} else {
 		paymentStatus = "paid" // Will be paid upon receipt
-		status = "done"
 		dueDate = &orderDate
 	}
 
@@ -125,14 +116,12 @@ func CreatePurchaseOrder(c *gin.Context) {
 		PONumber:      poNumber,
 		Supplier:      req.Supplier,
 		UserID:        userID.(uint),
-		Status:        status,
 		PaymentMethod: req.PaymentMethod,
 		PaymentTerm:   req.PaymentTerm,
 		PaymentStatus: paymentStatus,
 		DueDate:       dueDate,
 		Notes:         req.Notes,
 		OrderDate:     orderDate,
-		// ExpectedDate:  expectedDate,
 	}
 
 	if err := tx.Create(&po).Error; err != nil {
@@ -499,15 +488,8 @@ func DeletePurchaseOrder(c *gin.Context) {
 		return
 	}
 
-	// Check if PO can be deleted (only pending or cancelled POs should be deletable)
-	if po.Status != "pending" && po.Status != "cancelled" {
-		tx.Rollback()
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Cannot delete approved or received purchase orders"})
-		return
-	}
-
 	// Reverse stock movements for each item (only if status is not cancelled)
-	if po.Status != "cancelled" {
+	if po.PaymentStatus != "cancelled" {
 		for _, item := range po.Items {
 			var product models.Product
 			if err := tx.First(&product, item.ProductID).Error; err != nil {
@@ -680,17 +662,6 @@ func UpdatePurchaseOrder(c *gin.Context) {
 			return
 		}
 		po.PaymentTerm = req.PaymentTerm
-	}
-
-	// Validate status if provided
-	if req.Status != "" {
-		validStatuses := []string{"pending", "approved", "received", "cancelled"}
-		if !slices.Contains(validStatuses, req.Status) {
-			tx.Rollback()
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid status"})
-			return
-		}
-		po.Status = req.Status
 	}
 
 	// Update basic fields

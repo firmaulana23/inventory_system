@@ -63,10 +63,10 @@ func InitDatabase() {
 
 	log.Println("Database connected successfully")
 
-	// Run custom migrations first
-	err = runCustomMigrations()
+	// Run migrations
+	err = RunMigrations()
 	if err != nil {
-		log.Fatal("Failed to run custom migrations:", err)
+		log.Fatal("Failed to run migrations:", err)
 	}
 
 	// Auto migrate the schema
@@ -131,47 +131,6 @@ func createDefaultAdmin() {
 	}
 }
 
-// runCustomMigrations handles custom database migrations
-func runCustomMigrations() error {
-	// Check if HPP column exists
-	var count int64
-	err := DB.Raw("SELECT COUNT(*) FROM information_schema.columns WHERE table_name = 'products' AND column_name = 'hpp'").Scan(&count).Error
-	if err != nil {
-		return err
-	}
-
-	// If HPP column doesn't exist, add it with existing data handling
-	if count == 0 {
-		log.Println("Adding HPP column to products table...")
-		
-		// Add column as nullable first
-		err = DB.Exec("ALTER TABLE products ADD COLUMN hpp DECIMAL(10,2)").Error
-		if err != nil {
-			return err
-		}
-
-		// Update existing products to set HPP equal to cost
-		err = DB.Exec("UPDATE products SET hpp = COALESCE(cost, 0)").Error
-		if err != nil {
-			return err
-		}
-
-		// Make column NOT NULL with default
-		err = DB.Exec("ALTER TABLE products ALTER COLUMN hpp SET NOT NULL").Error
-		if err != nil {
-			return err
-		}
-
-		err = DB.Exec("ALTER TABLE products ALTER COLUMN hpp SET DEFAULT 0.00").Error
-		if err != nil {
-			return err
-		}
-
-		log.Println("HPP column added successfully")
-	}
-
-	return nil
-}
 
 // GetDB returns the database instance
 func GetDB() *gorm.DB {

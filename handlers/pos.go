@@ -146,6 +146,7 @@ func CreateSale(c *gin.Context) {
 			ProductID: product.ID,
 			Quantity:  itemReq.Quantity,
 			Price:     product.Price,
+			Cost:      product.Cost,
 			Total:     itemTotal,
 		}
 
