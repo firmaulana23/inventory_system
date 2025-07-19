@@ -17,12 +17,58 @@
             </h1>
             <div class="flex items-center space-x-4">
                 <span id="user-name" class="text-sm"></span>
+                
                 <button onclick="window.location.href='/dashboard.html'" class="bg-green-600 hover:bg-green-700 px-3 py-1 rounded text-sm">
                     <i class="fas fa-cash-register mr-1"></i>POS Dashboard
                 </button>
-                <button onclick="logout()" class="bg-red-500 hover:bg-red-600 px-3 py-1 rounded text-sm">
-                    <i class="fas fa-sign-out-alt mr-1"></i>Logout
-                </button>
+
+                <!-- Burger Menu -->
+                <div class="relative">
+                    <button id="burger-menu" class="bg-gray-700 hover:bg-gray-600 px-3 py-2 rounded text-sm">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    
+                    <!-- Dropdown Menu -->
+                    <div id="dropdown-menu" class="hidden absolute right-0 mt-2 w-64 bg-white rounded-md shadow-lg z-50">
+                        <div class="py-2">
+                            <a href="/users" class="flex items-center px-4 py-2 text-gray-800 hover:bg-gray-100">
+                                <i class="fas fa-users mr-3 text-blue-500"></i>
+                                Manage Users
+                            </a>
+                            <a href="/manage_products" class="flex items-center px-4 py-2 text-gray-800 hover:bg-gray-100">
+                                <i class="fas fa-boxes mr-3 text-green-500"></i>
+                                Manage Products
+                            </a>
+                            <a href="/purchase_orders" class="flex items-center px-4 py-2 text-gray-800 hover:bg-gray-100">
+                                <i class="fas fa-file-invoice-dollar mr-3 text-red-500"></i>
+                                Purchase Orders
+                            </a>
+                            <a href="/sales_history" class="flex items-center px-4 py-2 text-gray-800 hover:bg-gray-100">
+                                <i class="fas fa-chart-bar mr-3 text-purple-500"></i>
+                                View Reports
+                            </a>
+                            <a href="/settings" class="flex items-center px-4 py-2 text-gray-800 hover:bg-gray-100">
+                                <i class="fas fa-cog mr-3 text-gray-500"></i>
+                                System Settings
+                            </a>
+                            <a href="/contact_supplier" class="flex items-center px-4 py-2 text-gray-800 hover:bg-gray-100">
+                                <i class="fas fa-address-book mr-3 text-orange-500"></i>
+                                Supplier Contacts
+                            </a>
+                            <button onclick="exportData()" class="flex items-center w-full px-4 py-2 text-gray-800 hover:bg-gray-100 text-left">
+                                <i class="fas fa-download mr-3 text-indigo-500"></i>
+                                Export Data
+                            </button>
+                            <button onclick="backupDatabase()" class="flex items-center w-full px-4 py-2 text-gray-800 hover:bg-gray-100 text-left">
+                                <i class="fas fa-database mr-3 text-gray-500"></i>
+                                Backup DB
+                            </button>
+                            <button onclick="logout()" class="flex items-center w-full px-4 py-2 text-gray-800 hover:bg-gray-100 text-left">
+                                <i class="fas fa-sign-out-alt mr-3"></i>Logout
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </nav>
@@ -217,95 +263,23 @@
             </div>
         </div>
 
-        <!-- Recent Activity and Quick Actions -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <!-- Recent Sales -->
-            <div class="bg-white rounded-lg shadow p-6">
-                <h3 class="text-lg font-semibold mb-4">Recent Sales</h3>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full table-auto">
-                        <thead>
-                            <tr class="bg-gray-50">
-                                <th class="px-4 py-2 text-left text-sm font-medium text-gray-600">Sale #</th>
-                                <th class="px-4 py-2 text-left text-sm font-medium text-gray-600">Customer</th>
-                                <th class="px-4 py-2 text-left text-sm font-medium text-gray-600">Total</th>
-                                <th class="px-4 py-2 text-left text-sm font-medium text-gray-600">Date</th>
-                            </tr>
-                        </thead>
-                        <tbody id="recent-sales">
-                            <!-- Recent sales will be loaded here -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Quick Actions -->
-            <div class="bg-white rounded-lg shadow p-6">
-                <h3 class="text-lg font-semibold mb-4">Quick Actions</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <!-- Row 1 -->
-                    <button onclick="window.location.href='/users'" 
-                            class="flex items-center justify-center p-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">
-                        <i class="fas fa-users mr-2"></i>
-                        Manage Users
-                    </button>
-                    
-                    <button onclick="window.location.href='/manage_products'" 
-                            class="flex items-center justify-center p-4 bg-green-500 text-white rounded-lg hover:bg-green-600 transition">
-                        <i class="fas fa-boxes mr-2"></i>
-                        Manage Products
-                    </button>
-                    
-                    <button onclick="window.location.href='/purchase_orders'" 
-                            class="flex items-center justify-center p-4 bg-red-500 text-white rounded-lg hover:bg-red-600 transition">
-                        <i class="fas fa-file-invoice-dollar mr-2 text-white"></i>
-                        <span class="text-white">Purchase Orders</span>
-                    </button>
-                    
-                    <!-- Row 2 -->
-                    <button onclick="window.location.href='/sales_history'" 
-                            class="flex items-center justify-center p-4 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition">
-                        <i class="fas fa-chart-bar mr-2"></i>
-                        View Reports
-                    </button>
-                    
-                    <button onclick="window.location.href='/settings'" 
-                            class="flex items-center justify-center p-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition">
-                        <i class="fas fa-cog mr-2"></i>
-                        System Settings
-                    </button>
-                    
-                    <button onclick="window.location.href='/contact_supplier'" 
-                            class="flex items-center justify-center p-4 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition">
-                        <i class="fas fa-address-book mr-2"></i>
-                        Supplier Contacts
-                    </button>
-                    
-                    <button onclick="exportData()" 
-                            class="flex items-center justify-center p-4 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition">
-                        <i class="fas fa-download mr-2"></i>
-                        Export Data
-                    </button>
-                    
-                    <!-- Row 3 -->
-                    <!-- <button onclick="viewOverdueSales()" 
-                            class="flex items-center justify-center p-4 bg-red-500 text-white rounded-lg hover:bg-red-600 transition">
-                        <i class="fas fa-clock mr-2"></i>
-                        Overdue Sales
-                    </button> -->
-                    
-                    <button onclick="viewOverduePurchases()" 
-                            class="flex items-center justify-center p-4 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition">
-                        <i class="fas fa-file-invoice-dollar mr-2"></i>
-                        Overdue Purchases
-                    </button>
-                    
-                    <button onclick="backupDatabase()" 
-                            class="flex items-center justify-center p-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition">
-                        <i class="fas fa-database mr-2"></i>
-                        Backup DB
-                    </button>
-                </div>
+        <!-- Recent Activity -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold mb-4">Recent Sales</h3>
+            <div class="overflow-x-auto">
+                <table class="min-w-full table-auto">
+                    <thead>
+                        <tr class="bg-gray-50">
+                            <th class="px-4 py-2 text-left text-sm font-medium text-gray-600">Sale #</th>
+                            <th class="px-4 py-2 text-left text-sm font-medium text-gray-600">Customer</th>
+                            <th class="px-4 py-2 text-left text-sm font-medium text-gray-600">Total</th>
+                            <th class="px-4 py-2 text-left text-sm font-medium text-gray-600">Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recent-sales">
+                        <!-- Recent sales will be loaded here -->
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
@@ -543,6 +517,32 @@
             window.location.href = '/purchase_orders?filter=overdue';
         }
 
+        // Initialize burger menu functionality
+        function initializeBurgerMenu() {
+            const burgerButton = document.getElementById('burger-menu');
+            const dropdownMenu = document.getElementById('dropdown-menu');
+            
+            // Toggle dropdown on burger button click
+            burgerButton.addEventListener('click', function(e) {
+                e.stopPropagation();
+                dropdownMenu.classList.toggle('hidden');
+            });
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!dropdownMenu.contains(e.target) && !burgerButton.contains(e.target)) {
+                    dropdownMenu.classList.add('hidden');
+                }
+            });
+            
+            // Close dropdown when pressing Escape key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    dropdownMenu.classList.add('hidden');
+                }
+            });
+        }
+
         // Initialize dashboard
         document.addEventListener('DOMContentLoaded', function() {
             // Set user name if available
@@ -550,6 +550,9 @@
             if (userInfo.name) {
                 document.getElementById('user-name').textContent = userInfo.name;
             }
+            
+            // Initialize burger menu
+            initializeBurgerMenu();
             
             // Load dashboard data
             loadDashboard();
