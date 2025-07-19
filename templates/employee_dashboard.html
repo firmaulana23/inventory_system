@@ -80,12 +80,9 @@
                         <span class="text-lg font-medium">New Sale</span>
                     </button>
                     
-                    <div class="grid grid-cols-2 gap-2">
-                        <button onclick="viewSales()" class="bg-blue-500 text-white p-3 rounded hover:bg-blue-600 transition">
-                            <i class="fas fa-list mr-2"></i>View Sales
-                        </button>
-                        <button onclick="searchProducts()" class="bg-purple-500 text-white p-3 rounded hover:bg-purple-600 transition">
-                            <i class="fas fa-search mr-2"></i>Search Products
+                    <div class="grid">
+                        <button onclick="viewCreditSales()" class="bg-red-500 text-white p-3 rounded hover:bg-orange-600 transition">
+                            <i class="fas fa-credit-card mr-2"></i>Credit Sales
                         </button>
                     </div>
                 </div>
@@ -166,37 +163,84 @@
                     </div>
                     
                     <div class="space-y-2">
-                        <div class="flex justify-between">
-                            <span>Subtotal:</span>
-                            <span id="subtotal">Rp0.00</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span>Tax:</span>
-                            <span id="tax">Rp0.00</span>
-                        </div>
-                        <div class="flex justify-between font-bold text-lg">
-                            <span>Total:</span>
-                            <span id="total">Rp0.00</span>
+                        <div class="space-y-2 border-t pt-2">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Subtotal:</span>
+                                <span id="subtotal" class="font-medium">Rp0.00</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Discount:</span>
+                                <span id="discount-display" class="font-medium">Rp0.00</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Tax:</span>
+                                <span id="tax" class="font-medium">Rp0.00</span>
+                            </div>
+                            <div class="flex justify-between font-bold text-lg border-t pt-2">
+                                <span>Total:</span>
+                                <span id="total" class="text-green-600">Rp0.00</span>
+                            </div>
+                            <div id="down-payment-display" class="hidden">
+                                <div class="flex justify-between text-sm text-blue-600">
+                                    <span>Down Payment:</span>
+                                    <span id="down-payment-amount">Rp0.00</span>
+                                </div>
+                                <div class="flex justify-between text-sm text-orange-600 font-medium">
+                                    <span>Amount Due:</span>
+                                    <span id="amount-due">Rp0.00</span>
+                                </div>
+                            </div>
                         </div>
                         
-                        <select id="payment-method" class="w-full p-2 border rounded" onchange="updatePaymentTerms()">
-                            <option value="cash">Cash</option>
-                            <option value="card">Card</option>
-                            <option value="transfer">Transfer</option>
-                            <option value="credit">Credit</option>
-                        </select>
-                        
-                        <select id="payment-term" class="w-full p-2 border rounded">
-                            <option value="cash">Cash (Immediate)</option>
-                            <option value="net7">Net 7 (7 days)</option>
-                            <option value="net15">Net 15 (15 days)</option>
-                            <option value="net30">Net 30 (30 days)</option>
-                            <option value="net60">Net 60 (60 days)</option>
-                            <option value="net90">Net 90 (90 days)</option>
-                        </select>
-                        
-                        <input type="text" id="customer-name" placeholder="Customer name (optional)" 
-                               class="w-full p-2 border rounded">
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Payment Method</label>
+                                <select id="payment-method" class="w-full p-2 border rounded focus:ring-2 focus:ring-green-500 focus:border-transparent" onchange="updatePaymentTerms()">
+                                    <option value="cash">💰 Cash</option>
+                                    <option value="card">💳 Card</option>
+                                    <option value="transfer">🏦 Transfer</option>
+                                    <option value="credit">📅 Credit</option>
+                                </select>
+                            </div>
+                            
+                            <div id="payment-term-container" class="hidden">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Payment Terms</label>
+                                <select id="payment-term" class="w-full p-2 border rounded focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                                    <option value="net7">Net 7 (7 days)</option>
+                                    <option value="net15">Net 15 (15 days)</option>
+                                    <option value="net30">Net 30 (30 days)</option>
+                                    <option value="net60">Net 60 (60 days)</option>
+                                    <option value="net90">Net 90 (90 days)</option>
+                                </select>
+                            </div>
+                            
+                            <div id="down-payment-container" class="hidden">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Down Payment (Optional)</label>
+                                <input type="number" id="down-payment" placeholder="Enter down payment amount" 
+                                       class="w-full p-2 border rounded focus:ring-2 focus:ring-green-500 focus:border-transparent" 
+                                       min="0" step="0.01" oninput="updateDownPaymentDisplay()">
+                                <p class="text-xs text-gray-500 mt-1">Leave empty for no down payment</p>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Discount</label>
+                                <div class="flex space-x-2">
+                                    <select id="discount-type" class="w-24 p-2 border rounded focus:ring-2 focus:ring-green-500 focus:border-transparent" onchange="updateDiscount()">
+                                        <option value="percentage">%</option>
+                                        <option value="fixed">Rp</option>
+                                    </select>
+                                    <input type="number" id="discount-value" placeholder="0" 
+                                           class="flex-1 p-2 border rounded focus:ring-2 focus:ring-green-500 focus:border-transparent" 
+                                           min="0" step="0.01" oninput="updateDiscount()">
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Customer Name</label>
+                                <input type="text" id="customer-name" placeholder="Enter customer name (optional)" 
+                                       class="w-full p-2 border rounded focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                            </div>
+                        </div>
                         
                         <button onclick="completeSale()" id="complete-sale-btn" 
                                 class="w-full bg-green-500 text-white p-3 rounded hover:bg-green-600 transition disabled:opacity-50"
@@ -204,6 +248,164 @@
                             Complete Sale
                         </button>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Credit Sales Modal -->
+    <div id="credit-sales-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-10 mx-auto p-6 border w-11/12 max-w-7xl shadow-lg rounded-lg bg-white">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h3 class="text-xl font-bold text-gray-800">Credit Sales Management</h3>
+                    <p class="text-sm text-gray-600">Manage credit sales and track payments</p>
+                </div>
+                <button onclick="closeCreditSales()" class="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <!-- Summary Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div class="bg-blue-50 p-4 rounded-lg">
+                    <div class="flex items-center">
+                        <div class="p-2 bg-blue-100 rounded-full">
+                            <i class="fas fa-credit-card text-blue-600"></i>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm font-medium text-blue-600">Total Credit Sales</p>
+                            <p id="total-credit-sales" class="text-lg font-bold text-blue-800">0</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-green-50 p-4 rounded-lg">
+                    <div class="flex items-center">
+                        <div class="p-2 bg-green-100 rounded-full">
+                            <i class="fas fa-check-circle text-green-600"></i>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm font-medium text-green-600">Paid</p>
+                            <p id="paid-credit-sales" class="text-lg font-bold text-green-800">0</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-yellow-50 p-4 rounded-lg">
+                    <div class="flex items-center">
+                        <div class="p-2 bg-yellow-100 rounded-full">
+                            <i class="fas fa-clock text-yellow-600"></i>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm font-medium text-yellow-600">Pending</p>
+                            <p id="pending-credit-sales" class="text-lg font-bold text-yellow-800">0</p>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+            
+            <div class="bg-white rounded-lg border overflow-hidden">
+                <div class="px-4 py-3 bg-gray-50 border-b">
+                    <h4 class="font-medium text-gray-800">Credit Sales List</h4>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full table-auto">
+                        <thead>
+                            <tr class="bg-gray-50">
+                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">Sale #</th>
+                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">Customer</th>
+                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">Total</th>
+                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">Down Payment</th>
+                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">Amount Due</th>
+                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">Status</th>
+                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">Due Date</th>
+                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="credit-sales-table">
+                            <!-- Credit sales will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment History Modal -->
+    <div id="payment-history-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-20 mx-auto p-6 border w-11/12 max-w-4xl shadow-lg rounded-lg bg-white">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h3 class="text-lg font-bold text-gray-800">Payment History</h3>
+                    <p class="text-sm text-gray-600">Complete payment history for this credit sale</p>
+                </div>
+                <button onclick="closePaymentHistory()" class="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <div class="bg-white rounded-lg border overflow-hidden">
+                <div id="payment-history-content">
+                    <!-- Payment history will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Record Payment Modal -->
+    <div id="record-payment-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-20 mx-auto p-6 border w-96 shadow-lg rounded-lg bg-white">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h3 class="text-lg font-bold text-gray-800">Record Payment</h3>
+                    <p class="text-sm text-gray-600">Add a payment for this credit sale</p>
+                </div>
+                <button onclick="closeRecordPayment()" class="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-money-bill-wave mr-1"></i>Payment Amount
+                    </label>
+                    <input type="number" id="payment-amount" 
+                           class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" 
+                           min="0" step="0.01" placeholder="Enter payment amount">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-credit-card mr-1"></i>Payment Method
+                    </label>
+                    <select id="payment-method-select" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                        <option value="cash">💰 Cash</option>
+                        <option value="card">💳 Card</option>
+                        <option value="transfer">🏦 Transfer</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-sticky-note mr-1"></i>Notes (Optional)
+                    </label>
+                    <textarea id="payment-notes" 
+                              class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" 
+                              rows="3" placeholder="Add any notes about this payment..."></textarea>
+                </div>
+                
+                <div class="flex justify-end space-x-3 pt-4 border-t">
+                    <button onclick="closeRecordPayment()" 
+                            class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition">
+                        Cancel
+                    </button>
+                    <button onclick="submitPayment()" 
+                            class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition flex items-center">
+                        <i class="fas fa-check mr-2"></i>Record Payment
+                    </button>
                 </div>
             </div>
         </div>
@@ -368,6 +570,8 @@
         function closePOS() {
             document.getElementById('pos-modal').classList.add('hidden');
             cart = [];
+            document.getElementById('discount-value').value = '';
+            document.getElementById('discount-type').value = 'percentage';
             updateCart();
         }
 
@@ -491,24 +695,65 @@
                 cartContainer.appendChild(div);
             });
             
+            // Calculate discount
+            const discountValue = parseFloat(document.getElementById('discount-value').value) || 0;
+            const discountType = document.getElementById('discount-type').value;
+            let discountAmount = 0;
+            
+            if (discountValue > 0) {
+                if (discountType === 'percentage') {
+                    discountAmount = subtotal * (discountValue / 100);
+                } else {
+                    discountAmount = discountValue;
+                }
+            }
+            
             const tax = 0; // 8% tax
-            const total = subtotal + tax;
+            const total = subtotal - discountAmount + tax;
             
             subtotalElement.textContent = `Rp${subtotal.toFixed(2)}`;
+            document.getElementById('discount-display').textContent = `Rp${discountAmount.toFixed(2)}`;
             taxElement.textContent = `Rp${tax.toFixed(2)}`;
             totalElement.textContent = `Rp${total.toFixed(2)}`;
             completeButton.disabled = false;
+            
+            // Update down payment display
+            updateDownPaymentDisplay();
+        }
+        
+        function updateDiscount() {
+            updateCart();
+        }
+
+        // Logo variables for invoice generation
+        let companyLogo = null;
+        let companyName = 'INVENTORY SYSTEM';
+
+        function loadLogoForInvoice() {
+            const savedLogo = localStorage.getItem('companyLogo');
+            const savedName = localStorage.getItem('companyName');
+            
+            if (savedLogo) {
+                companyLogo = savedLogo;
+            }
+            
+            if (savedName) {
+                companyName = savedName;
+            }
         }
 
         // Generate invoice PDF
         function generateInvoicePDF(saleResult, saleData) {
+            // Load latest logo settings from localStorage
+            loadLogoForInvoice();
+            
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             
-            // Company header
+            // Company header (text only)
             doc.setFontSize(20);
             doc.setFont(undefined, 'bold');
-            doc.text('INVENTORY SYSTEM', 105, 20, { align: 'center' });
+            doc.text(companyName, 105, 20, { align: 'center' });
             
             doc.setFontSize(12);
             doc.setFont(undefined, 'normal');
@@ -524,15 +769,17 @@
                 minute: '2-digit'
             });
             
-            doc.text(`Invoice Number: ${saleResult.sale_number}`, 20, 50);
-            doc.text(`Date: ${invoiceDate}`, 20, 60);
-            doc.text(`Cashier: ${saleResult.user?.name || 'System'}`, 20, 70);
-            doc.text(`Customer: ${saleData.customer_name || 'Walk-in Customer'}`, 20, 80);
-            doc.text(`Payment Method: ${saleData.payment_method.toUpperCase()}`, 20, 90);
-            doc.text(`Payment Term: ${saleData.payment_term.toUpperCase()}`, 20, 100);
+            const detailsY = 50;
+            doc.text(`Invoice Number: ${saleResult.sale_number}`, 20, detailsY);
+            doc.text(`Date: ${invoiceDate}`, 20, detailsY + 10);
+            doc.text(`Cashier: ${saleResult.user?.name || 'System'}`, 20, detailsY + 20);
+            doc.text(`Customer: ${saleData.customer_name || 'Walk-in Customer'}`, 20, detailsY + 30);
+            doc.text(`Payment Method: ${saleData.payment_method.toUpperCase()}`, 20, detailsY + 40);
+            doc.text(`Payment Term: ${saleData.payment_term.toUpperCase()}`, 20, detailsY + 50);
             
             // Table header
-            let y = 120;
+            let y = detailsY + 70;
+            const tableStartY = y;
             doc.setFont(undefined, 'bold');
             doc.text('No.', 20, y);
             doc.text('Item', 35, y);
@@ -565,6 +812,12 @@
             doc.text(`Rp${saleData.subtotal.toFixed(2)}`, 170, y);
             y += 10;
             
+            if (saleData.discount > 0) {
+                doc.text('Discount:', 140, y);
+                doc.text(`-Rp${saleData.discount.toFixed(2)}`, 170, y);
+                y += 10;
+            }
+            
             doc.text('Tax:', 140, y);
             doc.text(`Rp${saleData.tax.toFixed(2)}`, 170, y);
             y += 10;
@@ -575,10 +828,43 @@
             
             // Footer
             y += 30;
+            const footerStartY = y;
             doc.setFont(undefined, 'normal');
             doc.setFontSize(8);
             doc.text('Thank you for your business!', 105, y, { align: 'center' });
             doc.text('This is a computer-generated invoice.', 105, y + 10, { align: 'center' });
+            
+            const finalContentY = y + 10;
+            
+            // Add logo as background image centered in content area with opacity
+            if (companyLogo) {
+                try {
+                    // Calculate content dimensions
+                    const contentStartY = 20; // Start from company header
+                    const contentHeight = finalContentY - contentStartY;
+                    const pageWidth = doc.internal.pageSize.getWidth();
+                    
+                    // Set background logo size (adjust as needed)
+                    const logoWidth = 80;
+                    const logoHeight = 80;
+                    const logoX = (pageWidth - logoWidth) / 2;
+                    const logoY = contentStartY + (contentHeight - logoHeight) / 2;
+                    
+                    // Save current graphics state
+                    doc.saveGraphicsState();
+                    
+                    // Set opacity to 40% (0.4)
+                    doc.setGState(doc.GState({opacity: 0.4}));
+                    
+                    // Add logo as background image centered in content area
+                    doc.addImage(companyLogo, 'JPEG', logoX, logoY, logoWidth, logoHeight);
+                    
+                    // Restore graphics state
+                    doc.restoreGraphicsState();
+                } catch (error) {
+                    console.error('Error adding background logo to PDF:', error);
+                }
+            }
             
             // Auto download
             const fileName = `Invoice_${saleResult.sale_number}_${new Date().toISOString().split('T')[0]}.pdf`;
@@ -588,14 +874,60 @@
         // Update payment terms based on payment method
         function updatePaymentTerms() {
             const paymentMethod = document.getElementById('payment-method').value;
+            const paymentTermContainer = document.getElementById('payment-term-container');
             const paymentTerm = document.getElementById('payment-term');
+            const downPaymentContainer = document.getElementById('down-payment-container');
+            const downPayment = document.getElementById('down-payment');
+            const downPaymentDisplay = document.getElementById('down-payment-display');
             
             if (paymentMethod === 'credit') {
-                paymentTerm.value = 'net30';
+                paymentTerm.value = 'net7';
                 paymentTerm.disabled = false;
+                paymentTermContainer.classList.remove('hidden');
+                downPaymentContainer.classList.remove('hidden');
             } else {
                 paymentTerm.value = 'cash';
                 paymentTerm.disabled = true;
+                paymentTermContainer.classList.add('hidden');
+                downPaymentContainer.classList.add('hidden');
+                downPayment.value = '';
+                downPaymentDisplay.classList.add('hidden');
+            }
+            updateDownPaymentDisplay();
+        }
+
+        // Update down payment display
+        function updateDownPaymentDisplay() {
+            const paymentMethod = document.getElementById('payment-method').value;
+            const downPaymentValue = parseFloat(document.getElementById('down-payment').value) || 0;
+            const downPaymentDisplay = document.getElementById('down-payment-display');
+            const downPaymentAmount = document.getElementById('down-payment-amount');
+            const amountDue = document.getElementById('amount-due');
+            
+            if (paymentMethod === 'credit' && downPaymentValue > 0) {
+                const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+                
+                // Calculate discount
+                const discountValue = parseFloat(document.getElementById('discount-value').value) || 0;
+                const discountType = document.getElementById('discount-type').value;
+                let discountAmount = 0;
+                
+                if (discountValue > 0) {
+                    if (discountType === 'percentage') {
+                        discountAmount = subtotal * (discountValue / 100);
+                    } else {
+                        discountAmount = discountValue;
+                    }
+                }
+                
+                const total = subtotal - discountAmount; // + tax - discount
+                const due = Math.max(0, total - downPaymentValue);
+                
+                downPaymentAmount.textContent = `Rp${downPaymentValue.toFixed(2)}`;
+                amountDue.textContent = `Rp${due.toFixed(2)}`;
+                downPaymentDisplay.classList.remove('hidden');
+            } else {
+                downPaymentDisplay.classList.add('hidden');
             }
         }
 
@@ -605,19 +937,42 @@
             const paymentMethod = document.getElementById('payment-method').value;
             const paymentTerm = document.getElementById('payment-term').value;
             const customerName = document.getElementById('customer-name').value;
+            const downPayment = parseFloat(document.getElementById('down-payment').value) || 0;
             const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
             const tax = 0;
+            
+            // Calculate discount
+            const discountValue = parseFloat(document.getElementById('discount-value').value) || 0;
+            const discountType = document.getElementById('discount-type').value;
+            let discountAmount = 0;
+            
+            if (discountValue > 0) {
+                if (discountType === 'percentage') {
+                    discountAmount = subtotal * (discountValue / 100);
+                } else {
+                    discountAmount = discountValue;
+                }
+            }
+            
+            const total = subtotal - discountAmount + tax;
+            
+            // Validate downpayment
+            if (paymentMethod === 'credit' && downPayment > total) {
+                alert('Down payment cannot exceed total amount');
+                return;
+            }
             
             const saleData = {
                 customer_name: customerName,
                 payment_method: paymentMethod,
                 payment_term: paymentTerm,
+                down_payment: downPayment,
                 items: cart.map(item => ({
                     product_id: item.product_id,
                     quantity: item.quantity
                 })),
                 tax: tax,
-                discount: 0
+                discount: discountAmount
             };
             
             try {
@@ -669,6 +1024,231 @@
             document.getElementById('product-search').focus();
         }
 
+        // Credit Sales Management Functions
+        let currentSaleId = null;
+
+        async function viewCreditSales() {
+            document.getElementById('credit-sales-modal').classList.remove('hidden');
+            await loadCreditSales();
+        }
+
+        function closeCreditSales() {
+            document.getElementById('credit-sales-modal').classList.add('hidden');
+        }
+
+        async function loadCreditSales() {
+            try {
+                const response = await makeRequest(`${API_BASE}/pos/sales?payment_method=credit`);
+                if (response.ok) {
+                    const result = await response.json();
+                    displayCreditSales(result.sales || []);
+                }
+            } catch (error) {
+                console.error('Error loading credit sales:', error);
+            }
+        }
+
+        function displayCreditSales(sales) {
+            const tbody = document.getElementById('credit-sales-table');
+            tbody.innerHTML = '';
+            
+            // Calculate summary statistics
+            const totalSales = sales.length;
+            const paidSales = sales.filter(sale => sale.payment_status === 'paid').length;
+            const pendingSales = sales.filter(sale => sale.payment_status === 'pending').length;
+            
+            
+            // Update summary cards
+            document.getElementById('total-credit-sales').textContent = totalSales;
+            document.getElementById('paid-credit-sales').textContent = paidSales;
+            document.getElementById('pending-credit-sales').textContent = pendingSales;
+            
+            
+            sales.forEach(sale => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50 border-b border-gray-100';
+                const statusBadge = getStatusBadge(sale.payment_status);
+                const dueDate = sale.due_date ? new Date(sale.due_date).toLocaleDateString() : 'N/A';
+                
+                row.innerHTML = `
+                    <td class="px-4 py-3 text-sm font-medium">${sale.sale_number}</td>
+                    <td class="px-4 py-3 text-sm">${sale.customer_name || '<span class="text-gray-400">Walk-in</span>'}</td>
+                    <td class="px-4 py-3 text-sm font-medium text-green-600">Rp${sale.total.toFixed(2)}</td>
+                    <td class="px-4 py-3 text-sm text-blue-600">Rp${(sale.down_payment || 0).toFixed(2)}</td>
+                    <td class="px-4 py-3 text-sm font-medium text-orange-600">Rp${(sale.amount_due || 0).toFixed(2)}</td>
+                    <td class="px-4 py-3 text-sm">${statusBadge}</td>
+                    <td class="px-4 py-3 text-sm">${dueDate}</td>
+                    <td class="px-4 py-3 text-sm">
+                        <div class="flex space-x-1">
+                            <button onclick="viewPaymentHistory(${sale.id})" class="bg-blue-500 text-white px-3 py-1 rounded text-xs hover:bg-blue-600 transition flex items-center">
+                                <i class="fas fa-history mr-1"></i>History
+                            </button>
+                            ${sale.payment_status !== 'paid' ? `
+                                <button onclick="recordPayment(${sale.id})" class="bg-green-500 text-white px-3 py-1 rounded text-xs hover:bg-green-600 transition flex items-center">
+                                    <i class="fas fa-plus mr-1"></i>Pay
+                                </button>
+                            ` : ''}
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            if (sales.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="px-4 py-8 text-center text-gray-500"><i class="fas fa-inbox text-3xl mb-2"></i><br>No credit sales found</td></tr>';
+            }
+        }
+
+        function getStatusBadge(status) {
+            const badges = {
+                'paid': '<span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">Paid</span>',
+                'pending': '<span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs">Pending</span>',
+                'overdue': '<span class="bg-red-100 text-red-800 px-2 py-1 rounded text-xs">Overdue</span>'
+            };
+            return badges[status] || '<span class="bg-gray-100 text-gray-800 px-2 py-1 rounded text-xs">Unknown</span>';
+        }
+
+        async function viewPaymentHistory(saleId) {
+            document.getElementById('payment-history-modal').classList.remove('hidden');
+            
+            // Show loading state
+            const container = document.getElementById('payment-history-content');
+            container.innerHTML = '<div class="p-8 text-center text-gray-500"><i class="fas fa-spinner fa-spin text-3xl mb-2"></i><br>Loading payment history...</div>';
+            
+            try {
+                console.log('Fetching payment history for sale ID:', saleId);
+                const response = await makeRequest(`${API_BASE}/pos/sales/${saleId}/payments`);
+                console.log('Response status:', response.status);
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log('Payment history result:', result);
+                    displayPaymentHistory(result.payments || []);
+                } else {
+                    const error = await response.json();
+                    console.error('API Error:', error);
+                    container.innerHTML = `<div class="p-8 text-center text-red-500"><i class="fas fa-exclamation-triangle text-3xl mb-2"></i><br>Error loading payment history: ${error.error || 'Unknown error'}</div>`;
+                }
+            } catch (error) {
+                console.error('Error loading payment history:', error);
+                container.innerHTML = '<div class="p-8 text-center text-red-500"><i class="fas fa-exclamation-triangle text-3xl mb-2"></i><br>Network error loading payment history</div>';
+            }
+        }
+
+        function displayPaymentHistory(payments) {
+            const container = document.getElementById('payment-history-content');
+            container.innerHTML = '';
+            
+            console.log('Displaying payment history:', payments);
+            
+            if (!payments || payments.length === 0) {
+                container.innerHTML = '<div class="p-8 text-center text-gray-500"><i class="fas fa-receipt text-3xl mb-2"></i><br>No payment history found</div>';
+                return;
+            }
+
+            // Calculate total payments
+            const totalPayments = payments.reduce((sum, payment) => sum + (payment.amount || 0), 0);
+            
+            const content = `
+                <div class="px-4 py-3 bg-gray-50 border-b">
+                    <div class="flex justify-between items-center">
+                        <h4 class="font-medium text-gray-800">Payment Records</h4>
+                        <span class="text-sm text-gray-600">Total: <span class="font-bold text-green-600">Rp${totalPayments.toFixed(2)}</span></span>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full table-auto">
+                        <thead>
+                            <tr class="bg-gray-50">
+                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">Date & Time</th>
+                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">Amount</th>
+                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">Method</th>
+                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">Type</th>
+                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">User</th>
+                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${payments.map((payment, index) => `
+                                <tr class="hover:bg-gray-50 border-b border-gray-100">
+                                    <td class="px-4 py-3 text-sm">
+                                        <div class="font-medium">${new Date(payment.created_at).toLocaleDateString()}</div>
+                                        <div class="text-xs text-gray-500">${new Date(payment.created_at).toLocaleTimeString()}</div>
+                                    </td>
+                                    <td class="px-4 py-3 text-sm font-medium text-green-600">Rp${payment.amount.toFixed(2)}</td>
+                                    <td class="px-4 py-3 text-sm">
+                                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                            ${payment.payment_method}
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-3 text-sm">
+                                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${payment.payment_type === 'downpayment' ? 'bg-purple-100 text-purple-800' : 'bg-green-100 text-green-800'}">
+                                            ${payment.payment_type}
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-3 text-sm">${payment.user?.name || 'Unknown'}</td>
+                                    <td class="px-4 py-3 text-sm text-gray-500">${payment.notes || '-'}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            container.innerHTML = content;
+        }
+
+        function closePaymentHistory() {
+            document.getElementById('payment-history-modal').classList.add('hidden');
+        }
+
+        function recordPayment(saleId) {
+            currentSaleId = saleId;
+            document.getElementById('record-payment-modal').classList.remove('hidden');
+            document.getElementById('payment-amount').value = '';
+            document.getElementById('payment-notes').value = '';
+        }
+
+        function closeRecordPayment() {
+            document.getElementById('record-payment-modal').classList.add('hidden');
+            currentSaleId = null;
+        }
+
+        async function submitPayment() {
+            if (!currentSaleId) return;
+
+            const amount = parseFloat(document.getElementById('payment-amount').value);
+            const method = document.getElementById('payment-method-select').value;
+            const notes = document.getElementById('payment-notes').value;
+
+            if (!amount || amount <= 0) {
+                alert('Please enter a valid amount');
+                return;
+            }
+
+            try {
+                const response = await makeRequest(`${API_BASE}/pos/sales/${currentSaleId}/payment`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        amount: amount,
+                        payment_method: method,
+                        notes: notes
+                    })
+                });
+
+                if (response.ok) {
+                    alert('Payment recorded successfully');
+                    closeRecordPayment();
+                    loadCreditSales(); // Refresh the credit sales list
+                } else {
+                    const error = await response.json();
+                    alert(`Failed to record payment: ${error.error}`);
+                }
+            } catch (error) {
+                console.error('Error recording payment:', error);
+                alert('Failed to record payment: Network error');
+            }
+        }
+
         // POS search
         async function posSearch() {
             const query = document.getElementById('pos-search').value;
@@ -706,6 +1286,9 @@
             
             // Initialize payment terms
             updatePaymentTerms();
+            
+            // Load logo settings for invoice generation
+            loadLogoForInvoice();
             
             // Refresh dashboard every 2 minutes
             setInterval(loadDashboard, 2 * 60 * 1000);

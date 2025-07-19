@@ -17,24 +17,142 @@
         </div>
     </nav>
     <div class="container mx-auto p-6">
-        <h2 class="text-2xl font-bold mb-4">System Settings</h2>
-        <form class="bg-white rounded-lg shadow p-6 max-w-lg mx-auto space-y-4">
-            <div>
-                <label for="company-name" class="block text-sm font-medium text-gray-700">Company Name</label>
-                <input id="company-name" name="company_name" type="text" class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+        <h2 class="text-2xl font-bold mb-6">System Settings</h2>
+        
+        <!-- Logo Settings Section -->
+        <div class="bg-white rounded-lg shadow p-6 mb-8">
+            <h3 class="text-lg font-semibold mb-4">
+                <i class="fas fa-image mr-2"></i>Invoice Logo Settings
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Upload Company Logo</label>
+                        <input type="file" id="logo-upload" accept="image/*" 
+                               class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               onchange="handleLogoUpload()">
+                        <p class="text-sm text-gray-500 mt-1">Recommended: PNG, JPG, or GIF. Max size: 2MB</p>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button onclick="saveLogoSettings()" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition">
+                            <i class="fas fa-save mr-2"></i>Save Logo
+                        </button>
+                        <button onclick="removeLogo()" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition">
+                            <i class="fas fa-trash mr-2"></i>Remove Logo
+                        </button>
+                    </div>
+                </div>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Logo Preview</label>
+                        <div id="logo-preview" class="w-full h-32 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-gray-50">
+                            <span class="text-gray-400 text-sm">No logo selected</span>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Company Name for Invoice</label>
+                        <input type="text" id="invoice-company-name" placeholder="Enter company name for invoice..." 
+                               class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               value="INVENTORY SYSTEM">
+                    </div>
+                </div>
             </div>
-            <div>
-                <label for="timezone" class="block text-sm font-medium text-gray-700">Timezone</label>
-                <input id="timezone" name="timezone" type="text" class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
-            </div>
-            <div>
-                <label for="currency" class="block text-sm font-medium text-gray-700">Currency</label>
-                <input id="currency" name="currency" type="text" class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
-            </div>
-            <div class="flex justify-end">
-                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">Save Settings</button>
-            </div>
-        </form>
+        </div>
+
+        <!-- General Settings Section -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold mb-4">
+                <i class="fas fa-cog mr-2"></i>General Settings
+            </h3>
+            <form class="space-y-4">
+                <div>
+                    <label for="company-name" class="block text-sm font-medium text-gray-700">Company Name</label>
+                    <input id="company-name" name="company_name" type="text" class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                </div>
+                <div>
+                    <label for="timezone" class="block text-sm font-medium text-gray-700">Timezone</label>
+                    <input id="timezone" name="timezone" type="text" class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                </div>
+                <div>
+                    <label for="currency" class="block text-sm font-medium text-gray-700">Currency</label>
+                    <input id="currency" name="currency" type="text" class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                </div>
+                <div class="flex justify-end">
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">Save Settings</button>
+                </div>
+            </form>
+        </div>
     </div>
+
+    <script>
+        // Logo handling functions
+        let companyLogo = null;
+        let companyName = 'INVENTORY SYSTEM';
+
+        function handleLogoUpload() {
+            const fileInput = document.getElementById('logo-upload');
+            const file = fileInput.files[0];
+            
+            if (file) {
+                // Check file size (2MB limit)
+                if (file.size > 2 * 1024 * 1024) {
+                    alert('File size must be less than 2MB');
+                    fileInput.value = '';
+                    return;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    companyLogo = e.target.result;
+                    showLogoPreview(companyLogo);
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function showLogoPreview(logoData) {
+            const preview = document.getElementById('logo-preview');
+            preview.innerHTML = `<img src="${logoData}" alt="Company Logo" class="max-w-full max-h-full object-contain rounded">`;
+        }
+
+        function saveLogoSettings() {
+            const companyNameInput = document.getElementById('invoice-company-name');
+            companyName = companyNameInput.value || 'INVENTORY SYSTEM';
+            
+            // Save to localStorage
+            localStorage.setItem('companyLogo', companyLogo);
+            localStorage.setItem('companyName', companyName);
+            
+            alert('Logo settings saved successfully!');
+        }
+
+        function removeLogo() {
+            companyLogo = null;
+            document.getElementById('logo-preview').innerHTML = '<span class="text-gray-400 text-sm">No logo selected</span>';
+            document.getElementById('logo-upload').value = '';
+            localStorage.removeItem('companyLogo');
+            alert('Logo removed successfully!');
+        }
+
+        function loadLogoSettings() {
+            const savedLogo = localStorage.getItem('companyLogo');
+            const savedName = localStorage.getItem('companyName');
+            
+            if (savedLogo) {
+                companyLogo = savedLogo;
+                showLogoPreview(companyLogo);
+            }
+            
+            if (savedName) {
+                companyName = savedName;
+                document.getElementById('invoice-company-name').value = companyName;
+            }
+        }
+
+        // Initialize settings page
+        document.addEventListener('DOMContentLoaded', function() {
+            loadLogoSettings();
+        });
+    </script>
 </body>
 </html>

@@ -16,7 +16,7 @@ import (
 
 // CreatePurchaseOrderRequest represents the request body for creating a purchase order
 type CreatePurchaseOrderRequest struct {
-	Supplier      string                    `json:"supplier" binding:"required"`
+	SupplierID    uint                      `json:"supplier_id" binding:"required"`
 	PaymentMethod string                    `json:"payment_method"`
 	PaymentTerm   string                    `json:"payment_term"`
 	DownPayment   float64                   `json:"down_payment"`
@@ -85,6 +85,7 @@ func CreatePurchaseOrder(c *gin.Context) {
 	// Calculate due date based on payment term
 	var dueDate *time.Time
 	var paymentStatus string
+	var paidDate *time.Time
 
 	if req.PaymentMethod == "credit" {
 		paymentStatus = "pending"
@@ -106,6 +107,7 @@ func CreatePurchaseOrder(c *gin.Context) {
 	} else {
 		paymentStatus = "paid" // Will be paid upon receipt
 		dueDate = &orderDate
+		paidDate = &orderDate // Set paid date to order date for cash/transfer
 	}
 
 	// Start transaction
@@ -114,11 +116,12 @@ func CreatePurchaseOrder(c *gin.Context) {
 	// Create purchase order
 	po := models.PurchaseOrder{
 		PONumber:      poNumber,
-		Supplier:      req.Supplier,
+		SupplierID:    req.SupplierID,
 		UserID:        userID.(uint),
 		PaymentMethod: req.PaymentMethod,
 		PaymentTerm:   req.PaymentTerm,
 		PaymentStatus: paymentStatus,
+		PaidDate:      paidDate,
 		DueDate:       dueDate,
 		Notes:         req.Notes,
 		OrderDate:     orderDate,
@@ -127,6 +130,14 @@ func CreatePurchaseOrder(c *gin.Context) {
 	if err := tx.Create(&po).Error; err != nil {
 		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create purchase order"})
+		return
+	}
+
+	// Load supplier to get supplier name
+	var supplier models.Supplier
+	if err := tx.First(&supplier, po.SupplierID).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid supplier ID"})
 		return
 	}
 
@@ -157,7 +168,7 @@ func CreatePurchaseOrder(c *gin.Context) {
 			Type:      "in",
 			Quantity:  item.Quantity,
 			Reference: po.PONumber,
-			Notes:     fmt.Sprintf("Purchase Order %s - %s", po.PONumber, req.Supplier),
+			Notes:     fmt.Sprintf("Purchase Order %s - %s", po.PONumber, supplier.Name),
 		}
 		if err := tx.Create(&stockMovement).Error; err != nil {
 			tx.Rollback()
@@ -207,8 +218,8 @@ func CreatePurchaseOrder(c *gin.Context) {
 			po.PaidDate = &now
 		}
 	} else {
-		po.AmountDue = totalAmount
-		po.AmountPaid = 0
+		po.AmountDue = 0
+		po.AmountPaid = totalAmount // For cash or transfer, mark as paid immediately
 	}
 
 	if err := tx.Save(&po).Error; err != nil {
@@ -297,7 +308,7 @@ func generatePONumber() string {
 // GetPurchaseOrders returns all purchase orders
 func GetPurchaseOrders(c *gin.Context) {
 	var purchaseOrders []models.PurchaseOrder
-	query := database.DB.Model(&models.PurchaseOrder{}).Preload("User")
+	query := database.DB.Model(&models.PurchaseOrder{}).Preload("User").Preload("Supplier")
 
 	// Pagination
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
@@ -330,7 +341,7 @@ func GetPurchaseOrder(c *gin.Context) {
 	}
 
 	var po models.PurchaseOrder
-	result := database.DB.Preload("User").Preload("Items.Product").First(&po, id)
+	result := database.DB.Preload("User").Preload("Supplier").Preload("Items.Product").First(&po, id)
 	if result.Error != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Purchase order not found"})
 		return
@@ -438,7 +449,7 @@ func RecordPurchasePayment(c *gin.Context) {
 func GetOverduePurchaseOrders(c *gin.Context) {
 	var purchaseOrders []models.PurchaseOrder
 
-	query := database.DB.Preload("User").Preload("Items.Product").
+	query := database.DB.Preload("User").Preload("Supplier").Preload("Items.Product").
 		Where("payment_status = ? OR (payment_status = ? AND due_date < ?)",
 			"overdue", "pending", time.Now())
 
@@ -598,7 +609,7 @@ func GetPurchasePaymentHistory(c *gin.Context) {
 
 // UpdatePurchaseOrderRequest represents the request body for updating a purchase order
 type UpdatePurchaseOrderRequest struct {
-	Supplier      string  `json:"supplier"`
+	SupplierID    uint    `json:"supplier_id"`
 	PaymentMethod string  `json:"payment_method"`
 	PaymentTerm   string  `json:"payment_term"`
 	Notes         string  `json:"notes"`
@@ -665,8 +676,8 @@ func UpdatePurchaseOrder(c *gin.Context) {
 	}
 
 	// Update basic fields
-	if req.Supplier != "" {
-		po.Supplier = req.Supplier
+	if req.SupplierID != 0 {
+		po.SupplierID = req.SupplierID
 	}
 	if req.Notes != "" {
 		po.Notes = req.Notes

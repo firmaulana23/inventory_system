@@ -163,6 +163,30 @@
                 </div>
             </div>
 
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-blue-100 text-blue-500">
+                        <i class="fas fa-shopping-cart text-2xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Total Purchasing</p>
+                        <p id="total-purchasing" class="text-2xl font-semibold text-gray-900">-</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-red-100 text-red-500">
+                        <i class="fas fa-exclamation-circle text-2xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Purchasing Due</p>
+                        <p id="purchasing-due" class="text-2xl font-semibold text-gray-900">-</p>
+                    </div>
+                </div>
+            </div>
+
             <!-- <div class="bg-white rounded-lg shadow p-6">
                 <div class="flex items-center">
                     <div class="p-3 rounded-full bg-teal-100 text-teal-500">
@@ -251,6 +275,12 @@
                         System Settings
                     </button>
                     
+                    <button onclick="window.location.href='/contact_supplier'" 
+                            class="flex items-center justify-center p-4 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition">
+                        <i class="fas fa-address-book mr-2"></i>
+                        Supplier Contacts
+                    </button>
+                    
                     <button onclick="exportData()" 
                             class="flex items-center justify-center p-4 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition">
                         <i class="fas fa-download mr-2"></i>
@@ -258,11 +288,11 @@
                     </button>
                     
                     <!-- Row 3 -->
-                    <button onclick="viewOverdueSales()" 
+                    <!-- <button onclick="viewOverdueSales()" 
                             class="flex items-center justify-center p-4 bg-red-500 text-white rounded-lg hover:bg-red-600 transition">
                         <i class="fas fa-clock mr-2"></i>
                         Overdue Sales
-                    </button>
+                    </button> -->
                     
                     <button onclick="viewOverduePurchases()" 
                             class="flex items-center justify-center p-4 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition">
@@ -323,6 +353,8 @@
                 document.getElementById('today-revenue').textContent = `Rp${data.today_revenue}`;
                 document.getElementById('total-profit').textContent = `Rp${data.total_profit}`;
                 document.getElementById('today-profit').textContent = `Rp${data.today_profit}`;
+                document.getElementById('total-purchasing').textContent = `Rp${data.total_purchasing}`;
+                document.getElementById('purchasing-due').textContent = `Rp${data.total_purchasing_due}`;
                 document.getElementById('low-stock').textContent = data.low_stock_products;
                 
                 // Load overdue data

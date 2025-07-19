@@ -18,6 +18,7 @@ type SaleRequest struct {
 	CustomerName  string            `json:"customer_name"`
 	PaymentMethod string            `json:"payment_method" binding:"required"`
 	PaymentTerm   string            `json:"payment_term"`
+	DownPayment   float64           `json:"down_payment"`
 	Items         []SaleItemRequest `json:"items" binding:"required,min=1"`
 	Discount      float64           `json:"discount"`
 	Tax           float64           `json:"tax"`
@@ -104,6 +105,7 @@ func CreateSale(c *gin.Context) {
 		PaymentMethod: request.PaymentMethod,
 		PaymentTerm:   request.PaymentTerm,
 		PaymentStatus: paymentStatus,
+		DownPayment:   request.DownPayment,
 		DueDate:       dueDate,
 		Status:        "completed",
 		Discount:      request.Discount,
@@ -181,8 +183,17 @@ func CreateSale(c *gin.Context) {
 		now := time.Now()
 		sale.PaidDate = &now
 	} else {
-		sale.AmountPaid = 0
-		sale.AmountDue = sale.Total
+		// For credit sales, set downpayment as amount paid
+		sale.AmountPaid = request.DownPayment
+		sale.AmountDue = sale.Total - request.DownPayment
+		
+		// If downpayment covers the full amount, mark as paid
+		if sale.AmountDue <= 0 {
+			sale.PaymentStatus = "paid"
+			now := time.Now()
+			sale.PaidDate = &now
+			sale.AmountDue = 0
+		}
 	}
 
 	// Save sale
@@ -201,6 +212,24 @@ func CreateSale(c *gin.Context) {
 		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create sale items"})
 		return
+	}
+
+	// Record downpayment if it's a credit sale with downpayment
+	if request.PaymentMethod == "credit" && request.DownPayment > 0 {
+		salePayment := models.SalePayment{
+			SaleID:        sale.ID,
+			UserID:        userID.(uint),
+			Amount:        request.DownPayment,
+			PaymentMethod: request.PaymentMethod,
+			PaymentType:   "downpayment",
+			Notes:         "Initial downpayment for credit sale",
+		}
+		
+		if err := tx.Create(&salePayment).Error; err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to record downpayment"})
+			return
+		}
 	}
 
 	tx.Commit()
@@ -591,6 +620,23 @@ func RecordSalePayment(c *gin.Context) {
 		return
 	}
 
+	// Record payment in SalePayment table
+	userID, _ := c.Get("user_id")
+	salePayment := models.SalePayment{
+		SaleID:        sale.ID,
+		UserID:        userID.(uint),
+		Amount:        request.Amount,
+		PaymentMethod: request.PaymentMethod,
+		PaymentType:   "payment",
+		Notes:         request.Notes,
+	}
+
+	if err := tx.Create(&salePayment).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to record payment"})
+		return
+	}
+
 	tx.Commit()
 
 	c.JSON(http.StatusOK, gin.H{
@@ -629,5 +675,30 @@ func GetOverdueSales(c *gin.Context) {
 		"total": total,
 		"page":  page,
 		"limit": limit,
+	})
+}
+
+// GetSalePayments returns payment history for a sale
+func GetSalePayments(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid sale ID"})
+		return
+	}
+
+	var payments []models.SalePayment
+	result := database.DB.Where("sale_id = ?", id).
+		Preload("User").
+		Order("created_at DESC").
+		Find(&payments)
+	
+	if result.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch payment history"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"payments": payments,
+		"total":    len(payments),
 	})
 }

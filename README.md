@@ -99,12 +99,7 @@ cp .env.example .env
 # Edit .env with your configuration
 ```
 
-5. Run database migrations:
-```bash
-go run migrations/migrate.go
-```
-
-6. Seed the database (optional):
+5. Seed the database (optional):
 ```bash
 go run cmd/seed/main.go
 ```

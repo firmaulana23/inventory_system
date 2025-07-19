@@ -93,9 +93,24 @@
                     
                     <!-- Basic Info -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
+                        <div class="relative">
                             <label for="po-supplier" class="block text-sm font-medium text-gray-700">Supplier *</label>
-                            <input id="po-supplier" name="supplier" type="text" required placeholder="Enter supplier name" class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                            <div class="relative">
+                                <input 
+                                    type="text" 
+                                    id="po-supplier-search" 
+                                    placeholder="Type to search suppliers..." 
+                                    autocomplete="off"
+                                    class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                                    onkeyup="handleSupplierKeyNav(event)"
+                                    onfocus="showSupplierDropdown()"
+                                    onblur="hideSupplierDropdown()"
+                                >
+                                <input type="hidden" id="po-supplier" name="supplier_id" required>
+                                <div id="supplier-dropdown" class="absolute z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg mt-1 max-h-60 overflow-y-auto hidden">
+                                    <!-- Supplier options will be populated here -->
+                                </div>
+                            </div>
                         </div>
                         <div>
                             <label for="po-order-date" class="block text-sm font-medium text-gray-700">Order Date *</label>
@@ -171,48 +186,63 @@
                     <!-- Payment History Section (shown only during updates) -->
                     <div id="payment-history-section" class="payment-history-section" style="display: none;">
                         <div class="border-t pt-6">
-                            <h4 class="text-lg font-semibold mb-4">Payment History</h4>
+                            <div class="flex justify-between items-center mb-6">
+                                <div>
+                                    <h4 class="text-lg font-bold text-gray-800">Payment History</h4>
+                                    <p class="text-sm text-gray-600">Complete payment history for this purchase order</p>
+                                </div>
+                                <button type="button" onclick="openRecordPurchasePayment()" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition flex items-center">
+                                    <i class="fas fa-plus mr-2"></i>Record Payment
+                                </button>
+                            </div>
                             
-                            <!-- Payment Summary -->
-                            <div id="payment-summary" class="bg-gray-50 rounded-lg p-4 mb-4">
-                                <div class="grid grid-cols-3 gap-4 text-center">
-                                    <div>
-                                        <p class="text-sm text-gray-600">Total Amount</p>
-                                        <p id="summary-total" class="text-lg font-bold text-gray-800">$0.00</p>
+                            <!-- Payment Summary Cards -->
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                                <div class="bg-blue-50 p-4 rounded-lg">
+                                    <div class="flex items-center">
+                                        <div class="p-2 bg-blue-100 rounded-full">
+                                            <i class="fas fa-file-invoice-dollar text-blue-600"></i>
+                                        </div>
+                                        <div class="ml-3">
+                                            <p class="text-sm font-medium text-blue-600">Total Amount</p>
+                                            <p id="summary-total" class="text-lg font-bold text-blue-800">$0.00</p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <p class="text-sm text-gray-600">Amount Paid</p>
-                                        <p id="summary-paid" class="text-lg font-bold text-green-600">$0.00</p>
+                                </div>
+                                
+                                <div class="bg-green-50 p-4 rounded-lg">
+                                    <div class="flex items-center">
+                                        <div class="p-2 bg-green-100 rounded-full">
+                                            <i class="fas fa-check-circle text-green-600"></i>
+                                        </div>
+                                        <div class="ml-3">
+                                            <p class="text-sm font-medium text-green-600">Amount Paid</p>
+                                            <p id="summary-paid" class="text-lg font-bold text-green-800">$0.00</p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <p class="text-sm text-gray-600">Amount Due</p>
-                                        <p id="summary-due" class="text-lg font-bold text-red-600">$0.00</p>
+                                </div>
+                                
+                                <div class="bg-red-50 p-4 rounded-lg">
+                                    <div class="flex items-center">
+                                        <div class="p-2 bg-red-100 rounded-full">
+                                            <i class="fas fa-exclamation-triangle text-red-600"></i>
+                                        </div>
+                                        <div class="ml-3">
+                                            <p class="text-sm font-medium text-red-600">Amount Due</p>
+                                            <p id="summary-due" class="text-lg font-bold text-red-800">$0.00</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                             
                             <!-- Payment History Table -->
-                            <div class="overflow-x-auto">
-                                <table class="min-w-full border border-gray-300">
-                                    <thead class="bg-gray-50">
-                                        <tr>
-                                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
-                                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Method</th>
-                                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
-                                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">User</th>
-                                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Notes</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="payment-history-table-body">
-                                        <!-- Payment history rows will be loaded here -->
-                                    </tbody>
-                                </table>
-                            </div>
-                            
-                            <!-- No payment history message -->
-                            <div id="no-payment-history" class="text-center py-4 text-gray-500" style="display: none;">
-                                No payment history found for this purchase order.
+                            <div class="bg-white rounded-lg border overflow-hidden">
+                                <div class="px-4 py-3 bg-gray-50 border-b">
+                                    <h4 class="font-medium text-gray-800">Payment Records</h4>
+                                </div>
+                                <div id="payment-history-content">
+                                    <!-- Payment history will be loaded here -->
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -238,6 +268,64 @@
                 </div>
                 <div id="po-details-content">
                     <!-- PO details will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Record Purchase Payment Modal -->
+    <div id="record-purchase-payment-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-20 mx-auto p-6 border w-96 shadow-lg rounded-lg bg-white">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h3 class="text-lg font-bold text-gray-800">Record Purchase Payment</h3>
+                    <p class="text-sm text-gray-600">Add a payment for this purchase order</p>
+                </div>
+                <button onclick="closeRecordPurchasePayment()" class="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-money-bill-wave mr-1"></i>Payment Amount
+                    </label>
+                    <input type="number" id="purchase-payment-amount" 
+                           class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" 
+                           min="0" step="0.01" placeholder="Enter payment amount">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-credit-card mr-1"></i>Payment Method
+                    </label>
+                    <select id="purchase-payment-method-select" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                        <option value="cash">💰 Cash</option>
+                        <option value="card">💳 Card</option>
+                        <option value="transfer">🏦 Transfer</option>
+                        <option value="check">📋 Check</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-sticky-note mr-1"></i>Notes (Optional)
+                    </label>
+                    <textarea id="purchase-payment-notes" 
+                              class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" 
+                              rows="3" placeholder="Add any notes about this payment..."></textarea>
+                </div>
+                
+                <div class="flex justify-end space-x-3 pt-4 border-t">
+                    <button type="button" onclick="closeRecordPurchasePayment()" 
+                            class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition">
+                        Cancel
+                    </button>
+                    <button type="button" onclick="submitPurchasePayment()" 
+                            class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition flex items-center">
+                        <i class="fas fa-check mr-2"></i>Record Payment
+                    </button>
                 </div>
             </div>
         </div>
@@ -288,6 +376,165 @@
                 setDefaultDates();
             }
         });
+
+        // Global suppliers array
+        let suppliersData = [];
+        
+        // Load suppliers for dropdown
+        async function loadSuppliers() {
+            try {
+                const response = await makeRequest(`${API_BASE}/suppliers`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    suppliersData = data.data;
+                    populateSupplierDropdown(suppliersData);
+                } else {
+                    console.error('Failed to load suppliers:', data.error);
+                }
+            } catch (error) {
+                console.error('Error loading suppliers:', error);
+            }
+        }
+        
+        // Populate supplier dropdown
+        function populateSupplierDropdown(suppliers) {
+            const dropdown = document.getElementById('supplier-dropdown');
+            dropdown.innerHTML = '';
+            
+            if (suppliers.length === 0) {
+                dropdown.innerHTML = '<div class="px-3 py-2 text-gray-500">No suppliers found</div>';
+                return;
+            }
+            
+            suppliers.forEach(supplier => {
+                const option = document.createElement('div');
+                option.className = 'px-3 py-2 cursor-pointer hover:bg-gray-100 supplier-option';
+                option.setAttribute('data-supplier-id', supplier.id);
+                option.setAttribute('data-supplier-name', supplier.name);
+                option.innerHTML = `
+                    <div class="font-medium">${supplier.name}</div>
+                    <div class="text-sm text-gray-500">${supplier.contact_person || 'N/A'} - ${supplier.phone || 'N/A'}</div>
+                `;
+                
+                option.onmousedown = function(e) {
+                    e.preventDefault(); // Prevent blur event
+                    selectSupplier(supplier.id, supplier.name);
+                };
+                
+                dropdown.appendChild(option);
+            });
+        }
+        
+        // Filter suppliers based on search input
+        function filterSuppliers() {
+            const searchTerm = document.getElementById('po-supplier-search').value.toLowerCase();
+            selectedSupplierIndex = -1; // Reset keyboard navigation
+            
+            if (searchTerm === '') {
+                populateSupplierDropdown(suppliersData);
+            } else {
+                const filteredSuppliers = suppliersData.filter(supplier => 
+                    supplier.name.toLowerCase().includes(searchTerm) ||
+                    (supplier.contact_person && supplier.contact_person.toLowerCase().includes(searchTerm)) ||
+                    (supplier.phone && supplier.phone.includes(searchTerm)) ||
+                    (supplier.email && supplier.email.toLowerCase().includes(searchTerm))
+                );
+                populateSupplierDropdown(filteredSuppliers);
+            }
+            
+            showSupplierDropdown();
+        }
+        
+        // Show supplier dropdown
+        function showSupplierDropdown() {
+            document.getElementById('supplier-dropdown').classList.remove('hidden');
+        }
+        
+        // Hide supplier dropdown with delay to allow click
+        function hideSupplierDropdown() {
+            setTimeout(() => {
+                document.getElementById('supplier-dropdown').classList.add('hidden');
+            }, 200);
+        }
+        
+        // Select a supplier from dropdown
+        function selectSupplier(supplierId, supplierName) {
+            document.getElementById('po-supplier').value = supplierId;
+            document.getElementById('po-supplier-search').value = supplierName;
+            document.getElementById('supplier-dropdown').classList.add('hidden');
+            selectedSupplierIndex = -1; // Reset keyboard navigation
+            
+            // Add visual feedback for selected supplier
+            const searchInput = document.getElementById('po-supplier-search');
+            searchInput.style.borderColor = '#10b981'; // Green border
+            searchInput.style.backgroundColor = '#f0fdf4'; // Light green background
+        }
+        
+        // Clear supplier selection
+        function clearSupplierSelection() {
+            document.getElementById('po-supplier').value = '';
+            document.getElementById('po-supplier-search').value = '';
+            
+            // Reset visual styling
+            const searchInput = document.getElementById('po-supplier-search');
+            searchInput.style.borderColor = '#d1d5db'; // Default gray border
+            searchInput.style.backgroundColor = '#ffffff'; // White background
+        }
+        
+        // Handle keyboard navigation in supplier search
+        let selectedSupplierIndex = -1;
+        
+        function handleSupplierKeyNav(event) {
+            const dropdown = document.getElementById('supplier-dropdown');
+            const options = dropdown.querySelectorAll('.supplier-option');
+            
+            switch(event.key) {
+                case 'ArrowDown':
+                    event.preventDefault();
+                    selectedSupplierIndex = Math.min(selectedSupplierIndex + 1, options.length - 1);
+                    highlightSelectedOption(options);
+                    break;
+                    
+                case 'ArrowUp':
+                    event.preventDefault();
+                    selectedSupplierIndex = Math.max(selectedSupplierIndex - 1, -1);
+                    highlightSelectedOption(options);
+                    break;
+                    
+                case 'Enter':
+                    event.preventDefault();
+                    if (selectedSupplierIndex >= 0 && options[selectedSupplierIndex]) {
+                        const option = options[selectedSupplierIndex];
+                        const supplierId = option.getAttribute('data-supplier-id');
+                        const supplierName = option.getAttribute('data-supplier-name');
+                        selectSupplier(supplierId, supplierName);
+                    }
+                    break;
+                    
+                case 'Escape':
+                    hideSupplierDropdown();
+                    selectedSupplierIndex = -1;
+                    break;
+                    
+                default:
+                    // Regular typing - filter suppliers
+                    filterSuppliers();
+                    selectedSupplierIndex = -1;
+                    break;
+            }
+        }
+        
+        function highlightSelectedOption(options) {
+            // Remove previous highlights
+            options.forEach((option, index) => {
+                if (index === selectedSupplierIndex) {
+                    option.classList.add('bg-blue-100');
+                } else {
+                    option.classList.remove('bg-blue-100');
+                }
+            });
+        }
 
         // Set default dates
         function setDefaultDates() {
@@ -365,7 +612,7 @@
                 
                 row.innerHTML = `
                     <td class="px-6 py-4 whitespace-nowrap font-medium">${po.po_number}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">${po.supplier || 'N/A'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${po.supplier ? po.supplier.name : 'N/A'}</td>
                     <td class="px-6 py-4 whitespace-nowrap">${formatDate(po.order_date)}</td>
                     
                     <td class="px-6 py-4 whitespace-nowrap">
@@ -442,6 +689,8 @@
             addItemRow(); // Add one empty row
             setDefaultDates();
             togglePaymentTerm(); // Set initial payment term visibility
+            loadSuppliers(); // Load suppliers for dropdown
+            clearSupplierSelection(); // Clear supplier autocomplete
             
             // Reset form submission to create
             const form = document.getElementById('po-form');
@@ -461,6 +710,23 @@
         // Hide PO modal
         function hidePOModal() {
             document.getElementById('po-modal').classList.add('hidden');
+            clearPOForm();
+        }
+
+        // Clear purchase order form
+        function clearPOForm() {
+            // Clear supplier selection
+            document.getElementById('po-supplier').value = '';
+            document.getElementById('po-supplier-search').value = '';
+            const searchInput = document.getElementById('po-supplier-search');
+            searchInput.style.borderColor = '';
+            searchInput.style.backgroundColor = '';
+            
+            // Clear form fields
+            document.getElementById('po-form').reset();
+            
+            // Clear items table
+            clearItemsTable();
         }
 
         // Hide view PO modal
@@ -478,15 +744,23 @@
         function addItemRow() {
             const tbody = document.getElementById('items-table-body');
             const row = document.createElement('tr');
+            const rowId = 'row-' + Date.now();
             row.innerHTML = `
-                <td class="px-3 py-2 border-b">
-                    <input type="text" name="sku" required class="w-full p-1 border rounded text-sm" placeholder="SKU">
+                <td class="px-3 py-2 border-b relative">
+                    <input type="text" name="sku" required class="w-full p-1 border rounded text-sm sku-autocomplete" 
+                           placeholder="Type SKU or product name..." autocomplete="off"
+                           onkeyup="searchProducts(this, '${rowId}')" 
+                           onfocus="showProductDropdown('${rowId}')"
+                           onblur="hideProductDropdown('${rowId}')">
+                    <div id="product-dropdown-${rowId}" class="absolute z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg mt-1 max-h-60 overflow-y-auto hidden">
+                        <!-- Product options populated here -->
+                    </div>
                 </td>
                 <td class="px-3 py-2 border-b">
-                    <input type="text" name="product_name" class="w-full p-1 border rounded text-sm" placeholder="Product Name">
+                    <input type="text" name="product_name" class="w-full p-1 border rounded text-sm" placeholder="Product Name" readonly>
                 </td>
                 <td class="px-3 py-2 border-b">
-                    <input type="text" name="category" class="w-full p-1 border rounded text-sm" placeholder="Category">
+                    <input type="text" name="category" class="w-full p-1 border rounded text-sm" placeholder="Category" readonly>
                 </td>
                 <td class="px-3 py-2 border-b">
                     <input type="number" name="quantity" min="1" required class="w-full p-1 border rounded text-sm" placeholder="Qty" onchange="calculateRowTotal(this)">
@@ -503,6 +777,7 @@
                     </button>
                 </td>
             `;
+            row.id = rowId;
             tbody.appendChild(row);
         }
 
@@ -567,9 +842,16 @@
                 alert('Please add at least one item');
                 return;
             }
+
+            // Validate supplier selection
+            const supplierID = parseInt(formData.get('supplier_id'));
+            if (!supplierID || isNaN(supplierID)) {
+                alert('Please select a supplier');
+                return;
+            }
             
             const poData = {
-                supplier: formData.get('supplier'),
+                supplier_id: supplierID,
                 payment_method: formData.get('payment_method'),
                 payment_term: formData.get('payment_term'),
                 down_payment: parseFloat(formData.get('down_payment')) || 0,
@@ -607,7 +889,7 @@
             const poId = document.getElementById('po-id').value;
             
             const updateData = {
-                supplier: formData.get('supplier'),
+                supplier_id: parseInt(formData.get('supplier_id')),
                 payment_method: formData.get('payment_method'),
                 payment_term: formData.get('payment_term'),
                 down_payment: parseFloat(formData.get('down_payment')) || 0,
@@ -779,7 +1061,7 @@
                 const response = await makeRequest(`${API_BASE}/purchase-orders/${id}`);
                 if (response.ok) {
                     const po = await response.json();
-                    showUpdatePOModal(po);
+                    await showUpdatePOModal(po);
                 } else {
                     alert('Failed to load purchase order details');
                 }
@@ -790,10 +1072,21 @@
         }
         
         // Show update PO modal
-        function showUpdatePOModal(po) {
+        async function showUpdatePOModal(po) {
             document.getElementById('modal-title').textContent = 'Update Purchase Order';
             document.getElementById('po-id').value = po.id;
-            document.getElementById('po-supplier').value = po.supplier || '';
+            
+            // Load suppliers first, then set the selected value
+            await loadSuppliers();
+            
+            // Set supplier selection in autocomplete
+            if (po.supplier && po.supplier_id) {
+                document.getElementById('po-supplier').value = po.supplier_id;
+                document.getElementById('po-supplier-search').value = po.supplier.name;
+            } else {
+                clearSupplierSelection();
+            }
+            
             document.getElementById('po-payment-method').value = po.payment_method || 'cash';
             document.getElementById('po-payment-term').value = po.payment_term || 'net30';
             document.getElementById('po-downpayment').value = po.down_payment || 0;
@@ -801,6 +1094,9 @@
             
             // Show/hide fields based on payment method (preserve downpayment value)
             togglePaymentTerm(true);
+            
+            // Set current purchase order ID for payment recording
+            window.currentPurchaseOrderId = po.id;
             
             // Change form submission to update
             const form = document.getElementById('po-form');
@@ -880,49 +1176,144 @@
             document.getElementById('summary-paid').textContent = `$${purchase_order.amount_paid.toFixed(2)}`;
             document.getElementById('summary-due').textContent = `$${purchase_order.amount_due.toFixed(2)}`;
             
-            // Clear and populate payment history table
-            const tbody = document.getElementById('payment-history-table-body');
-            tbody.innerHTML = '';
+            // Display payment history in the content area
+            const container = document.getElementById('payment-history-content');
+            container.innerHTML = '';
             
-            if (payment_history && payment_history.length > 0) {
-                payment_history.forEach(payment => {
-                    const row = document.createElement('tr');
-                    row.className = 'hover:bg-gray-50';
-                    
-                    const paymentTypeClass = getPaymentTypeClass(payment.payment_type);
-                    
-                    row.innerHTML = `
-                        <td class="px-3 py-2 border-b text-sm">${formatDateTime(payment.created_at)}</td>
-                        <td class="px-3 py-2 border-b text-sm font-medium ${payment.amount >= 0 ? 'text-green-600' : 'text-red-600'}">
-                            ${payment.amount >= 0 ? '+' : ''}Rp${payment.amount.toFixed(2)}
-                        </td>
-                        <td class="px-3 py-2 border-b text-sm">${capitalizeFirst(payment.payment_method)}</td>
-                        <td class="px-3 py-2 border-b text-sm">
-                            <span class="px-2 py-1 text-xs font-medium rounded-full ${paymentTypeClass}">
-                                ${capitalizeFirst(payment.payment_type)}
-                            </span>
-                        </td>
-                        <td class="px-3 py-2 border-b text-sm">${payment.user?.name || 'N/A'}</td>
-                        <td class="px-3 py-2 border-b text-sm">${payment.notes || '-'}</td>
-                    `;
-                    tbody.appendChild(row);
-                });
-                
-                document.getElementById('no-payment-history').style.display = 'none';
-            } else {
-                showNoPaymentHistory();
+            if (!payment_history || payment_history.length === 0) {
+                container.innerHTML = '<div class="p-8 text-center text-gray-500"><i class="fas fa-receipt text-3xl mb-2"></i><br>No payment history found</div>';
+                return;
             }
+
+            // Calculate total payments
+            const totalPayments = payment_history.reduce((sum, payment) => sum + (payment.amount || 0), 0);
+            
+            const content = `
+                <div class="px-4 py-3 bg-gray-50 border-b">
+                    <div class="flex justify-between items-center">
+                        <h4 class="font-medium text-gray-800">Payment Records</h4>
+                        <span class="text-sm text-gray-600">Total: <span class="font-bold text-green-600">$${totalPayments.toFixed(2)}</span></span>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full table-auto">
+                        <thead>
+                            <tr class="bg-gray-50">
+                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">Date & Time</th>
+                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">Amount</th>
+                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">Method</th>
+                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">Type</th>
+                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">User</th>
+                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${payment_history.map((payment, index) => `
+                                <tr class="hover:bg-gray-50 border-b border-gray-100">
+                                    <td class="px-4 py-3 text-sm">
+                                        <div class="font-medium">${new Date(payment.created_at).toLocaleDateString()}</div>
+                                        <div class="text-xs text-gray-500">${new Date(payment.created_at).toLocaleTimeString()}</div>
+                                    </td>
+                                    <td class="px-4 py-3 text-sm font-medium text-green-600">$${payment.amount.toFixed(2)}</td>
+                                    <td class="px-4 py-3 text-sm">
+                                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                            ${payment.payment_method}
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-3 text-sm">
+                                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${payment.payment_type === 'downpayment' ? 'bg-purple-100 text-purple-800' : 'bg-green-100 text-green-800'}">
+                                            ${payment.payment_type}
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-3 text-sm">${payment.user?.name || 'Unknown'}</td>
+                                    <td class="px-4 py-3 text-sm text-gray-500">${payment.notes || '-'}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            container.innerHTML = content;
+            
+            // Store current PO ID for payment recording
+            window.currentPurchaseOrderId = purchase_order.id;
         }
 
         // Show no payment history message
         function showNoPaymentHistory() {
-            document.getElementById('payment-history-table-body').innerHTML = '';
-            document.getElementById('no-payment-history').style.display = 'block';
+            const container = document.getElementById('payment-history-content');
+            container.innerHTML = '<div class="p-8 text-center text-gray-500"><i class="fas fa-receipt text-3xl mb-2"></i><br>No payment history found</div>';
             
             // Reset summary
             document.getElementById('summary-total').textContent = '$0.00';
             document.getElementById('summary-paid').textContent = '$0.00';
             document.getElementById('summary-due').textContent = '$0.00';
+        }
+
+        // Purchase Payment Modal Functions
+        function openRecordPurchasePayment() {
+            console.log('Opening purchase payment modal');
+            if (!window.currentPurchaseOrderId) {
+                alert('No purchase order selected. Please select a purchase order first.');
+                return;
+            }
+            
+            const modal = document.getElementById('record-purchase-payment-modal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                // Clear form fields
+                document.getElementById('purchase-payment-amount').value = '';
+                document.getElementById('purchase-payment-notes').value = '';
+                console.log('Purchase payment modal opened');
+            } else {
+                console.error('Purchase payment modal not found');
+            }
+        }
+
+        function closeRecordPurchasePayment() {
+            document.getElementById('record-purchase-payment-modal').classList.add('hidden');
+        }
+
+        async function submitPurchasePayment() {
+            if (!window.currentPurchaseOrderId) {
+                alert('No purchase order selected');
+                return;
+            }
+
+            const amount = parseFloat(document.getElementById('purchase-payment-amount').value);
+            const method = document.getElementById('purchase-payment-method-select').value;
+            const notes = document.getElementById('purchase-payment-notes').value;
+
+            if (!amount || amount <= 0) {
+                alert('Please enter a valid amount');
+                return;
+            }
+
+            try {
+                const response = await makeRequest(`${API_BASE}/purchase-orders/${window.currentPurchaseOrderId}/payment`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        amount: amount,
+                        payment_method: method,
+                        notes: notes
+                    })
+                });
+
+                if (response.ok) {
+                    alert('Payment recorded successfully');
+                    closeRecordPurchasePayment();
+                    // Reload payment history
+                    loadPaymentHistory(window.currentPurchaseOrderId);
+                    // Refresh the PO list
+                    loadPurchaseOrders();
+                } else {
+                    const error = await response.json();
+                    alert(`Failed to record payment: ${error.error}`);
+                }
+            } catch (error) {
+                console.error('Error recording payment:', error);
+                alert('Failed to record payment: Network error');
+            }
         }
 
         // Get payment type CSS class
@@ -940,6 +1331,126 @@
             const date = new Date(dateString);
             return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
         }
+
+        // Product autocomplete functionality
+        let productSearchTimeout;
+        let currentProductDropdown = null;
+
+        async function searchProducts(input, rowId) {
+            clearTimeout(productSearchTimeout);
+            const query = input.value.trim();
+            
+            if (query.length < 2) {
+                hideProductDropdown(rowId);
+                return;
+            }
+
+            productSearchTimeout = setTimeout(async () => {
+                try {
+                    const response = await makeRequest(`${API_BASE}/products/search?q=${encodeURIComponent(query)}`);
+                    if (response.ok) {
+                        const products = await response.json();
+                        showProductResults(products, rowId);
+                    }
+                } catch (error) {
+                    console.error('Error searching products:', error);
+                }
+            }, 300);
+        }
+
+        function showProductResults(products, rowId) {
+            const dropdown = document.getElementById(`product-dropdown-${rowId}`);
+            if (!dropdown) return;
+
+            if (products.length === 0) {
+                dropdown.innerHTML = '<div class="p-2 text-gray-500 text-sm">No products found</div>';
+            } else {
+                dropdown.innerHTML = products.map(product => `
+                    <div class="p-2 hover:bg-gray-100 cursor-pointer border-b last:border-b-0 text-sm"
+                         onclick="selectProduct('${product.sku}', '${product.name}', '${product.category}', '${rowId}')">
+                        <div class="font-medium">${product.sku}</div>
+                        <div class="text-gray-600">${product.name}</div>
+                        <div class="text-gray-500 text-xs">${product.category}</div>
+                    </div>
+                `).join('');
+            }
+            
+            dropdown.classList.remove('hidden');
+            currentProductDropdown = rowId;
+        }
+
+        function selectProduct(sku, name, category, rowId) {
+            const row = document.getElementById(rowId);
+            if (!row) return;
+
+            const skuInput = row.querySelector('input[name="sku"]');
+            const nameInput = row.querySelector('input[name="product_name"]');
+            const categoryInput = row.querySelector('input[name="category"]');
+
+            if (skuInput) skuInput.value = sku;
+            if (nameInput) nameInput.value = name;
+            if (categoryInput) categoryInput.value = category;
+
+            hideProductDropdown(rowId);
+        }
+
+        function showProductDropdown(rowId) {
+            const input = document.querySelector(`#${rowId} input[name="sku"]`);
+            if (input && input.value.length >= 2) {
+                searchProducts(input, rowId);
+            }
+        }
+
+        function hideProductDropdown(rowId) {
+            setTimeout(() => {
+                const dropdown = document.getElementById(`product-dropdown-${rowId}`);
+                if (dropdown) {
+                    dropdown.classList.add('hidden');
+                }
+                if (currentProductDropdown === rowId) {
+                    currentProductDropdown = null;
+                }
+            }, 200);
+        }
+
+        // Handle keyboard navigation for product dropdown
+        document.addEventListener('keydown', function(e) {
+            if (currentProductDropdown && (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Enter')) {
+                const dropdown = document.getElementById(`product-dropdown-${currentProductDropdown}`);
+                if (!dropdown || dropdown.classList.contains('hidden')) return;
+
+                const items = dropdown.querySelectorAll('.cursor-pointer');
+                if (items.length === 0) return;
+
+                const currentActive = dropdown.querySelector('.bg-blue-100');
+                let newActiveIndex = 0;
+
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    if (currentActive) {
+                        const currentIndex = Array.from(items).indexOf(currentActive);
+                        newActiveIndex = (currentIndex + 1) % items.length;
+                        currentActive.classList.remove('bg-blue-100');
+                    }
+                    items[newActiveIndex].classList.add('bg-blue-100');
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    if (currentActive) {
+                        const currentIndex = Array.from(items).indexOf(currentActive);
+                        newActiveIndex = currentIndex > 0 ? currentIndex - 1 : items.length - 1;
+                        currentActive.classList.remove('bg-blue-100');
+                    } else {
+                        newActiveIndex = items.length - 1;
+                    }
+                    items[newActiveIndex].classList.add('bg-blue-100');
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (currentActive) {
+                        currentActive.click();
+                    }
+                }
+            }
+        });
     </script>
 </body>
 </html>

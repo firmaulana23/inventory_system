@@ -63,19 +63,14 @@ func InitDatabase() {
 
 	log.Println("Database connected successfully")
 
-	// Run migrations
-	err = RunMigrations()
-	if err != nil {
-		log.Fatal("Failed to run migrations:", err)
-	}
-
-	// Auto migrate the schema
+	// Auto migrate the schema first
 	err = DB.AutoMigrate(
 		&models.User{},
 		&models.Product{},
 		&models.StockMovement{},
 		&models.Sale{},
 		&models.SaleItem{},
+		&models.SalePayment{},
 		&models.Supplier{},
 		&models.PurchaseOrder{},
 		&models.PurchaseOrderItem{},
@@ -86,7 +81,7 @@ func InitDatabase() {
 		log.Fatal("Failed to migrate database:", err)
 	}
 
-	log.Println("Database migration completed")
+	log.Println("Database schema migration completed")
 
 	// Create default admin user
 	createDefaultAdmin()

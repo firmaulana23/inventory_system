@@ -16,18 +16,21 @@ import (
 
 // DashboardStats represents admin dashboard statistics
 type DashboardStats struct {
-	TotalUsers       int64          `json:"total_users"`
-	TotalProducts    int64          `json:"total_products"`
-	TotalSales       int64          `json:"total_sales"`
-	TodaySales       int64          `json:"today_sales"`
-	TotalRevenue     float64        `json:"total_revenue"`
-	TodayRevenue     float64        `json:"today_revenue"`
-	TotalProfit      float64        `json:"total_profit"`
-	TodayProfit      float64        `json:"today_profit"`
-	LowStockProducts int64          `json:"low_stock_products"`
-	RecentSales      []models.Sale  `json:"recent_sales"`
-	TopProducts      []ProductStats `json:"top_products"`
-	SalesChart       []SalesChart   `json:"sales_chart"`
+	TotalUsers         int64          `json:"total_users"`
+	TotalProducts      int64          `json:"total_products"`
+	TotalSales         int64          `json:"total_sales"`
+	TodaySales         int64          `json:"today_sales"`
+	TotalRevenue       float64        `json:"total_revenue"`
+	TodayRevenue       float64        `json:"today_revenue"`
+	TotalProfit        float64        `json:"total_profit"`
+	TodayProfit        float64        `json:"today_profit"`
+	TotalPurchasing    float64        `json:"total_purchasing"`
+	TotalPurchasingPaid float64       `json:"total_purchasing_paid"`
+	TotalPurchasingDue  float64       `json:"total_purchasing_due"`
+	LowStockProducts   int64          `json:"low_stock_products"`
+	RecentSales        []models.Sale  `json:"recent_sales"`
+	TopProducts        []ProductStats `json:"top_products"`
+	SalesChart         []SalesChart   `json:"sales_chart"`
 }
 
 type ProductStats struct {
@@ -81,6 +84,15 @@ func GetDashboardStats(c *gin.Context) {
 		JOIN sales s ON si.sale_id = s.id
 		WHERE s.created_at::date = ?
 	`, today).Scan(&stats.TodayProfit)
+
+	// Calculate total purchasing price
+	database.DB.Model(&models.PurchaseOrder{}).Select("COALESCE(SUM(total), 0)").Scan(&stats.TotalPurchasing)
+
+	// Calculate total purchasing amount paid
+	database.DB.Model(&models.PurchaseOrder{}).Select("COALESCE(SUM(amount_paid), 0)").Scan(&stats.TotalPurchasingPaid)
+
+	// Calculate total purchasing amount due
+	database.DB.Model(&models.PurchaseOrder{}).Select("COALESCE(SUM(amount_due), 0)").Scan(&stats.TotalPurchasingDue)
 
 	// Count low stock products (stock < 10)
 	database.DB.Model(&models.Product{}).Where("quantity < ?", 10).Count(&stats.LowStockProducts)

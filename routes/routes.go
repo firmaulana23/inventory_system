@@ -28,6 +28,7 @@ func SetupRoutes() *gin.Engine {
 	router.StaticFile("/users", "./templates/users.html")
 	router.StaticFile("/activity_logs", "./templates/activity_logs.html")
 	router.StaticFile("/settings", "./templates/settings.html")
+	router.StaticFile("/contact_supplier", "./templates/contact_supplier.html")
 	router.StaticFile("/404.html", "./templates/404.html")
 
 	// Redirect root to login
@@ -74,12 +75,21 @@ func SetupRoutes() *gin.Engine {
 			pos.POST("/sales", handlers.CreateSale)
 			pos.GET("/sales", handlers.GetSales)
 			pos.GET("/sales/:id", handlers.GetSale)
+			pos.GET("/sales/:id/payments", handlers.GetSalePayments)
 			pos.GET("/reports", handlers.GetSalesReport)
 			pos.GET("/sales/overdue", handlers.GetOverdueSales)
 		}
 
 		// Stock movements (view only for employees)
 		protected.GET("/stock-movements", handlers.GetStockMovements)
+		
+		// Suppliers (view only for employees)
+		suppliers := protected.Group("/suppliers")
+		{
+			suppliers.GET("", handlers.GetSuppliers)
+			suppliers.GET("/:id", handlers.GetSupplier)
+			suppliers.GET("/search", handlers.SearchSuppliers)
+		}
 
 		// Manager level routes
 		manager := protected.Group("/")
@@ -89,6 +99,11 @@ func SetupRoutes() *gin.Engine {
 			manager.POST("/products", handlers.CreateProduct)
 			manager.PUT("/products/:id", handlers.UpdateProduct)
 			manager.POST("/products/:id/adjust-stock", handlers.AdjustStock)
+			
+			// Supplier management
+			manager.POST("/suppliers", handlers.CreateSupplier)
+			manager.PUT("/suppliers/:id", handlers.UpdateSupplier)
+			manager.DELETE("/suppliers/:id", handlers.DeleteSupplier)
 
 			// Sales management
 			manager.PUT("/pos/sales/:id/void", handlers.VoidSale)
@@ -104,6 +119,7 @@ func SetupRoutes() *gin.Engine {
 			manager.POST("/purchase-orders/:id/payment", handlers.RecordPurchasePayment)
 			manager.GET("/purchase-orders/:id/payments", handlers.GetPurchasePaymentHistory)
 			manager.DELETE("/purchase-orders/:id", handlers.DeletePurchaseOrder)
+
 		}
 
 		// Admin only routes

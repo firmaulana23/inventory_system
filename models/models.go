@@ -67,6 +67,7 @@ type Sale struct {
 	PaymentMethod string         `json:"payment_method" gorm:"not null"`     // cash, card, transfer, credit
 	PaymentTerm   string         `json:"payment_term" gorm:"default:cash"`   // cash, net7, net15, net30, net60, net90
 	PaymentStatus string         `json:"payment_status" gorm:"default:paid"` // paid, pending, overdue
+	DownPayment   float64        `json:"down_payment" gorm:"default:0"`      // downpayment amount for credit sales
 	DueDate       *time.Time     `json:"due_date"`
 	PaidDate      *time.Time     `json:"paid_date"`
 	AmountPaid    float64        `json:"amount_paid" gorm:"default:0"`
@@ -98,6 +99,7 @@ type Supplier struct {
 	Phone         string         `json:"phone"`
 	Address       string         `json:"address"`
 	ContactPerson string         `json:"contact_person"`
+	Website       string         `json:"website"`
 	IsActive      bool           `json:"is_active" gorm:"default:true"`
 	CreatedAt     time.Time      `json:"created_at"`
 	UpdatedAt     time.Time      `json:"updated_at"`
@@ -108,7 +110,8 @@ type Supplier struct {
 type PurchaseOrder struct {
 	ID            uint                `json:"id" gorm:"primaryKey"`
 	PONumber      string              `json:"po_number" gorm:"unique;not null"`
-	Supplier      string              `json:"supplier" gorm:"not null"`
+	SupplierID    uint                `json:"supplier_id" gorm:"not null"`
+	Supplier      Supplier            `json:"supplier" gorm:"foreignKey:SupplierID"`
 	UserID        uint                `json:"user_id" gorm:"not null"`
 	User          User                `json:"user" gorm:"foreignKey:UserID"`
 	PaymentMethod string              `json:"payment_method" gorm:"default:net30"`   // cash, net7, net15, net30, net60, net90, credit
@@ -155,6 +158,20 @@ type PurchasePayment struct {
 	CreatedAt       time.Time     `json:"created_at"`
 }
 
+// SalePayment represents payment history for sales
+type SalePayment struct {
+	ID            uint      `json:"id" gorm:"primaryKey"`
+	SaleID        uint      `json:"sale_id" gorm:"not null"`
+	Sale          Sale      `json:"sale" gorm:"foreignKey:SaleID"`
+	UserID        uint      `json:"user_id" gorm:"not null"`
+	User          User      `json:"user" gorm:"foreignKey:UserID"`
+	Amount        float64   `json:"amount" gorm:"not null"`
+	PaymentMethod string    `json:"payment_method" gorm:"not null"`
+	PaymentType   string    `json:"payment_type" gorm:"not null"` // downpayment, payment, adjustment
+	Notes         string    `json:"notes"`
+	CreatedAt     time.Time `json:"created_at"`
+}
+
 // ActivityLog represents system activity logs
 type ActivityLog struct {
 	ID         uint      `json:"id" gorm:"primaryKey"`
@@ -168,3 +185,4 @@ type ActivityLog struct {
 	UserAgent  string    `json:"user_agent"`
 	CreatedAt  time.Time `json:"created_at"`
 }
+
