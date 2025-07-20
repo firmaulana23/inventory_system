@@ -617,6 +617,75 @@ type UpdatePurchaseOrderRequest struct {
 	DownPayment   float64 `json:"down_payment"`
 }
 
+// GetPurchaseOrdersSummary returns summary statistics for purchase orders
+func GetPurchaseOrdersSummary(c *gin.Context) {
+	startDate := c.Query("start_date")
+	endDate := c.Query("end_date")
+
+	// Set default dates if not provided (last 30 days)
+	if startDate == "" {
+		startDate = time.Now().AddDate(0, 0, -30).Format("2006-01-02")
+	}
+	if endDate == "" {
+		endDate = time.Now().Format("2006-01-02")
+	}
+
+	// Parse dates
+	start, err := time.Parse("2006-01-02", startDate)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid start date format"})
+		return
+	}
+	end, err := time.Parse("2006-01-02", endDate)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid end date format"})
+		return
+	}
+	// Add 23:59:59 to end date to include the entire day
+	end = end.Add(23*time.Hour + 59*time.Minute + 59*time.Second)
+
+	db := database.DB
+
+	// Calculate total purchase orders count
+	var totalOrders int64
+	db.Model(&models.PurchaseOrder{}).
+		Where("created_at BETWEEN ? AND ?", start, end).
+		Count(&totalOrders)
+
+	// Calculate total amount
+	var totalAmount float64
+	db.Model(&models.PurchaseOrder{}).
+		Where("created_at BETWEEN ? AND ?", start, end).
+		Select("COALESCE(SUM(total), 0)").
+		Scan(&totalAmount)
+
+	// Calculate pending payments (credit orders with amount due > 0)
+	var pendingAmount float64
+	db.Model(&models.PurchaseOrder{}).
+		Where("created_at BETWEEN ? AND ? AND payment_method = ? AND amount_due > ?", start, end, "credit", 0).
+		Select("COALESCE(SUM(amount_due), 0)").
+		Scan(&pendingAmount)
+
+	// Calculate overdue payments (credit orders past due date with amount due > 0)
+	var overdueAmount float64
+	db.Model(&models.PurchaseOrder{}).
+		Where("created_at BETWEEN ? AND ? AND payment_method = ? AND amount_due > ? AND due_date < ?", 
+			start, end, "credit", 0, time.Now()).
+		Select("COALESCE(SUM(amount_due), 0)").
+		Scan(&overdueAmount)
+
+	c.JSON(http.StatusOK, gin.H{
+		"total_orders":   totalOrders,
+		"total_amount":   totalAmount,
+		"pending_amount": pendingAmount,
+		"overdue_amount": overdueAmount,
+		"period": gin.H{
+			"start_date": startDate,
+			"end_date":   endDate,
+		},
+	})
+}
+
 // UpdatePurchaseOrder updates an existing purchase order
 func UpdatePurchaseOrder(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 32)

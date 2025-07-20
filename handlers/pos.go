@@ -11,6 +11,7 @@ import (
 	"inventory_system/models"
 
 	"github.com/gin-gonic/gin"
+	"github.com/xuri/excelize/v2"
 )
 
 // SaleRequest represents a POS sale request
@@ -283,6 +284,13 @@ func GetSales(c *gin.Context) {
 		filters["payment_method"] = paymentMethod
 		query = query.Where("payment_method = ?", paymentMethod)
 		countQuery = countQuery.Where("payment_method = ?", paymentMethod)
+	}
+
+	// Filter by payment status
+	if paymentStatus := c.Query("payment_status"); paymentStatus != "" {
+		filters["payment_status"] = paymentStatus
+		query = query.Where("payment_status = ?", paymentStatus)
+		countQuery = countQuery.Where("payment_status = ?", paymentStatus)
 	}
 
 	// Pagination
@@ -701,4 +709,449 @@ func GetSalePayments(c *gin.Context) {
 		"payments": payments,
 		"total":    len(payments),
 	})
+}
+
+// GetSalesSummary returns summary statistics for sales
+func GetSalesSummary(c *gin.Context) {
+	startDate := c.Query("start_date")
+	endDate := c.Query("end_date")
+
+	// Set default dates if not provided (last 30 days)
+	if startDate == "" {
+		startDate = time.Now().AddDate(0, 0, -30).Format("2006-01-02")
+	}
+	if endDate == "" {
+		endDate = time.Now().Format("2006-01-02")
+	}
+
+	// Parse dates
+	start, err := time.Parse("2006-01-02", startDate)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid start date format"})
+		return
+	}
+	end, err := time.Parse("2006-01-02", endDate)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid end date format"})
+		return
+	}
+	// Add 23:59:59 to end date to include the entire day
+	end = end.Add(23*time.Hour + 59*time.Minute + 59*time.Second)
+
+	db := database.GetDB()
+
+	// Calculate total sales amount
+	var totalSales float64
+	db.Model(&models.Sale{}).
+		Where("created_at BETWEEN ? AND ?", start, end).
+		Select("COALESCE(SUM(total), 0)").
+		Scan(&totalSales)
+
+	// Calculate total number of transactions
+	var totalTransactions int64
+	db.Model(&models.Sale{}).
+		Where("created_at BETWEEN ? AND ?", start, end).
+		Count(&totalTransactions)
+
+	// Calculate pending payments (credit sales with amount due > 0)
+	var pendingPayments float64
+	db.Model(&models.Sale{}).
+		Where("created_at BETWEEN ? AND ? AND payment_method = ? AND amount_due > ?", start, end, "credit", 0).
+		Select("COALESCE(SUM(amount_due), 0)").
+		Scan(&pendingPayments)
+
+	// Calculate overdue payments (credit sales past due date with amount due > 0)
+	var overduePayments float64
+	db.Model(&models.Sale{}).
+		Where("created_at BETWEEN ? AND ? AND payment_method = ? AND amount_due > ? AND due_date < ?", 
+			start, end, "credit", 0, time.Now()).
+		Select("COALESCE(SUM(amount_due), 0)").
+		Scan(&overduePayments)
+
+	c.JSON(http.StatusOK, gin.H{
+		"total_sales":       totalSales,
+		"total_transactions": totalTransactions,
+		"pending_payments":   pendingPayments,
+		"overdue_payments":   overduePayments,
+		"period": gin.H{
+			"start_date": startDate,
+			"end_date":   endDate,
+		},
+	})
+}
+
+// ExportSales exports sales data as CSV
+func ExportSales(c *gin.Context) {
+	startDate := c.Query("start_date")
+	endDate := c.Query("end_date")
+	paymentMethod := c.Query("payment_method")
+	paymentStatus := c.Query("payment_status")
+
+	// Set default dates if not provided (last 30 days)
+	if startDate == "" {
+		startDate = time.Now().AddDate(0, 0, -30).Format("2006-01-02")
+	}
+	if endDate == "" {
+		endDate = time.Now().Format("2006-01-02")
+	}
+
+	// Parse dates
+	start, err := time.Parse("2006-01-02", startDate)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid start date format"})
+		return
+	}
+	end, err := time.Parse("2006-01-02", endDate)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid end date format"})
+		return
+	}
+	// Add 23:59:59 to end date to include the entire day
+	end = end.Add(23*time.Hour + 59*time.Minute + 59*time.Second)
+
+	db := database.GetDB()
+
+	// Build query with filters
+	query := db.Preload("User").Preload("Items.Product").Where("created_at BETWEEN ? AND ?", start, end)
+
+	if paymentMethod != "" {
+		query = query.Where("payment_method = ?", paymentMethod)
+	}
+
+	if paymentStatus != "" {
+		switch paymentStatus {
+		case "paid":
+			query = query.Where("payment_method != ? OR (payment_method = ? AND amount_due = ?)", "credit", "credit", 0)
+		case "pending":
+			query = query.Where("payment_method = ? AND amount_due > ? AND (due_date IS NULL OR due_date >= ?)", "credit", 0, time.Now())
+		case "overdue":
+			query = query.Where("payment_method = ? AND amount_due > ? AND due_date < ?", "credit", 0, time.Now())
+		}
+	}
+
+	var sales []models.Sale
+	if err := query.Find(&sales).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch sales data"})
+		return
+	}
+
+	// Create CSV content
+	csvContent := "Sale Number,Customer Name,Date,Payment Method,Payment Status,Total,Amount Due,Cashier,Items\n"
+
+	for _, sale := range sales {
+		// Determine payment status
+		paymentStatusStr := "paid"
+		if sale.PaymentMethod == "credit" {
+			if sale.AmountDue > 0 {
+				if sale.DueDate != nil && sale.DueDate.Before(time.Now()) {
+					paymentStatusStr = "overdue"
+				} else {
+					paymentStatusStr = "pending"
+				}
+			}
+		}
+
+		// Get items summary
+		itemsSummary := ""
+		if len(sale.Items) > 0 {
+			for i, item := range sale.Items {
+				if i > 0 {
+					itemsSummary += "; "
+				}
+				productName := "Unknown Product"
+				if item.Product.ID != 0 {
+					productName = item.Product.Name
+				}
+				itemsSummary += fmt.Sprintf("%s (Qty: %d, Price: $%.2f)", productName, item.Quantity, item.Price)
+			}
+		}
+
+		// Escape CSV fields that contain commas or quotes
+		customerName := sale.CustomerName
+		if customerName == "" {
+			customerName = "Walk-in"
+		}
+		customerName = escapeCSV(customerName)
+		
+		cashierName := "Unknown"
+		if sale.User.ID != 0 {
+			cashierName = escapeCSV(sale.User.Name)
+		}
+
+		itemsSummary = escapeCSV(itemsSummary)
+
+		csvContent += fmt.Sprintf("%s,%s,%s,%s,%s,%.2f,%.2f,%s,%s\n",
+			escapeCSV(sale.SaleNumber),
+			customerName,
+			sale.CreatedAt.Format("2006-01-02 15:04:05"),
+			escapeCSV(sale.PaymentMethod),
+			paymentStatusStr,
+			sale.Total,
+			sale.AmountDue,
+			cashierName,
+			itemsSummary,
+		)
+	}
+
+	// Set headers for CSV download
+	filename := fmt.Sprintf("sales_report_%s.csv", time.Now().Format("2006-01-02"))
+	c.Header("Content-Description", "File Transfer")
+	c.Header("Content-Disposition", "attachment; filename="+filename)
+	c.Header("Content-Type", "text/csv")
+	c.Header("Content-Length", fmt.Sprintf("%d", len(csvContent)))
+
+	c.String(http.StatusOK, csvContent)
+}
+
+// Helper function to escape CSV fields
+func escapeCSV(field string) string {
+	// If field contains comma, quote, or newline, wrap in quotes and escape internal quotes
+	if fmt.Sprintf("%q", field) != "\""+field+"\"" {
+		field = fmt.Sprintf("%q", field)
+	}
+	return field
+}
+
+// ExportSalesExcel exports sales data as Excel file
+func ExportSalesExcel(c *gin.Context) {
+	startDate := c.Query("start_date")
+	endDate := c.Query("end_date")
+	paymentMethod := c.Query("payment_method")
+	paymentStatus := c.Query("payment_status")
+
+	// Set default dates if not provided (last 30 days)
+	if startDate == "" {
+		startDate = time.Now().AddDate(0, 0, -30).Format("2006-01-02")
+	}
+	if endDate == "" {
+		endDate = time.Now().Format("2006-01-02")
+	}
+
+	// Parse dates
+	start, err := time.Parse("2006-01-02", startDate)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid start date format"})
+		return
+	}
+	end, err := time.Parse("2006-01-02", endDate)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid end date format"})
+		return
+	}
+	// Add 23:59:59 to end date to include the entire day
+	end = end.Add(23*time.Hour + 59*time.Minute + 59*time.Second)
+
+	db := database.GetDB()
+
+	// Build query with filters
+	query := db.Preload("User").Preload("Items.Product").Where("created_at BETWEEN ? AND ?", start, end)
+
+	if paymentMethod != "" {
+		query = query.Where("payment_method = ?", paymentMethod)
+	}
+
+	if paymentStatus != "" {
+		switch paymentStatus {
+		case "paid":
+			query = query.Where("payment_method != ? OR (payment_method = ? AND amount_due = ?)", "credit", "credit", 0)
+		case "pending":
+			query = query.Where("payment_method = ? AND amount_due > ? AND (due_date IS NULL OR due_date >= ?)", "credit", 0, time.Now())
+		case "overdue":
+			query = query.Where("payment_method = ? AND amount_due > ? AND due_date < ?", "credit", 0, time.Now())
+		}
+	}
+
+	var sales []models.Sale
+	if err := query.Find(&sales).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch sales data"})
+		return
+	}
+
+	// Create new Excel file
+	f := excelize.NewFile()
+	defer func() {
+		if err := f.Close(); err != nil {
+			fmt.Println(err)
+		}
+	}()
+
+	// Create a new worksheet
+	sheetName := "Sales Report"
+	index, err := f.NewSheet(sheetName)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create Excel sheet"})
+		return
+	}
+
+	// Set the worksheet as active
+	f.SetActiveSheet(index)
+
+	// Define headers
+	headers := []string{
+		"Sale Number", "Customer Name", "Date", "Payment Method", 
+		"Payment Status", "Total", "Amount Due", "Cashier", "Items Count", "Items Detail",
+	}
+
+	// Create header style
+	headerStyle, err := f.NewStyle(&excelize.Style{
+		Font: &excelize.Font{
+			Bold: true,
+			Size: 12,
+		},
+		Fill: excelize.Fill{
+			Type:    "pattern",
+			Color:   []string{"#366092"},
+			Pattern: 1,
+		},
+		Alignment: &excelize.Alignment{
+			Horizontal: "center",
+			Vertical:   "center",
+		},
+		Border: []excelize.Border{
+			{Type: "left", Color: "000000", Style: 1},
+			{Type: "top", Color: "000000", Style: 1},
+			{Type: "bottom", Color: "000000", Style: 1},
+			{Type: "right", Color: "000000", Style: 1},
+		},
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create Excel style"})
+		return
+	}
+
+	// Create data style
+	dataStyle, err := f.NewStyle(&excelize.Style{
+		Border: []excelize.Border{
+			{Type: "left", Color: "000000", Style: 1},
+			{Type: "top", Color: "000000", Style: 1},
+			{Type: "bottom", Color: "000000", Style: 1},
+			{Type: "right", Color: "000000", Style: 1},
+		},
+		Alignment: &excelize.Alignment{
+			Vertical: "center",
+		},
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create Excel data style"})
+		return
+	}
+
+	// Set headers
+	for i, header := range headers {
+		cell := fmt.Sprintf("%c1", 'A'+i)
+		f.SetCellValue(sheetName, cell, header)
+		f.SetCellStyle(sheetName, cell, cell, headerStyle)
+	}
+
+	// Add data rows
+	for i, sale := range sales {
+		row := i + 2 // Start from row 2 (after headers)
+		
+		// Determine payment status
+		paymentStatusStr := "Paid"
+		if sale.PaymentMethod == "credit" {
+			if sale.AmountDue > 0 {
+				if sale.DueDate != nil && sale.DueDate.Before(time.Now()) {
+					paymentStatusStr = "Overdue"
+				} else {
+					paymentStatusStr = "Pending"
+				}
+			}
+		}
+
+		// Get items summary and count
+		itemsCount := len(sale.Items)
+		itemsSummary := ""
+		if len(sale.Items) > 0 {
+			for j, item := range sale.Items {
+				if j > 0 {
+					itemsSummary += "; "
+				}
+				productName := "Unknown Product"
+				if item.Product.ID != 0 {
+					productName = item.Product.Name
+				}
+				itemsSummary += fmt.Sprintf("%s (Qty: %d, Price: $%.2f)", productName, item.Quantity, item.Price)
+			}
+		}
+
+		customerName := sale.CustomerName
+		if customerName == "" {
+			customerName = "Walk-in"
+		}
+		
+		cashierName := "Unknown"
+		if sale.User.ID != 0 {
+			cashierName = sale.User.Name
+		}
+
+		// Set cell values
+		data := []interface{}{
+			sale.SaleNumber,
+			customerName,
+			sale.CreatedAt.Format("2006-01-02 15:04:05"),
+			sale.PaymentMethod,
+			paymentStatusStr,
+			sale.Total,
+			sale.AmountDue,
+			cashierName,
+			itemsCount,
+			itemsSummary,
+		}
+
+		for j, value := range data {
+			cell := fmt.Sprintf("%c%d", 'A'+j, row)
+			f.SetCellValue(sheetName, cell, value)
+			f.SetCellStyle(sheetName, cell, cell, dataStyle)
+		}
+	}
+
+	// Auto-fit columns
+	cols := []string{"A", "B", "C", "D", "E", "F", "G", "H", "I", "J"}
+	for _, col := range cols {
+		f.SetColWidth(sheetName, col, col, 15)
+	}
+	
+	// Make the Items Detail column wider
+	f.SetColWidth(sheetName, "J", "J", 50)
+
+	// Add summary information at the top
+	f.InsertRows(sheetName, 1, 3)
+	
+	// Add title
+	f.SetCellValue(sheetName, "A1", "Sales Report")
+	titleStyle, _ := f.NewStyle(&excelize.Style{
+		Font: &excelize.Font{
+			Bold: true,
+			Size: 16,
+		},
+	})
+	f.SetCellStyle(sheetName, "A1", "A1", titleStyle)
+
+	// Add date range
+	f.SetCellValue(sheetName, "A2", fmt.Sprintf("Period: %s to %s", startDate, endDate))
+	
+	// Add total count
+	f.SetCellValue(sheetName, "A3", fmt.Sprintf("Total Records: %d", len(sales)))
+
+	// Set the header row (now row 4)
+	for i, header := range headers {
+		cell := fmt.Sprintf("%c4", 'A'+i)
+		f.SetCellValue(sheetName, cell, header)
+		f.SetCellStyle(sheetName, cell, cell, headerStyle)
+	}
+
+	// Generate filename
+	filename := fmt.Sprintf("sales_report_%s.xlsx", time.Now().Format("2006-01-02"))
+	
+	// Set headers for Excel download
+	c.Header("Content-Description", "File Transfer")
+	c.Header("Content-Disposition", "attachment; filename="+filename)
+	c.Header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
+	// Write the Excel file to the response
+	if err := f.Write(c.Writer); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate Excel file"})
+		return
+	}
 }

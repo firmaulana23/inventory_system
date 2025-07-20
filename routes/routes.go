@@ -76,6 +76,9 @@ func SetupRoutes() *gin.Engine {
 			pos.GET("/sales", handlers.GetSales)
 			pos.GET("/sales/:id", handlers.GetSale)
 			pos.GET("/sales/:id/payments", handlers.GetSalePayments)
+			pos.GET("/sales/summary", handlers.GetSalesSummary)
+			pos.GET("/sales/export", handlers.ExportSales)
+			pos.GET("/sales/export-excel", handlers.ExportSalesExcel)
 			pos.GET("/reports", handlers.GetSalesReport)
 			pos.GET("/sales/overdue", handlers.GetOverdueSales)
 		}
@@ -116,6 +119,7 @@ func SetupRoutes() *gin.Engine {
 			manager.GET("/purchase-orders/:id", handlers.GetPurchaseOrder)
 			manager.PUT("/purchase-orders/:id", handlers.UpdatePurchaseOrder)
 			manager.GET("/purchase-orders/overdue", handlers.GetOverduePurchaseOrders)
+			manager.GET("/purchase-orders/summary", handlers.GetPurchaseOrdersSummary)
 			manager.POST("/purchase-orders/:id/payment", handlers.RecordPurchasePayment)
 			manager.GET("/purchase-orders/:id/payments", handlers.GetPurchasePaymentHistory)
 			manager.DELETE("/purchase-orders/:id", handlers.DeletePurchaseOrder)

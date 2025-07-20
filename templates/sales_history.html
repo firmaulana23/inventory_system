@@ -122,36 +122,32 @@
                                 <i class="fas fa-tachometer-alt mr-3 text-blue-500"></i>
                                 Dashboard
                             </a>
-                            <a href="/users" class="flex items-center px-4 py-2 text-gray-800 hover:bg-gray-100">
-                                <i class="fas fa-users mr-3 text-blue-500"></i>
-                                Manage Users
-                            </a>
                             <a href="/manage_products" class="flex items-center px-4 py-2 text-gray-800 hover:bg-gray-100">
                                 <i class="fas fa-boxes mr-3 text-green-500"></i>
                                 Manage Products
                             </a>
                             <a href="/purchase_orders" class="flex items-center px-4 py-2 text-gray-800 hover:bg-gray-100">
                                 <i class="fas fa-file-invoice-dollar mr-3 text-red-500"></i>
-                                Purchase Orders
-                            </a>
-                            <a href="/settings" class="flex items-center px-4 py-2 text-gray-800 hover:bg-gray-100">
-                                <i class="fas fa-cog mr-3 text-gray-500"></i>
-                                System Settings
+                                Manage Purchase
                             </a>
                             <a href="/contact_supplier" class="flex items-center px-4 py-2 text-gray-800 hover:bg-gray-100">
                                 <i class="fas fa-address-book mr-3 text-orange-500"></i>
                                 Supplier Contacts
                             </a>
+                            <a href="/users" class="flex items-center px-4 py-2 text-gray-800 hover:bg-gray-100">
+                                <i class="fas fa-users mr-3 text-blue-500"></i>
+                                Manage Users
+                            </a>
+                            <a href="/settings" class="flex items-center px-4 py-2 text-gray-800 hover:bg-gray-100">
+                                <i class="fas fa-cog mr-3 text-gray-500"></i>
+                                System Settings
+                            </a>
+                            <button onclick="logout()" class="flex items-center w-full px-4 py-2 text-gray-800 hover:bg-gray-100 text-left">
+                                <i class="fas fa-sign-out-alt mr-3"></i>Logout
+                            </button>
                         </div>
                     </div>
                 </div>
-                
-                <button onclick="window.location.href='/dashboard.html'" class="bg-green-600 hover:bg-green-700 px-3 py-1 rounded text-sm">
-                    <i class="fas fa-cash-register mr-1"></i>POS Dashboard
-                </button>
-                <button onclick="logout()" class="bg-red-500 hover:bg-red-600 px-3 py-1 rounded text-sm">
-                    <i class="fas fa-sign-out-alt mr-1"></i>Logout
-                </button>
             </div>
         </div>
     </nav>
@@ -159,33 +155,33 @@
         <div class="flex justify-between items-center mb-4">
             <h2 class="text-2xl font-bold">Sales Records & Reports</h2>
             <div class="flex space-x-2">
-                <button onclick="exportSalesData()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded">
-                    <i class="fas fa-download mr-1"></i>Export
-                </button>
+                <!-- Export Dropdown -->
+                <div class="relative">
+                    <button id="export-button" onclick="toggleExportMenu()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded flex items-center">
+                        <i class="fas fa-download mr-1"></i>Export
+                        <i class="fas fa-chevron-down ml-1 text-xs"></i>
+                    </button>
+                    <div id="export-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-50 border">
+                        <div class="py-1">
+                            <button onclick="exportSalesData('csv')" class="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                <i class="fas fa-file-csv mr-3 text-green-500"></i>
+                                Export as CSV
+                            </button>
+                            <button onclick="exportSalesData('excel')" class="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                <i class="fas fa-file-excel mr-3 text-green-600"></i>
+                                Export as Excel
+                            </button>
+                        </div>
+                    </div>
+                </div>
                 <button onclick="refreshCurrentView()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
                     <i class="fas fa-refresh mr-1"></i>Refresh
                 </button>
             </div>
         </div>
 
-        <!-- Tab Navigation -->
-        <div class="bg-white rounded-lg shadow mb-6">
-            <div class="border-b border-gray-200">
-                <nav class="-mb-px flex">
-                    <button id="all-sales-tab" onclick="switchTab('all-sales')" 
-                            class="tab-button border-b-2 border-purple-500 text-purple-600 py-4 px-6 text-sm font-medium focus:outline-none">
-                        <i class="fas fa-chart-bar mr-2"></i>All Sales
-                    </button>
-                    <button id="credit-sales-tab" onclick="switchTab('credit-sales')" 
-                            class="tab-button border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 py-4 px-6 text-sm font-medium focus:outline-none">
-                        <i class="fas fa-credit-card mr-2"></i>Credit Sales Management
-                    </button>
-                </nav>
-            </div>
-        </div>
 
-        <!-- All Sales Tab Content -->
-        <div id="all-sales-content" class="tab-content">
+        <!-- Sales Content -->
             <!-- Enhanced Search and Filters -->
             <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
                 <!-- Quick Search Bar -->
@@ -221,9 +217,11 @@
                                 </label>
                                 <div class="grid grid-cols-2 gap-2">
                                     <input type="date" id="start-date-filter" 
+                                           onchange="filterSales()"
                                            class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200"
                                            title="Start Date">
                                     <input type="date" id="end-date-filter" 
+                                           onchange="filterSales()"
                                            class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200"
                                            title="End Date">
                                 </div>
@@ -263,10 +261,10 @@
                                 </label>
                                 <div class="grid grid-cols-2 gap-2">
                                     <input type="number" id="min-amount-filter" 
-                                           placeholder="Min $" onchange="filterSales()"
+                                           placeholder="Min $" onchange="filterSales()" oninput="filterSales()"
                                            class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200">
                                     <input type="number" id="max-amount-filter" 
-                                           placeholder="Max $" onchange="filterSales()"
+                                           placeholder="Max $" onchange="filterSales()" oninput="filterSales()"
                                            class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200">
                                 </div>
                             </div>
@@ -448,114 +446,6 @@
                 <!-- Pagination buttons will be added here -->
             </div>
         </div>
-
-        <!-- Credit Sales Management Tab Content -->
-        <div id="credit-sales-content" class="tab-content hidden">
-            <!-- Credit Sales Summary Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-                <div class="bg-white rounded-lg shadow p-6">
-                    <div class="flex items-center">
-                        <div class="p-3 rounded-full bg-blue-100 text-blue-500">
-                            <i class="fas fa-credit-card text-2xl"></i>
-                        </div>
-                        <div class="ml-4">
-                            <p class="text-sm font-medium text-gray-600">Total Credit Sales</p>
-                            <p id="total-credit-sales" class="text-2xl font-semibold text-gray-900">0</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="bg-white rounded-lg shadow p-6">
-                    <div class="flex items-center">
-                        <div class="p-3 rounded-full bg-green-100 text-green-500">
-                            <i class="fas fa-check-circle text-2xl"></i>
-                        </div>
-                        <div class="ml-4">
-                            <p class="text-sm font-medium text-gray-600">Paid Sales</p>
-                            <p id="paid-credit-sales" class="text-2xl font-semibold text-gray-900">0</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="bg-white rounded-lg shadow p-6">
-                    <div class="flex items-center">
-                        <div class="p-3 rounded-full bg-yellow-100 text-yellow-500">
-                            <i class="fas fa-clock text-2xl"></i>
-                        </div>
-                        <div class="ml-4">
-                            <p class="text-sm font-medium text-gray-600">Pending Payments</p>
-                            <p id="pending-credit-sales" class="text-2xl font-semibold text-gray-900">0</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="bg-white rounded-lg shadow p-6">
-                    <div class="flex items-center">
-                        <div class="p-3 rounded-full bg-red-100 text-red-500">
-                            <i class="fas fa-exclamation-triangle text-2xl"></i>
-                        </div>
-                        <div class="ml-4">
-                            <p class="text-sm font-medium text-gray-600">Overdue</p>
-                            <p id="overdue-credit-sales" class="text-2xl font-semibold text-gray-900">0</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Credit Sales Filters -->
-            <div class="bg-white rounded-lg shadow p-4 mb-6">
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Payment Status</label>
-                        <select id="credit-status-filter" onchange="filterCreditSales()" class="w-full p-2 border border-gray-300 rounded-md">
-                            <option value="">All Statuses</option>
-                            <option value="pending">Pending</option>
-                            <option value="paid">Paid</option>
-                            <option value="overdue">Overdue</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Customer Name</label>
-                        <input type="text" id="credit-customer-filter" placeholder="Search customer..." onkeyup="filterCreditSales()" class="w-full p-2 border border-gray-300 rounded-md">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Sale Number</label>
-                        <input type="text" id="credit-sale-filter" placeholder="Search sale number..." onkeyup="filterCreditSales()" class="w-full p-2 border border-gray-300 rounded-md">
-                    </div>
-                    <div class="flex items-end">
-                        <button onclick="clearCreditFilters()" class="w-full bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded">
-                            Clear Filters
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Credit Sales Table -->
-            <div class="bg-white rounded-lg shadow p-4 overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead>
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sale Number</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Down Payment</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount Due</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Due Date</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="credit-sales-table-body">
-                        <!-- Credit sales rows will be injected here by JS -->
-                    </tbody>
-                </table>
-            </div>
-            
-            <!-- Credit Sales Pagination -->
-            <div id="credit-pagination" class="mt-4 flex justify-center space-x-2">
-                <!-- Pagination buttons will be added here -->
-            </div>
-        </div>
     </div>
 
     <!-- Record Payment Modal -->
@@ -664,10 +554,14 @@
             try {
                 let url = `${API_BASE}/pos/sales?limit=100`;
                 
-                // Add filters to URL
+                // Add all filters to URL (backend support)
                 if (filters.start_date) url += `&start_date=${filters.start_date}`;
                 if (filters.end_date) url += `&end_date=${filters.end_date}`;
                 if (filters.payment_method) url += `&payment_method=${filters.payment_method}`;
+                if (filters.payment_status) url += `&payment_status=${filters.payment_status}`;
+                if (filters.search) url += `&search=${encodeURIComponent(filters.search)}`;
+                if (filters.min_amount) url += `&min_amount=${filters.min_amount}`;
+                if (filters.max_amount) url += `&max_amount=${filters.max_amount}`;
 
                 const response = await makeRequest(url);
                 if (!response.ok) {
@@ -684,11 +578,88 @@
                 }
 
                 const data = await response.json();
-                displaySales(data.sales || []);
+                
+                // Apply client-side filtering as backup if backend doesn't support all filters
+                let salesData = data.sales || [];
+                salesData = applyClientSideFilters(salesData, filters);
+                
+                displaySales(salesData);
             } catch (error) {
                 console.error('Error fetching sales:', error);
                 alert('Failed to load sales history: ' + error.message);
             }
+        }
+
+        // Client-side filtering as backup for unsupported backend filters
+        function applyClientSideFilters(sales, filters) {
+            return sales.filter(sale => {
+                // Search filter (searches in sale number, customer name, and cashier name)
+                if (filters.search && filters.search.trim() !== '') {
+                    const searchTerm = filters.search.toLowerCase().trim();
+                    const saleNumber = (sale.sale_number || sale.id.toString()).toLowerCase();
+                    const customerName = (sale.customer_name || '').toLowerCase();
+                    const cashierName = (sale.user?.name || '').toLowerCase();
+                    
+                    if (!saleNumber.includes(searchTerm) && 
+                        !customerName.includes(searchTerm) && 
+                        !cashierName.includes(searchTerm)) {
+                        return false;
+                    }
+                }
+                
+                // Payment status filter
+                if (filters.payment_status && filters.payment_status !== '') {
+                    const salePaymentStatus = determinePaymentStatus(sale);
+                    if (salePaymentStatus !== filters.payment_status) {
+                        return false;
+                    }
+                }
+                
+                // Amount range filter
+                if (filters.min_amount && filters.min_amount !== '') {
+                    const minAmount = parseFloat(filters.min_amount);
+                    if (sale.total < minAmount) {
+                        return false;
+                    }
+                }
+                
+                if (filters.max_amount && filters.max_amount !== '') {
+                    const maxAmount = parseFloat(filters.max_amount);
+                    if (sale.total > maxAmount) {
+                        return false;
+                    }
+                }
+                
+                return true;
+            });
+        }
+
+        // Determine payment status based on sale data
+        function determinePaymentStatus(sale) {
+            // If payment_status is explicitly set, use it
+            if (sale.payment_status) {
+                return sale.payment_status;
+            }
+            
+            // For credit sales, determine status based on amount due and due date
+            if (sale.payment_method === 'credit') {
+                // Check for amount due (could be amount_due or amountDue)
+                const amountDue = sale.amount_due || sale.amountDue || 0;
+                
+                if (amountDue > 0) {
+                    // Check if overdue
+                    const dueDate = sale.due_date || sale.dueDate;
+                    if (dueDate && new Date(dueDate) < new Date()) {
+                        return 'overdue';
+                    }
+                    return 'pending';
+                } else {
+                    return 'paid';
+                }
+            }
+            
+            // For non-credit sales, default to paid
+            return 'paid';
         }
 
         // Apply filters with enhanced UX
@@ -705,10 +676,12 @@
                 max_amount: document.getElementById('max-amount-filter').value
             };
             
+            
             // Update active filters count
             updateActiveFiltersCount(filters);
             
             fetchSales(filters);
+            loadSalesSummary(); // Refresh summary with current filters
         }
 
         // Update active filters count
@@ -786,7 +759,8 @@
                 row.className = 'hover:bg-gray-50 border-b border-gray-100 transition-colors duration-150';
                 
                 // Get payment status badge
-                const statusBadge = getStatusBadge(sale.payment_status || 'paid');
+                const paymentStatus = determinePaymentStatus(sale);
+                const statusBadge = getStatusBadge(paymentStatus);
                 
                 // Enhanced row with better styling and interactions
                 if (currentView === 'compact') {
@@ -794,7 +768,7 @@
                         <td class="px-6 py-3 text-sm font-medium">
                             <div class="flex items-center">
                                 <span class="text-gray-900">${sale.sale_number || '#' + sale.id}</span>
-                                ${sale.payment_status === 'overdue' ? '<i class="fas fa-exclamation-triangle text-red-500 ml-2" title="Overdue"></i>' : ''}
+                                ${paymentStatus === 'overdue' ? '<i class="fas fa-exclamation-triangle text-red-500 ml-2" title="Overdue"></i>' : ''}
                             </div>
                         </td>
                         <td class="px-6 py-3 text-sm">
@@ -811,7 +785,7 @@
                             </span>
                         </td>
                         <td class="px-6 py-3">${statusBadge}</td>
-                        <td class="px-6 py-3 text-sm font-semibold text-green-600">$${sale.total.toFixed(2)}</td>
+                        <td class="px-6 py-3 text-sm font-semibold text-green-600">$${sale.total}</td>
                         <td class="px-6 py-3 text-sm text-gray-600">${sale.user ? sale.user.name : 'Unknown'}</td>
                         <td class="px-6 py-3 text-right">
                             <div class="flex items-center justify-end space-x-2">
@@ -820,7 +794,7 @@
                                         title="View Details">
                                     <i class="fas fa-eye"></i>
                                 </button>
-                                ${(sale.payment_status === 'pending' || sale.payment_status === 'overdue') && sale.payment_method === 'credit' ? `
+                                ${(paymentStatus === 'pending' || paymentStatus === 'overdue') && sale.payment_method === 'credit' ? `
                                     <button onclick="showRecordPayment(${sale.id}, ${sale.amount_due || 0})" 
                                             class="inline-flex items-center px-2.5 py-1.5 text-xs font-medium rounded-md text-green-700 bg-green-100 hover:bg-green-200 transition-colors duration-150"
                                             title="Record Payment">
@@ -872,9 +846,9 @@
                         <td class="px-6 py-4">${statusBadge}</td>
                         <td class="px-6 py-4">
                             <div class="flex flex-col">
-                                <span class="text-sm font-semibold text-green-600">$${sale.total.toFixed(2)}</span>
+                                <span class="text-sm font-semibold text-green-600">$${sale.total}</span>
                                 ${sale.payment_method === 'credit' && sale.amount_due > 0 ? 
-                                    `<span class="text-xs text-red-600">Due: $${sale.amount_due.toFixed(2)}</span>` : ''}
+                                    `<span class="text-xs text-red-600">Due: $${sale.amount_due}</span>` : ''}
                             </div>
                         </td>
                         <td class="px-6 py-4 text-sm">
@@ -893,7 +867,7 @@
                                         class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 transition-colors duration-150">
                                     <i class="fas fa-eye mr-1"></i>View
                                 </button>
-                                ${(sale.payment_status === 'pending' || sale.payment_status === 'overdue') && sale.payment_method === 'credit' ? `
+                                ${(paymentStatus === 'pending' || paymentStatus === 'overdue') && sale.payment_method === 'credit' ? `
                                     <button onclick="showRecordPayment(${sale.id}, ${sale.amount_due || 0})" 
                                             class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md text-green-700 bg-green-100 hover:bg-green-200 transition-colors duration-150">
                                         <i class="fas fa-plus mr-1"></i>Pay
@@ -1011,27 +985,103 @@
             });
         }
 
-        // Export sales data
-        function exportSalesData() {
-            // Get current filters
-            const startDate = document.getElementById('start-date-filter').value;
-            const endDate = document.getElementById('end-date-filter').value;
-            const paymentMethod = document.getElementById('payment-filter').value;
-            const paymentStatus = document.getElementById('payment-status-filter').value;
+        // Toggle export menu
+        function toggleExportMenu() {
+            const menu = document.getElementById('export-menu');
+            menu.classList.toggle('hidden');
+        }
+        
+        // Close export menu when clicking outside
+        document.addEventListener('click', function(event) {
+            const exportButton = document.getElementById('export-button');
+            const exportMenu = document.getElementById('export-menu');
             
-            let exportUrl = `${API_BASE}/pos/sales/export?`;
-            if (startDate) exportUrl += `start_date=${startDate}&`;
-            if (endDate) exportUrl += `end_date=${endDate}&`;
-            if (paymentMethod) exportUrl += `payment_method=${paymentMethod}&`;
-            if (paymentStatus) exportUrl += `payment_status=${paymentStatus}&`;
-            
-            // Create a temporary link and click it to download
-            const link = document.createElement('a');
-            link.href = exportUrl;
-            link.download = `sales_report_${new Date().toISOString().split('T')[0]}.csv`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            if (!exportButton.contains(event.target) && !exportMenu.contains(event.target)) {
+                exportMenu.classList.add('hidden');
+            }
+        });
+
+        // Export sales data with format selection
+        async function exportSalesData(format = 'csv') {
+            try {
+                // Hide the export menu
+                document.getElementById('export-menu').classList.add('hidden');
+                
+                // Get current filters
+                const startDate = document.getElementById('start-date-filter').value;
+                const endDate = document.getElementById('end-date-filter').value;
+                const paymentMethod = document.getElementById('payment-filter').value;
+                const paymentStatus = document.getElementById('payment-status-filter').value;
+                
+                // Determine the endpoint based on format
+                let exportUrl = format === 'excel' ? 
+                    `${API_BASE}/pos/sales/export-excel?` : 
+                    `${API_BASE}/pos/sales/export?`;
+                    
+                if (startDate) exportUrl += `start_date=${startDate}&`;
+                if (endDate) exportUrl += `end_date=${endDate}&`;
+                if (paymentMethod) exportUrl += `payment_method=${paymentMethod}&`;
+                if (paymentStatus) exportUrl += `payment_status=${paymentStatus}&`;
+                
+                // Use fetch with authentication headers
+                const response = await fetch(exportUrl, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                    }
+                });
+                
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        alert('Session expired. Please login again.');
+                        localStorage.removeItem('token');
+                        window.location.href = '/login.html';
+                        return;
+                    } else if (response.status === 403) {
+                        alert('Access denied. You do not have permission to export sales data.');
+                        return;
+                    } else {
+                        throw new Error(`Export failed: ${response.status}`);
+                    }
+                }
+                
+                // Get the file content (CSV text or Excel binary)
+                let blob;
+                let filename;
+                let fileExtension;
+                
+                if (format === 'excel') {
+                    const arrayBuffer = await response.arrayBuffer();
+                    blob = new Blob([arrayBuffer], { 
+                        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+                    });
+                    fileExtension = 'xlsx';
+                } else {
+                    const csvContent = await response.text();
+                    blob = new Blob([csvContent], { type: 'text/csv' });
+                    fileExtension = 'csv';
+                }
+                
+                filename = `sales_report_${new Date().toISOString().split('T')[0]}.${fileExtension}`;
+                
+                // Create download
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                // Clean up the blob URL
+                window.URL.revokeObjectURL(url);
+                
+                // Show success message
+                alert(`Sales report exported successfully as ${format.toUpperCase()}!`);
+                
+            } catch (error) {
+                console.error('Error exporting sales data:', error);
+                alert('Failed to export sales data: ' + error.message);
+            }
         }
 
         // Clear all filters
@@ -1133,18 +1183,18 @@
         function clearAllFilters() {
             // Clear all filter inputs
             document.getElementById('search-filter').value = '';
-            document.getElementById('start-date-filter').value = '';
-            document.getElementById('end-date-filter').value = '';
             document.getElementById('payment-status-filter').value = '';
             document.getElementById('payment-filter').value = '';
             document.getElementById('min-amount-filter').value = '';
             document.getElementById('max-amount-filter').value = '';
             
+            // Reset to default dates (last 30 days)
+            setDefaultDates();
+            
             // Hide clear search button
             document.getElementById('clear-search').classList.add('hidden');
             
-            // Update count and apply filters
-            updateActiveFiltersCount();
+            // Apply filters
             applyFilters();
         }
 
@@ -1231,107 +1281,9 @@
             document.getElementById('empty-state').classList.remove('hidden');
         }
 
-        // Tab switching functionality
-        let currentTab = 'all-sales';
-        
-        function switchTab(tab) {
-            // Update current tab
-            currentTab = tab;
-            
-            // Hide all tab contents
-            document.querySelectorAll('.tab-content').forEach(content => {
-                content.classList.add('hidden');
-            });
-            
-            // Show selected tab content
-            document.getElementById(tab + '-content').classList.remove('hidden');
-            
-            // Update tab buttons
-            document.querySelectorAll('.tab-button').forEach(button => {
-                button.classList.remove('border-purple-500', 'text-purple-600');
-                button.classList.add('border-transparent', 'text-gray-500');
-            });
-            
-            // Highlight active tab
-            const activeButton = document.getElementById(tab + '-tab');
-            activeButton.classList.remove('border-transparent', 'text-gray-500');
-            activeButton.classList.add('border-purple-500', 'text-purple-600');
-            
-            // Load data for the selected tab
-            if (tab === 'all-sales') {
-                loadSalesSummary();
-                applyFilters();
-            } else if (tab === 'credit-sales') {
-                loadCreditSales();
-            }
-        }
 
-        // Credit Sales Management Functions
+        // Payment management for credit sales
         let currentSaleId = null;
-        
-        async function loadCreditSales() {
-            try {
-                const response = await makeRequest(`${API_BASE}/pos/sales?payment_method=credit`);
-                if (response.ok) {
-                    const result = await response.json();
-                    displayCreditSales(result.sales || []);
-                }
-            } catch (error) {
-                console.error('Error loading credit sales:', error);
-            }
-        }
-        
-        function displayCreditSales(sales) {
-            const tbody = document.getElementById('credit-sales-table-body');
-            tbody.innerHTML = '';
-            
-            // Calculate summary statistics
-            const totalSales = sales.length;
-            const paidSales = sales.filter(sale => sale.payment_status === 'paid').length;
-            const pendingSales = sales.filter(sale => sale.payment_status === 'pending').length;
-            const overdueSales = sales.filter(sale => {
-                if (sale.payment_status === 'pending' && sale.due_date) {
-                    return new Date(sale.due_date) < new Date();
-                }
-                return false;
-            }).length;
-            
-            // Update summary cards
-            document.getElementById('total-credit-sales').textContent = totalSales;
-            document.getElementById('paid-credit-sales').textContent = paidSales;
-            document.getElementById('pending-credit-sales').textContent = pendingSales;
-            document.getElementById('overdue-credit-sales').textContent = overdueSales;
-            
-            sales.forEach(sale => {
-                const row = document.createElement('tr');
-                row.className = 'hover:bg-gray-50 border-b border-gray-100';
-                const statusBadge = getStatusBadge(sale.payment_status);
-                const dueDate = sale.due_date ? new Date(sale.due_date).toLocaleDateString() : 'N/A';
-                
-                row.innerHTML = `
-                    <td class="px-6 py-4 text-sm font-medium">${sale.sale_number}</td>
-                    <td class="px-6 py-4 text-sm">${sale.customer_name || '<span class="text-gray-400">Walk-in</span>'}</td>
-                    <td class="px-6 py-4 text-sm font-medium text-green-600">$${sale.total.toFixed(2)}</td>
-                    <td class="px-6 py-4 text-sm text-blue-600">$${(sale.down_payment || 0).toFixed(2)}</td>
-                    <td class="px-6 py-4 text-sm font-medium text-red-600">$${(sale.amount_due || 0).toFixed(2)}</td>
-                    <td class="px-6 py-4 text-sm">${dueDate}</td>
-                    <td class="px-6 py-4">${statusBadge}</td>
-                    <td class="px-6 py-4 text-sm space-x-2">
-                        ${sale.payment_status !== 'paid' ? `
-                            <button onclick="showRecordPayment(${sale.id}, ${sale.amount_due || 0})" 
-                                    class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-xs">
-                                <i class="fas fa-plus mr-1"></i>Payment
-                            </button>
-                        ` : ''}
-                        <button onclick="showPaymentHistory(${sale.id})" 
-                                class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs">
-                            <i class="fas fa-history mr-1"></i>History
-                        </button>
-                    </td>
-                `;
-                tbody.appendChild(row);
-            });
-        }
         
         function getStatusBadge(status) {
             const badges = {
@@ -1342,18 +1294,6 @@
             return badges[status] || badges['pending'];
         }
         
-        // Credit sales filtering
-        function filterCreditSales() {
-            clearTimeout(filterCreditSales.timeout);
-            filterCreditSales.timeout = setTimeout(loadCreditSales, 300);
-        }
-        
-        function clearCreditFilters() {
-            document.getElementById('credit-status-filter').value = '';
-            document.getElementById('credit-customer-filter').value = '';
-            document.getElementById('credit-sale-filter').value = '';
-            loadCreditSales();
-        }
         
         // Record Payment Modal Functions
         function showRecordPayment(saleId, amountDue) {
@@ -1395,7 +1335,7 @@
                 if (response.ok) {
                     alert('Payment recorded successfully!');
                     closeRecordPayment();
-                    loadCreditSales(); // Refresh the credit sales table
+                    applyFilters(); // Refresh the sales table
                 } else {
                     const error = await response.json();
                     alert('Error recording payment: ' + (error.error || 'Unknown error'));
@@ -1434,7 +1374,7 @@
                 <div class="p-4 bg-gray-50 border-b">
                     <h4 class="font-medium text-gray-800">Sale: ${sale.sale_number}</h4>
                     <p class="text-sm text-gray-600">Customer: ${sale.customer_name || 'Walk-in'}</p>
-                    <p class="text-sm text-gray-600">Total: $${sale.total.toFixed(2)} | Amount Due: $${sale.amount_due.toFixed(2)}</p>
+                    <p class="text-sm text-gray-600">Total: $${sale.total} | Amount Due: $${sale.amount_due}</p>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="min-w-full table-auto">
@@ -1451,7 +1391,7 @@
                             ${payments.map(payment => `
                                 <tr class="border-b border-gray-100">
                                     <td class="px-4 py-3 text-sm">${new Date(payment.created_at).toLocaleDateString()}</td>
-                                    <td class="px-4 py-3 text-sm font-medium text-green-600">$${payment.amount.toFixed(2)}</td>
+                                    <td class="px-4 py-3 text-sm font-medium text-green-600">$${payment.amount}</td>
                                     <td class="px-4 py-3 text-sm">${payment.payment_method}</td>
                                     <td class="px-4 py-3 text-sm">${payment.payment_type}</td>
                                     <td class="px-4 py-3 text-sm">${payment.notes || '-'}</td>
@@ -1467,11 +1407,7 @@
         
         // Update refresh function
         function refreshCurrentView() {
-            if (currentTab === 'all-sales') {
-                refreshSales();
-            } else if (currentTab === 'credit-sales') {
-                loadCreditSales();
-            }
+            refreshSales();
         }
 
         // View sale details function
@@ -1527,7 +1463,8 @@
 
         function displaySaleDetails(sale) {
             const content = document.getElementById('sale-details-content');
-            const statusBadge = getStatusBadge(sale.payment_status || 'paid');
+            const paymentStatus = determinePaymentStatus(sale);
+            const statusBadge = getStatusBadge(paymentStatus);
             
             let itemsHtml = '';
             if (sale.items && sale.items.length > 0) {
@@ -1535,8 +1472,8 @@
                     <tr class="border-b border-gray-100">
                         <td class="px-4 py-3 text-sm">${item.product ? item.product.name : 'Unknown Product'}</td>
                         <td class="px-4 py-3 text-sm text-center">${item.quantity}</td>
-                        <td class="px-4 py-3 text-sm text-right">$${item.price.toFixed(2)}</td>
-                        <td class="px-4 py-3 text-sm text-right font-medium">$${item.total.toFixed(2)}</td>
+                        <td class="px-4 py-3 text-sm text-right">$${item.price}</td>
+                        <td class="px-4 py-3 text-sm text-right font-medium">$${item.total}</td>
                     </tr>
                 `).join('');
             } else {
@@ -1560,10 +1497,10 @@
                         <div class="space-y-2 text-sm">
                             <div><span class="font-medium">Payment Method:</span> ${(sale.payment_method || 'cash').charAt(0).toUpperCase() + (sale.payment_method || 'cash').slice(1)}</div>
                             <div><span class="font-medium">Payment Status:</span> ${statusBadge}</div>
-                            <div><span class="font-medium">Subtotal:</span> $${sale.subtotal ? sale.subtotal.toFixed(2) : sale.total.toFixed(2)}</div>
-                            <div><span class="font-medium">Tax:</span> $${(sale.tax || 0).toFixed(2)}</div>
-                            <div><span class="font-medium">Discount:</span> $${(sale.discount || 0).toFixed(2)}</div>
-                            <div class="font-medium text-lg"><span class="font-medium">Total:</span> <span class="text-green-600">$${sale.total.toFixed(2)}</span></div>
+                            <div><span class="font-medium">Subtotal:</span> $${sale.subtotal ? sale.subtotal : sale.total}</div>
+                            <div><span class="font-medium">Tax:</span> $${(sale.tax || 0)}</div>
+                            <div><span class="font-medium">Discount:</span> $${(sale.discount || 0)}</div>
+                            <div class="font-medium text-lg"><span class="font-medium">Total:</span> <span class="text-green-600">$${sale.total}</span></div>
                         </div>
                     </div>
                 </div>
@@ -1612,10 +1549,10 @@
                 if (response.ok) {
                     const data = await response.json();
                     
-                    document.getElementById('total-sales').textContent = `$${data.total_sales || 0}`;
+                    document.getElementById('total-sales').textContent = `$${(data.total_sales || 0)}`;
                     document.getElementById('total-transactions').textContent = data.total_transactions || 0;
-                    document.getElementById('pending-payments').textContent = `$${data.pending_payments || 0}`;
-                    document.getElementById('overdue-payments').textContent = `$${data.overdue_payments || 0}`;
+                    document.getElementById('pending-payments').textContent = `$${(data.pending_payments || 0)}`;
+                    document.getElementById('overdue-payments').textContent = `$${(data.overdue_payments || 0)}`;
                 }
             } catch (error) {
                 console.error('Error loading sales summary:', error);
@@ -1672,12 +1609,6 @@
                     refreshCurrentView();
                 }
                 
-                // Alt+T to toggle between All Sales and Credit Sales tabs
-                if (event.altKey && event.key === 't') {
-                    event.preventDefault();
-                    const newTab = currentTab === 'all-sales' ? 'credit-sales' : 'all-sales';
-                    switchTab(newTab);
-                }
                 
                 // Alt+F to toggle advanced filters
                 if (event.altKey && event.key === 'f') {
