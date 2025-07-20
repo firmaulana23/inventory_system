@@ -572,7 +572,7 @@ func GetPurchasePaymentHistory(c *gin.Context) {
 	var payments []models.PurchasePayment
 	result := database.DB.Preload("User").
 		Where("purchase_order_id = ?", id).
-		Order("created_at ASC").
+		Order("created_at DESC").
 		Find(&payments)
 
 	if result.Error != nil {

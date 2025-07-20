@@ -1446,10 +1446,23 @@
 
         async function loadSaleDetails(saleId) {
             try {
-                const response = await makeRequest(`${API_BASE}/pos/sales/${saleId}`);
-                if (response.ok) {
-                    const sale = await response.json();
-                    displaySaleDetails(sale);
+                // Load both sale details and payment history in parallel
+                const [saleResponse, paymentsResponse] = await Promise.all([
+                    makeRequest(`${API_BASE}/pos/sales/${saleId}`),
+                    makeRequest(`${API_BASE}/pos/sales/${saleId}/payments`)
+                ]);
+                
+                if (saleResponse.ok) {
+                    const sale = await saleResponse.json();
+                    
+                    // Get payment history if available
+                    let paymentHistory = [];
+                    if (paymentsResponse.ok) {
+                        const paymentsData = await paymentsResponse.json();
+                        paymentHistory = paymentsData.payments || [];
+                    }
+                    
+                    displaySaleDetails(sale, paymentHistory);
                 } else {
                     document.getElementById('sale-details-content').innerHTML = 
                         '<div class="text-red-500"><i class="fas fa-exclamation-triangle mr-2"></i>Error loading sale details</div>';
@@ -1461,7 +1474,7 @@
             }
         }
 
-        function displaySaleDetails(sale) {
+        function displaySaleDetails(sale, paymentHistory = []) {
             const content = document.getElementById('sale-details-content');
             const paymentStatus = determinePaymentStatus(sale);
             const statusBadge = getStatusBadge(paymentStatus);
@@ -1478,6 +1491,34 @@
                 `).join('');
             } else {
                 itemsHtml = '<tr><td colspan="4" class="px-4 py-3 text-center text-gray-500">No items found</td></tr>';
+            }
+            
+            // Build payment history HTML
+            let paymentHistoryHtml = '';
+            if (paymentHistory && paymentHistory.length > 0) {
+                paymentHistoryHtml = paymentHistory.map(payment => `
+                    <tr class="border-b border-gray-100">
+                        <td class="px-4 py-3 text-sm">${formatDate(payment.created_at)}</td>
+                        <td class="px-4 py-3 text-sm font-medium text-green-600">$${payment.amount}</td>
+                        <td class="px-4 py-3 text-sm">
+                            <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
+                                <i class="fas fa-${getPaymentIcon(payment.payment_method)} mr-1"></i>
+                                ${(payment.payment_method || 'cash').charAt(0).toUpperCase() + (payment.payment_method || 'cash').slice(1)}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-sm">
+                            <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full ${payment.payment_type === 'downpayment' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}">
+                                ${payment.payment_type === 'downpayment' ? 'Down Payment' : 'Payment'}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-sm">${payment.notes || '-'}</td>
+                        <td class="px-4 py-3 text-sm text-gray-600">${payment.user ? payment.user.name : 'System'}</td>
+                    </tr>
+                `).join('');
+            } else if (sale.payment_method === 'credit') {
+                paymentHistoryHtml = '<tr><td colspan="6" class="px-4 py-3 text-center text-gray-500">No payment history found</td></tr>';
+            } else {
+                paymentHistoryHtml = '<tr><td colspan="6" class="px-4 py-3 text-center text-gray-500">Payment completed at time of sale</td></tr>';
             }
             
             content.innerHTML = `
@@ -1501,11 +1542,16 @@
                             <div><span class="font-medium">Tax:</span> $${(sale.tax || 0)}</div>
                             <div><span class="font-medium">Discount:</span> $${(sale.discount || 0)}</div>
                             <div class="font-medium text-lg"><span class="font-medium">Total:</span> <span class="text-green-600">$${sale.total}</span></div>
+                            ${sale.payment_method === 'credit' ? `
+                                <div><span class="font-medium">Amount Paid:</span> <span class="text-green-600">$${sale.amount_paid || 0}</span></div>
+                                <div><span class="font-medium">Amount Due:</span> <span class="text-red-600">$${sale.amount_due || 0}</span></div>
+                                ${sale.due_date ? `<div><span class="font-medium">Due Date:</span> ${formatDate(sale.due_date)}</div>` : ''}
+                            ` : ''}
                         </div>
                     </div>
                 </div>
                 
-                <div class="bg-white rounded-lg border overflow-hidden">
+                <div class="bg-white rounded-lg border overflow-hidden mb-6">
                     <div class="px-4 py-3 bg-gray-50 border-b">
                         <h4 class="font-medium text-gray-800">Items</h4>
                     </div>
@@ -1521,6 +1567,33 @@
                             </thead>
                             <tbody>
                                 ${itemsHtml}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-lg border overflow-hidden">
+                    <div class="px-4 py-3 bg-gray-50 border-b">
+                        <h4 class="font-medium text-gray-800 flex items-center">
+                            <i class="fas fa-history mr-2 text-gray-600"></i>
+                            Payment History
+                            ${paymentHistory.length > 0 ? `<span class="ml-2 bg-blue-500 text-white text-xs px-2 py-1 rounded-full">${paymentHistory.length}</span>` : ''}
+                        </h4>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full">
+                            <thead>
+                                <tr class="bg-gray-50">
+                                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-600">Date</th>
+                                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-600">Amount</th>
+                                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-600">Method</th>
+                                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-600">Type</th>
+                                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-600">Notes</th>
+                                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-600">Recorded By</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${paymentHistoryHtml}
                             </tbody>
                         </table>
                     </div>

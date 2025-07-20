@@ -94,7 +94,7 @@
                 <i class="fas fa-users mr-2"></i>User Management
             </h1>
             <div class="flex items-center space-x-4">
-                <span id="user-name" class="text-sm"></span>
+                <span id="current-user-name" class="text-sm"></span>
                 
                 <!-- Burger Menu -->
                 <div class="relative">
@@ -344,21 +344,6 @@
                             <p class="text-xs text-gray-500 mt-1">Role determines system permissions</p>
                         </div>
                         
-                        <div>
-                            <label for="user-department" class="block text-sm font-medium text-gray-700 mb-2">
-                                <i class="fas fa-building mr-1"></i>Department
-                            </label>
-                            <select id="user-department" name="department" 
-                                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
-                                <option value="">Select Department...</option>
-                                <option value="sales">💼 Sales</option>
-                                <option value="inventory">📦 Inventory</option>
-                                <option value="finance">💰 Finance</option>
-                                <option value="hr">👥 Human Resources</option>
-                                <option value="it">💻 IT Support</option>
-                            </select>
-                            <p class="text-xs text-gray-500 mt-1">Optional department assignment</p>
-                        </div>
                     </div>
                 </div>
                 
@@ -604,7 +589,10 @@
             
             // Focus on first input
             setTimeout(() => {
-                document.getElementById('user-name').focus();
+                const nameInput = document.getElementById('user-name');
+                if (nameInput) {
+                    nameInput.focus();
+                }
             }, 100);
         }
         
@@ -617,10 +605,13 @@
             document.getElementById('modal-title').innerText = 'Edit User';
             document.querySelector('#modal-title').nextElementSibling.innerText = 'Update user information and permissions';
             document.getElementById('user-id').value = user.id;
-            document.getElementById('user-name').value = user.name;
-            document.getElementById('user-email').value = user.email;
-            document.getElementById('user-role').value = user.role;
-            document.getElementById('user-department').value = user.department || '';
+            const nameInput = document.getElementById('user-name');
+            const emailInput = document.getElementById('user-email');
+            const roleInput = document.getElementById('user-role');
+            
+            if (nameInput) nameInput.value = user.name;
+            if (emailInput) emailInput.value = user.email;
+            if (roleInput) roleInput.value = user.role;
             
             // Hide password fields for editing
             document.getElementById('password-section').style.display = 'none';
@@ -648,7 +639,6 @@
                         <div><strong>Name:</strong> ${user.name}</div>
                         <div><strong>Email:</strong> ${user.email}</div>
                         <div><strong>Role:</strong> ${getRoleInfo(user.role).icon} ${getRoleInfo(user.role).label}</div>
-                        <div><strong>Department:</strong> ${user.department || 'Not assigned'}</div>
                         <div><strong>Status:</strong> ${getStatusBadge(user.status || 'active')}</div>
                         <div><strong>Created:</strong> ${user.created_at ? new Date(user.created_at).toLocaleDateString() : 'Unknown'}</div>
                     </div>
@@ -660,10 +650,18 @@
         document.getElementById('user-form').onsubmit = async function(e) {
             e.preventDefault();
             
+            console.log('Form submission started');
+            
             // Validate passwords for new users
             const id = document.getElementById('user-id').value;
             const password = document.getElementById('user-password').value;
             const confirmPassword = document.getElementById('user-password-confirm').value;
+            
+            console.log('Form fields found:', {
+                id: !!id,
+                password: !!password,
+                confirmPassword: !!confirmPassword
+            });
             
             if (!id) { // New user
                 if (!password || password.length < 6) {
@@ -677,6 +675,35 @@
                 }
             }
             
+            // Validate email format
+            const emailElement = document.getElementById('user-email');
+            console.log('Email element:', emailElement);
+            if (!emailElement) {
+                showMessage('Email field not found.', 'error');
+                return;
+            }
+            const email = emailElement.value.trim();
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                showMessage('Please enter a valid email address.', 'error');
+                return;
+            }
+            
+            // Validate name
+            const nameElement = document.getElementById('user-name');
+            console.log('Name element:', nameElement);
+            if (!nameElement) {
+                showMessage('Name field not found.', 'error');
+                return;
+            }
+            const name = nameElement.value.trim();
+            if (!name || name.length < 2) {
+                showMessage('Name must be at least 2 characters long.', 'error');
+                return;
+            }
+            
+            console.log('All validations passed');
+            
             const submitBtn = document.getElementById('submit-btn');
             const submitText = document.getElementById('submit-text');
             const submitLoading = document.getElementById('submit-loading');
@@ -688,16 +715,17 @@
             
             try {
                 const payload = {
-                    name: document.getElementById('user-name').value.trim(),
-                    email: document.getElementById('user-email').value.trim(),
-                    role: document.getElementById('user-role').value,
-                    department: document.getElementById('user-department').value
+                    name: nameElement.value.trim(),
+                    email: emailElement.value.trim(),
+                    role: document.getElementById('user-role').value
                 };
                 
                 // Add password for new users
                 if (!id && password) {
                     payload.password = password;
                 }
+                
+                console.log('Creating user with payload:', payload);
                 
                 let url = '/api/v1/admin/users';
                 let method = 'POST';
@@ -717,6 +745,8 @@
                     credentials: 'include'
                 });
                 
+                console.log('Response status:', res.status);
+                
                 if (res.ok) {
                     const successMessage = id ? 'User updated successfully!' : 'User created successfully!';
                     showMessage(successMessage, 'success');
@@ -727,6 +757,7 @@
                     }, 1500);
                 } else {
                     const errorData = await res.json();
+                    console.log('Error response:', errorData);
                     const errorMessage = errorData.error || errorData.message || 'Failed to save user';
                     showMessage(errorMessage, 'error');
                 }
@@ -931,7 +962,7 @@
             // Set user name if available
             const userInfo = JSON.parse(localStorage.getItem('user') || '{}');
             if (userInfo.name) {
-                document.getElementById('user-name').textContent = userInfo.name;
+                document.getElementById('current-user-name').textContent = userInfo.name;
             }
             
             // Initialize burger menu

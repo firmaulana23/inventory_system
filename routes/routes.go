@@ -145,6 +145,7 @@ func SetupRoutes() *gin.Engine {
 
 			// User management
 			admin.GET("/users", handlers.GetUsers)
+			admin.POST("/users", handlers.Register) // Admin can create users
 			admin.GET("/users/:id", handlers.GetUser)
 			admin.PUT("/users/:id", handlers.UpdateUser)
 			admin.DELETE("/users/:id", handlers.DeleteUser)
