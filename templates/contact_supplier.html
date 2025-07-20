@@ -6,6 +6,118 @@
     <title>Supplier Contacts - Inventory System</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Enhanced mobile responsiveness */
+        @media (max-width: 768px) {
+            .container {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+            
+            .grid.md\:grid-cols-2.lg\:grid-cols-3 {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .mobile-hidden {
+                display: none;
+            }
+            
+            button {
+                min-height: 44px;
+                min-width: 44px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .text-2xl {
+                font-size: 1.5rem;
+            }
+            
+            nav .container {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+        }
+        
+        /* Focus states for accessibility */
+        input:focus, select:focus, button:focus, textarea:focus {
+            outline: 2px solid #8b5cf6;
+            outline-offset: 2px;
+        }
+        
+        /* Card hover effects */
+        .supplier-card {
+            transition: all 0.3s ease;
+        }
+        
+        .supplier-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+        
+        /* Modal animations */
+        .modal-enter {
+            animation: modalEnter 0.3s ease-out;
+        }
+        
+        @keyframes modalEnter {
+            from {
+                opacity: 0;
+                transform: scale(0.9) translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+        
+        /* Status indicators */
+        .status-online {
+            background: linear-gradient(45deg, #10b981, #059669);
+        }
+        
+        .status-offline {
+            background: linear-gradient(45deg, #6b7280, #4b5563);
+        }
+        
+        /* Button animations */
+        .btn-hover {
+            transition: all 0.2s ease;
+        }
+        
+        .btn-hover:hover {
+            transform: scale(1.05);
+        }
+        
+        /* Loading animation */
+        .animate-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        /* Custom scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
 </head>
 <body class="bg-gray-100">
     <nav class="bg-purple-800 text-white p-4">
@@ -60,57 +172,395 @@
     </nav>
     
     <div class="container mx-auto p-6">
-        <div class="flex justify-between items-center mb-4">
-            <h2 class="text-2xl font-bold">Supplier Contact Directory</h2>
-            <div class="flex space-x-2">
-                <input type="text" id="search-input" placeholder="Search suppliers..." class="border border-gray-300 rounded-md px-3 py-2">
-                <button onclick="searchSuppliers()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
-                    <i class="fas fa-search"></i>
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-4">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-900">Supplier Contact Directory</h2>
+                <p class="text-gray-600 text-sm mt-1">Manage and communicate with your suppliers</p>
+            </div>
+            <div class="flex items-center space-x-3">
+                <button onclick="exportSuppliers()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg transition-colors duration-200">
+                    <i class="fas fa-download mr-2"></i>Export
                 </button>
-                <button onclick="showAddSupplierModal()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">
-                    <i class="fas fa-plus mr-1"></i>Add Supplier
+                <button onclick="refreshSuppliers()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg transition-colors duration-200">
+                    <i class="fas fa-sync-alt mr-2"></i>Refresh
+                </button>
+                <button onclick="showAddSupplierModal()" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors duration-200">
+                    <i class="fas fa-plus mr-2"></i>Add Supplier
                 </button>
             </div>
         </div>
         
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="suppliers-grid">
+        <!-- Supplier Stats Cards -->
+        <!-- <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-purple-100 text-purple-600">
+                        <i class="fas fa-building text-2xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Total Suppliers</p>
+                        <p id="total-suppliers" class="text-2xl font-semibold text-gray-900">0</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-green-100 text-green-600">
+                        <i class="fas fa-check-circle text-2xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Active Suppliers</p>
+                        <p id="active-suppliers" class="text-2xl font-semibold text-gray-900">0</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+                        <i class="fas fa-globe text-2xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">With Website</p>
+                        <p id="suppliers-with-website" class="text-2xl font-semibold text-gray-900">0</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-orange-100 text-orange-600">
+                        <i class="fas fa-handshake text-2xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">New This Month</p>
+                        <p id="new-suppliers" class="text-2xl font-semibold text-gray-900">0</p>
+                    </div>
+                </div>
+            </div>
+        </div> -->
+        
+        <!-- Enhanced Search and Filters -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+            <div class="p-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">
+                    <i class="fas fa-search mr-2"></i>Search & Filter Suppliers
+                </h3>
+            </div>
+            <div class="p-4">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="relative col-span-2">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-search text-gray-400"></i>
+                        </div>
+                        <input type="text" id="search-input" 
+                               placeholder="Search by name, contact person, phone, or email..." 
+                               onkeyup="performSearch()" 
+                               class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200">
+                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                            <button onclick="clearSearch()" id="clear-search" class="text-gray-400 hover:text-gray-600 hidden">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <select id="status-filter" onchange="filterSuppliers()" 
+                                class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200">
+                            <option value="">All Status</option>
+                            <option value="active">✅ Active</option>
+                            <option value="inactive">❌ Inactive</option>
+                        </select>
+                    </div>
+                    
+                    <div class="flex space-x-2">
+                        <button onclick="filterSuppliers()" 
+                                class="flex-1 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors duration-200">
+                            <i class="fas fa-filter mr-2"></i>Filter
+                        </button>
+                        <button onclick="clearFilters()" 
+                                class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors duration-200">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="flex items-center justify-between mt-4 text-sm text-gray-600">
+                    <span id="supplier-count">0 suppliers found</span>
+                    <div class="flex items-center space-x-4">
+                        <span id="filter-status" class="hidden">Filters active</span>
+                        <div class="flex items-center space-x-2">
+                            <span>View:</span>
+                            <button onclick="setView('grid')" id="grid-view" class="px-3 py-1 text-sm rounded bg-purple-100 text-purple-800">
+                                <i class="fas fa-th mr-1"></i>Grid
+                            </button>
+                            <button onclick="setView('list')" id="list-view" class="px-3 py-1 text-sm rounded text-gray-600 hover:bg-gray-100">
+                                <i class="fas fa-list mr-1"></i>List
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Loading State -->
+        <div id="loading-state" class="hidden flex items-center justify-center py-12">
+            <div class="text-center">
+                <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mb-3"></div>
+                <p class="text-gray-600">Loading suppliers...</p>
+            </div>
+        </div>
+        
+        <!-- Suppliers Grid View -->
+        <div id="suppliers-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <!-- Supplier cards will be loaded here -->
+        </div>
+        
+        <!-- Suppliers List View -->
+        <div id="suppliers-list" class="hidden bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <div class="flex items-center">
+                                    <i class="fas fa-building mr-2"></i>Company
+                                </div>
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <div class="flex items-center">
+                                    <i class="fas fa-user mr-2"></i>Contact Person
+                                </div>
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider mobile-hidden">
+                                <div class="flex items-center">
+                                    <i class="fas fa-phone mr-2"></i>Phone
+                                </div>
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider mobile-hidden">
+                                <div class="flex items-center">
+                                    <i class="fas fa-envelope mr-2"></i>Email
+                                </div>
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Status
+                            </th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Actions
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="suppliers-table-body" class="bg-white divide-y divide-gray-200">
+                        <!-- Table rows will be populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Empty State -->
+        <div id="empty-state" class="hidden text-center py-12">
+            <div class="text-gray-400 mb-4">
+                <i class="fas fa-building text-6xl"></i>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">No suppliers found</h3>
+            <p class="text-gray-600 mb-6">Try adjusting your search criteria or add a new supplier.</p>
+            <button onclick="showAddSupplierModal()" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg transition-colors duration-200">
+                <i class="fas fa-plus mr-2"></i>Add First Supplier
+            </button>
         </div>
     </div>
     
-    <!-- Add/Edit Supplier Modal -->
-    <div id="supplier-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
-        <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
-            <h3 id="modal-title" class="text-xl font-bold mb-4">Add New Supplier</h3>
-            <form id="supplier-form" class="space-y-4">
+    <!-- Enhanced Add/Edit Supplier Modal -->
+    <div id="supplier-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 hidden">
+        <div class="relative top-10 mx-auto p-6 border w-full max-w-2xl shadow-lg rounded-lg bg-white modal-enter">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h3 id="modal-title" class="text-xl font-bold text-gray-800">Add New Supplier</h3>
+                    <p class="text-sm text-gray-600 mt-1">Add a new supplier to your directory</p>
+                </div>
+                <button onclick="hideSupplierModal()" class="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <!-- Success/Error Messages -->
+            <div id="modal-message" class="hidden mb-4 p-4 rounded-lg">
+                <div class="flex items-center">
+                    <i id="modal-message-icon" class="mr-2"></i>
+                    <span id="modal-message-text"></span>
+                </div>
+            </div>
+            
+            <form id="supplier-form" class="space-y-6">
                 <input type="hidden" id="supplier-id">
-                <div>
-                    <label for="supplier-name" class="block text-sm font-medium text-gray-700">Company Name</label>
-                    <input id="supplier-name" name="name" type="text" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                
+                <!-- Basic Information Section -->
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h4 class="text-md font-medium text-gray-800 mb-3">
+                        <i class="fas fa-building mr-2"></i>Company Information
+                    </h4>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="supplier-name" class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-building mr-1"></i>Company Name <span class="text-red-500">*</span>
+                            </label>
+                            <input id="supplier-name" name="name" type="text" required 
+                                   placeholder="Enter company name..."
+                                   class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200">
+                        </div>
+                        
+                        <div>
+                            <label for="supplier-contact" class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-user mr-1"></i>Contact Person <span class="text-red-500">*</span>
+                            </label>
+                            <input id="supplier-contact" name="contact_person" type="text" required 
+                                   placeholder="Enter contact person name..."
+                                   class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200">
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                        <div>
+                            <label for="supplier-category" class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-tags mr-1"></i>Category
+                            </label>
+                            <select id="supplier-category" name="category" 
+                                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200">
+                                <option value="">Select Category...</option>
+                                <option value="electronics">📱 Electronics</option>
+                                <option value="food">🍕 Food & Beverages</option>
+                                <option value="clothing">👕 Clothing & Textile</option>
+                                <option value="construction">🏗️ Construction Materials</option>
+                                <option value="office">🏢 Office Supplies</option>
+                                <option value="automotive">🚗 Automotive</option>
+                                <option value="packaging">📦 Packaging</option>
+                                <option value="other">🔧 Other</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label for="supplier-priority" class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-star mr-1"></i>Priority Level
+                            </label>
+                            <select id="supplier-priority" name="priority" 
+                                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200">
+                                <option value="medium">🟡 Medium</option>
+                                <option value="high">🔴 High</option>
+                                <option value="low">🟢 Low</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
-                <div>
-                    <label for="supplier-contact" class="block text-sm font-medium text-gray-700">Contact Person</label>
-                    <input id="supplier-contact" name="contact_person" type="text" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                
+                <!-- Contact Information Section -->
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h4 class="text-md font-medium text-gray-800 mb-3">
+                        <i class="fas fa-phone mr-2"></i>Contact Information
+                    </h4>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="supplier-phone" class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-phone mr-1"></i>Phone Number <span class="text-red-500">*</span>
+                            </label>
+                            <input id="supplier-phone" name="phone" type="tel" required 
+                                   placeholder="e.g., +62 812-3456-7890"
+                                   class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200">
+                            <p class="text-xs text-gray-500 mt-1">Include country code for WhatsApp integration</p>
+                        </div>
+                        
+                        <div>
+                            <label for="supplier-whatsapp" class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fab fa-whatsapp mr-1"></i>WhatsApp Number
+                            </label>
+                            <input id="supplier-whatsapp" name="whatsapp" type="tel" 
+                                   placeholder="e.g., +62 812-3456-7890"
+                                   class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200">
+                            <p class="text-xs text-gray-500 mt-1">If different from phone number</p>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                        <div>
+                            <label for="supplier-email" class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-envelope mr-1"></i>Email Address <span class="text-red-500">*</span>
+                            </label>
+                            <input id="supplier-email" name="email" type="email" required 
+                                   placeholder="supplier@company.com"
+                                   class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200">
+                        </div>
+                        
+                        <div>
+                            <label for="supplier-website" class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-globe mr-1"></i>Website
+                            </label>
+                            <input id="supplier-website" name="website" type="url" 
+                                   placeholder="https://www.company.com"
+                                   class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200">
+                        </div>
+                    </div>
                 </div>
-                <div>
-                    <label for="supplier-phone" class="block text-sm font-medium text-gray-700">Phone</label>
-                    <input id="supplier-phone" name="phone" type="tel" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                
+                <!-- Address & Additional Info Section -->
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h4 class="text-md font-medium text-gray-800 mb-3">
+                        <i class="fas fa-map-marker-alt mr-2"></i>Address & Additional Information
+                    </h4>
+                    
+                    <div class="grid grid-cols-1 gap-4">
+                        <div>
+                            <label for="supplier-address" class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-map-marker-alt mr-1"></i>Address <span class="text-red-500">*</span>
+                            </label>
+                            <textarea id="supplier-address" name="address" rows="3" required 
+                                      placeholder="Enter complete address..."
+                                      class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200"></textarea>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="supplier-notes" class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-sticky-note mr-1"></i>Notes
+                                </label>
+                                <textarea id="supplier-notes" name="notes" rows="2" 
+                                          placeholder="Additional notes about this supplier..."
+                                          class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200"></textarea>
+                            </div>
+                            
+                            <div>
+                                <label for="supplier-payment-terms" class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-credit-card mr-1"></i>Payment Terms
+                                </label>
+                                <select id="supplier-payment-terms" name="payment_terms" 
+                                        class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200">
+                                    <option value="">Select Terms...</option>
+                                    <option value="cash">💰 Cash on Delivery</option>
+                                    <option value="net15">📅 Net 15 Days</option>
+                                    <option value="net30">📅 Net 30 Days</option>
+                                    <option value="net45">📅 Net 45 Days</option>
+                                    <option value="prepaid">💳 Prepaid</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div>
-                    <label for="supplier-email" class="block text-sm font-medium text-gray-700">Email</label>
-                    <input id="supplier-email" name="email" type="email" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
-                </div>
-                <div>
-                    <label for="supplier-address" class="block text-sm font-medium text-gray-700">Address</label>
-                    <textarea id="supplier-address" name="address" rows="3" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"></textarea>
-                </div>
-                <div>
-                    <label for="supplier-website" class="block text-sm font-medium text-gray-700">Website</label>
-                    <input id="supplier-website" name="website" type="url" class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
-                </div>
-                <div class="flex justify-end space-x-2">
-                    <button type="button" onclick="hideSupplierModal()" class="bg-gray-300 hover:bg-gray-400 px-4 py-2 rounded">Cancel</button>
-                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">Save</button>
+                
+                <!-- Form Actions -->
+                <div class="flex flex-col sm:flex-row sm:justify-end sm:space-x-3 space-y-2 sm:space-y-0 pt-6 border-t border-gray-200">
+                    <button type="button" onclick="hideSupplierModal()" 
+                            class="w-full sm:w-auto bg-gray-100 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-200 transition-colors duration-200 font-medium">
+                        <i class="fas fa-times mr-2"></i>Cancel
+                    </button>
+                    <button type="submit" id="submit-btn"
+                            class="w-full sm:w-auto bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors duration-200 font-medium flex items-center justify-center">
+                        <i class="fas fa-save mr-2"></i>
+                        <span id="submit-text">Save Supplier</span>
+                        <div id="submit-loading" class="hidden ml-2">
+                            <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        </div>
+                    </button>
                 </div>
             </form>
         </div>
@@ -221,18 +671,26 @@
         // Load and display suppliers
         function loadSuppliers(filteredSuppliers = null) {
             const suppliersGrid = document.getElementById('suppliers-grid');
+            const emptyState = document.getElementById('empty-state');
             const suppliersToShow = filteredSuppliers || suppliers;
             
             suppliersGrid.innerHTML = '';
             
+            // Update supplier count
+            updateSupplierCount(suppliersToShow.length);
+            
             if (suppliersToShow.length === 0) {
-                suppliersGrid.innerHTML = '<div class="col-span-full text-center text-gray-500">No suppliers found</div>';
+                suppliersGrid.classList.add('hidden');
+                emptyState.classList.remove('hidden');
                 return;
+            } else {
+                suppliersGrid.classList.remove('hidden');
+                emptyState.classList.add('hidden');
             }
             
             suppliersToShow.forEach(supplier => {
                 const supplierCard = document.createElement('div');
-                supplierCard.className = 'bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow';
+                supplierCard.className = 'bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow supplier-card';
                 
                 supplierCard.innerHTML = `
                     <div class="flex items-center mb-4">
@@ -258,19 +716,16 @@
                             <i class="fas fa-map-marker-alt w-4 mr-2 mt-1"></i>
                             <span>${supplier.address}</span>
                         </div>
-                        <div class="flex items-center text-sm text-gray-600">
+                        ${supplier.website ? `<div class="flex items-center text-sm text-gray-600">
                             <i class="fas fa-globe w-4 mr-2"></i>
                             <a href="http://${supplier.website}" target="_blank" class="text-blue-600 hover:text-blue-800">${supplier.website}</a>
-                        </div>
+                        </div>` : ''}
                     </div>
                     
                     <div class="mt-4 pt-4 border-t border-gray-200">
                         <div class="flex space-x-2 mb-2">
-                            <button onclick="callSupplier('${supplier.phone}')" class="flex-1 bg-green-600 hover:bg-green-700 text-white text-sm px-3 py-2 rounded">
-                                <i class="fas fa-phone mr-1"></i>Call
-                            </button>
-                            <button onclick="emailSupplier('${supplier.email}')" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-sm px-3 py-2 rounded">
-                                <i class="fas fa-envelope mr-1"></i>Email
+                            <button onclick="whatsappSupplier('${supplier.phone || supplier.whatsapp}')" class="flex-1 bg-green-600 hover:bg-green-700 text-white text-sm px-3 py-2 rounded">
+                                <i class="fab fa-whatsapp mr-1"></i>Contact
                             </button>
                         </div>
                         <div class="flex space-x-2">
@@ -286,6 +741,52 @@
                 
                 suppliersGrid.appendChild(supplierCard);
             });
+        }
+        
+        // Refresh suppliers function
+        function refreshSuppliers() {
+            const refreshBtn = document.querySelector('button[onclick="refreshSuppliers()"] i');
+            refreshBtn.classList.add('fa-spin');
+            
+            loadSuppliersFromAPI().finally(() => {
+                refreshBtn.classList.remove('fa-spin');
+            });
+        }
+        
+        // Export suppliers function
+        function exportSuppliers() {
+            if (suppliers.length === 0) {
+                showAlert('No suppliers to export', 'error');
+                return;
+            }
+            
+            // Create CSV content
+            const csvHeaders = ['Name', 'Contact Person', 'Phone', 'Email', 'Address', 'Website'];
+            const csvData = suppliers.map(supplier => [
+                supplier.name,
+                supplier.contact_person,
+                supplier.phone,
+                supplier.email,
+                supplier.address,
+                supplier.website || ''
+            ]);
+            
+            const csvContent = [csvHeaders, ...csvData]
+                .map(row => row.map(field => `"${field}"`).join(','))
+                .join('\n');
+            
+            // Download CSV file
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `suppliers_${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            
+            showAlert('Suppliers exported successfully', 'success');
         }
         
         // Search suppliers
@@ -326,6 +827,206 @@
                 searchSuppliers();
             }
         });
+        
+        // Perform search function called by the input
+        function performSearch() {
+            const searchTerm = document.getElementById('search-input').value.trim();
+            const clearButton = document.getElementById('clear-search');
+            
+            // Show/hide clear button
+            if (searchTerm) {
+                clearButton.classList.remove('hidden');
+            } else {
+                clearButton.classList.add('hidden');
+            }
+            
+            // Perform local search if no API search is available
+            if (searchTerm === '') {
+                loadSuppliers();
+                updateSupplierCount(suppliers.length);
+                return;
+            }
+            
+            // Filter suppliers locally
+            const filteredSuppliers = suppliers.filter(supplier => {
+                return supplier.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                       supplier.contact_person.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                       supplier.phone.includes(searchTerm) ||
+                       supplier.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                       (supplier.address && supplier.address.toLowerCase().includes(searchTerm.toLowerCase()));
+            });
+            
+            loadSuppliers(filteredSuppliers);
+            updateSupplierCount(filteredSuppliers.length);
+        }
+        
+        // Filter suppliers function
+        function filterSuppliers() {
+            const statusFilter = document.getElementById('status-filter').value;
+            const searchTerm = document.getElementById('search-input').value.trim();
+            
+            let filteredSuppliers = [...suppliers];
+            
+            // Apply search filter
+            if (searchTerm) {
+                filteredSuppliers = filteredSuppliers.filter(supplier => {
+                    return supplier.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           supplier.contact_person.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           supplier.phone.includes(searchTerm) ||
+                           supplier.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           (supplier.address && supplier.address.toLowerCase().includes(searchTerm.toLowerCase()));
+                });
+            }
+            
+            // Apply status filter
+            if (statusFilter) {
+                filteredSuppliers = filteredSuppliers.filter(supplier => {
+                    return supplier.status === statusFilter;
+                });
+            }
+            
+            loadSuppliers(filteredSuppliers);
+            updateSupplierCount(filteredSuppliers.length);
+            
+            // Show filter status
+            const filterStatus = document.getElementById('filter-status');
+            if (statusFilter || searchTerm) {
+                filterStatus.classList.remove('hidden');
+            } else {
+                filterStatus.classList.add('hidden');
+            }
+        }
+        
+        // Clear search function
+        function clearSearch() {
+            document.getElementById('search-input').value = '';
+            document.getElementById('clear-search').classList.add('hidden');
+            performSearch();
+        }
+        
+        // Clear filters function
+        function clearFilters() {
+            document.getElementById('search-input').value = '';
+            document.getElementById('status-filter').value = '';
+            document.getElementById('clear-search').classList.add('hidden');
+            document.getElementById('filter-status').classList.add('hidden');
+            
+            loadSuppliers();
+            updateSupplierCount(suppliers.length);
+        }
+        
+        // Update supplier count display
+        function updateSupplierCount(count) {
+            const countElement = document.getElementById('supplier-count');
+            countElement.textContent = `${count} supplier${count !== 1 ? 's' : ''} found`;
+        }
+        
+        // View switching functions
+        function setView(viewType) {
+            const gridView = document.getElementById('grid-view');
+            const listView = document.getElementById('list-view');
+            const suppliersGrid = document.getElementById('suppliers-grid');
+            const suppliersList = document.getElementById('suppliers-list');
+            
+            if (viewType === 'grid') {
+                gridView.classList.add('bg-purple-100', 'text-purple-800');
+                gridView.classList.remove('text-gray-600', 'hover:bg-gray-100');
+                listView.classList.remove('bg-purple-100', 'text-purple-800');
+                listView.classList.add('text-gray-600', 'hover:bg-gray-100');
+                
+                suppliersGrid.classList.remove('hidden');
+                suppliersList.classList.add('hidden');
+            } else {
+                listView.classList.add('bg-purple-100', 'text-purple-800');
+                listView.classList.remove('text-gray-600', 'hover:bg-gray-100');
+                gridView.classList.remove('bg-purple-100', 'text-purple-800');
+                gridView.classList.add('text-gray-600', 'hover:bg-gray-100');
+                
+                suppliersGrid.classList.add('hidden');
+                suppliersList.classList.remove('hidden');
+                
+                // Load suppliers in table format
+                loadSuppliersTable();
+            }
+        }
+        
+        // Load suppliers in table format
+        function loadSuppliersTable() {
+            const tableBody = document.getElementById('suppliers-table-body');
+            tableBody.innerHTML = '';
+            
+            suppliers.forEach(supplier => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50';
+                
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-building text-purple-600"></i>
+                            </div>
+                            <div class="ml-4">
+                                <div class="text-sm font-medium text-gray-900">${supplier.name}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">${supplier.contact_person}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap mobile-hidden">
+                        <div class="text-sm text-gray-900">${supplier.phone}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap mobile-hidden">
+                        <div class="text-sm text-gray-900">${supplier.email}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${supplier.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                            ${supplier.status || 'active'}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div class="flex justify-end space-x-2">
+                            <button onclick="whatsappSupplier('${supplier.phone || supplier.whatsapp}')" class="text-green-600 hover:text-green-900">
+                                <i class="fab fa-whatsapp"></i>
+                            </button>
+                            <button onclick="editSupplier(${supplier.id})" class="text-yellow-600 hover:text-yellow-900">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="deleteSupplier(${supplier.id})" class="text-red-600 hover:text-red-900">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                
+                tableBody.appendChild(row);
+            });
+        }
+        
+        // WhatsApp supplier function
+        function whatsappSupplier(phone) {
+            if (!phone) {
+                showAlert('No phone number available for WhatsApp', 'error');
+                return;
+            }
+            
+            // Clean phone number - remove spaces, dashes, and other non-numeric characters except +
+            let cleanPhone = phone.replace(/[^\d+]/g, '');
+            
+            // Ensure phone number starts with country code
+            if (!cleanPhone.startsWith('+')) {
+                // Assume Indonesian number if no country code
+                if (cleanPhone.startsWith('0')) {
+                    cleanPhone = '+62' + cleanPhone.substring(1);
+                } else {
+                    cleanPhone = '+62' + cleanPhone;
+                }
+            }
+            
+            // Open WhatsApp Web
+            const whatsappUrl = `https://wa.me/${cleanPhone}`;
+            window.open(whatsappUrl, '_blank');
+        }
         
         // Call supplier function
         function callSupplier(phone) {

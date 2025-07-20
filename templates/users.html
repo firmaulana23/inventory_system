@@ -6,6 +6,86 @@
     <title>User Management - Inventory System</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Enhanced mobile responsiveness */
+        @media (max-width: 768px) {
+            .container {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+            
+            /* Improve table responsiveness */
+            .table-container {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            /* Hide less important columns on mobile */
+            .mobile-hidden {
+                display: none;
+            }
+            
+            /* Adjust button sizes for touch */
+            button {
+                min-height: 44px;
+                min-width: 44px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            /* Smaller text on mobile */
+            .text-2xl {
+                font-size: 1.5rem;
+            }
+            
+            /* Compact navigation */
+            nav .container {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+        }
+        
+        /* Focus states for accessibility */
+        input:focus, select:focus, button:focus {
+            outline: 2px solid #3b82f6;
+            outline-offset: 2px;
+        }
+        
+        /* Loading animation */
+        .animate-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        /* Enhanced modal transitions */
+        .modal-enter {
+            animation: modalEnter 0.3s ease-out;
+        }
+        
+        @keyframes modalEnter {
+            from {
+                opacity: 0;
+                transform: scale(0.9) translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+        
+        /* Status badge styles */
+        .status-badge {
+            transition: all 0.2s ease-in-out;
+        }
+        
+        .status-badge:hover {
+            transform: scale(1.05);
+        }
+    </style>
 </head>
 <body class="bg-gray-100">
     <nav class="bg-blue-900 text-white p-4">
@@ -59,138 +139,639 @@
         </div>
     </nav>
     <div class="container mx-auto p-6">
-        <div class="flex justify-between items-center mb-4">
-            <h2 class="text-2xl font-bold">User List</h2>
-            <button onclick="showAddUserModal()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">
-                <i class="fas fa-plus mr-1"></i>Add User
-            </button>
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-4">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-900">User Management</h2>
+                <p class="text-gray-600 text-sm mt-1">Manage system users, roles, and permissions</p>
+            </div>
+            <div class="flex items-center space-x-3">
+                <button onclick="refreshUsers()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg transition-colors duration-200">
+                    <i class="fas fa-sync-alt mr-2"></i>Refresh
+                </button>
+                <button onclick="showAddUserModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200">
+                    <i class="fas fa-plus mr-2"></i>Add User
+                </button>
+            </div>
         </div>
-        <div class="bg-white rounded-lg shadow p-4 overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead>
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="user-table-body">
-                    <!-- User rows will be injected here by JS -->
-                </tbody>
-            </table>
+        
+        <!-- Enhanced Search and Filters -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+            <div class="p-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-search text-gray-400"></i>
+                        </div>
+                        <input type="text" id="search-filter" 
+                               placeholder="Search by name or email..." 
+                               onkeyup="filterUsers()" 
+                               class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
+                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                            <button onclick="clearSearch()" id="clear-search" class="text-gray-400 hover:text-gray-600 hidden">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <select id="role-filter" onchange="filterUsers()" 
+                                class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
+                            <option value="">All Roles</option>
+                            <option value="admin">👑 Admin</option>
+                            <option value="manager">🏢 Manager</option>
+                            <option value="employee">👤 Employee</option>
+                        </select>
+                    </div>
+                    
+                    <div class="flex space-x-2">
+                        <button onclick="filterUsers()" 
+                                class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200">
+                            <i class="fas fa-filter mr-2"></i>Filter
+                        </button>
+                        <button onclick="clearFilters()" 
+                                class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors duration-200">
+                            <i class="fas fa-times mr-2"></i>Clear
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="mt-4 flex items-center justify-between text-sm text-gray-600">
+                    <span id="user-count">0 users found</span>
+                    <span id="filter-status" class="hidden">Filters active</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Enhanced User Table -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <!-- Table Header -->
+            <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                <h3 class="text-lg font-medium text-gray-900">Users</h3>
+            </div>
+            
+            <!-- Loading State -->
+            <div id="table-loading" class="hidden flex items-center justify-center py-12">
+                <div class="text-center">
+                    <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-3"></div>
+                    <p class="text-gray-600">Loading users...</p>
+                </div>
+            </div>
+            
+            <!-- Table Container -->
+            <div id="table-container" class="overflow-x-auto table-container">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <div class="flex items-center">
+                                    <i class="fas fa-hashtag mr-2"></i>#
+                                </div>
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <div class="flex items-center">
+                                    <i class="fas fa-user mr-2"></i>User
+                                </div>
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider mobile-hidden">
+                                <div class="flex items-center">
+                                    <i class="fas fa-envelope mr-2"></i>Email
+                                </div>
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <div class="flex items-center">
+                                    <i class="fas fa-user-tag mr-2"></i>Role
+                                </div>
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <div class="flex items-center">
+                                    <i class="fas fa-clock mr-2"></i>Status
+                                </div>
+                            </th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Actions
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="user-table-body" class="bg-white divide-y divide-gray-200">
+                        <!-- User rows will be injected here by JS -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Empty State -->
+            <div id="empty-state" class="hidden text-center py-12">
+                <div class="text-gray-400 mb-4">
+                    <i class="fas fa-users text-6xl"></i>
+                </div>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">No users found</h3>
+                <p class="text-gray-600 mb-6">Try adjusting your search criteria or add a new user.</p>
+                <button onclick="showAddUserModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors duration-200">
+                    <i class="fas fa-plus mr-2"></i>Add First User
+                </button>
+            </div>
         </div>
     </div>
-    <!-- Add/Edit User Modal (hidden by default) -->
-    <div id="user-modal" class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center hidden">
-        <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
-            <h3 id="modal-title" class="text-xl font-bold mb-4">Add User</h3>
-            <form id="user-form" class="space-y-4">
+    <!-- Enhanced Add/Edit User Modal -->
+    <div id="user-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 hidden">
+        <div class="relative top-20 mx-auto p-6 border w-full max-w-2xl shadow-lg rounded-lg bg-white modal-enter">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h3 id="modal-title" class="text-xl font-bold text-gray-800">Add User</h3>
+                    <p class="text-sm text-gray-600 mt-1">Create a new user account for the system</p>
+                </div>
+                <button onclick="hideUserModal()" class="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <!-- Success/Error Messages -->
+            <div id="modal-message" class="hidden mb-4 p-4 rounded-lg">
+                <div class="flex items-center">
+                    <i id="modal-message-icon" class="mr-2"></i>
+                    <span id="modal-message-text"></span>
+                </div>
+            </div>
+            
+            <form id="user-form" class="space-y-6">
                 <input type="hidden" id="user-id">
-                <div>
-                    <label for="user-name" class="block text-sm font-medium text-gray-700">Name</label>
-                    <input id="user-name" name="name" type="text" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                
+                <!-- User Information Section -->
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h4 class="text-md font-medium text-gray-800 mb-3">
+                        <i class="fas fa-user mr-2"></i>User Information
+                    </h4>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="user-name" class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-user mr-1"></i>Full Name <span class="text-red-500">*</span>
+                            </label>
+                            <input id="user-name" name="name" type="text" required 
+                                   placeholder="Enter full name..."
+                                   class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
+                            <p class="text-xs text-gray-500 mt-1">Enter the user's full name</p>
+                        </div>
+                        
+                        <div>
+                            <label for="user-email" class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-envelope mr-1"></i>Email Address <span class="text-red-500">*</span>
+                            </label>
+                            <input id="user-email" name="email" type="email" required 
+                                   placeholder="user@example.com"
+                                   class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
+                            <p class="text-xs text-gray-500 mt-1">Must be a valid email address</p>
+                        </div>
+                    </div>
                 </div>
-                <div>
-                    <label for="user-email" class="block text-sm font-medium text-gray-700">Email</label>
-                    <input id="user-email" name="email" type="email" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                
+                <!-- Role and Permissions Section -->
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h4 class="text-md font-medium text-gray-800 mb-3">
+                        <i class="fas fa-user-tag mr-2"></i>Role and Permissions
+                    </h4>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="user-role" class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-shield-alt mr-1"></i>User Role <span class="text-red-500">*</span>
+                            </label>
+                            <select id="user-role" name="role" required 
+                                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">\n                                <option value="">Select Role...</option>
+                                <option value="admin">👑 Admin - Full system access</option>
+                                <option value="manager">🏢 Manager - Department management</option>
+                                <option value="employee">👤 Employee - Basic access</option>
+                            </select>
+                            <p class="text-xs text-gray-500 mt-1">Role determines system permissions</p>
+                        </div>
+                        
+                        <div>
+                            <label for="user-department" class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-building mr-1"></i>Department
+                            </label>
+                            <select id="user-department" name="department" 
+                                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
+                                <option value="">Select Department...</option>
+                                <option value="sales">💼 Sales</option>
+                                <option value="inventory">📦 Inventory</option>
+                                <option value="finance">💰 Finance</option>
+                                <option value="hr">👥 Human Resources</option>
+                                <option value="it">💻 IT Support</option>
+                            </select>
+                            <p class="text-xs text-gray-500 mt-1">Optional department assignment</p>
+                        </div>
+                    </div>
                 </div>
-                <div>
-                    <label for="user-role" class="block text-sm font-medium text-gray-700">Role</label>
-                    <select id="user-role" name="role" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
-                        <option value="admin">Admin</option>
-                        <option value="manager">Manager</option>
-                        <option value="employee">Employee</option>
-                    </select>
+                
+                <!-- Password Section (for new users) -->
+                <div id="password-section" class="bg-gray-50 p-4 rounded-lg">
+                    <h4 class="text-md font-medium text-gray-800 mb-3">
+                        <i class="fas fa-lock mr-2"></i>Security Settings
+                    </h4>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="user-password" class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-key mr-1"></i>Password <span class="text-red-500" id="password-required">*</span>
+                            </label>
+                            <div class="relative">
+                                <input id="user-password" name="password" type="password" 
+                                       placeholder="Enter password..."
+                                       class="w-full p-3 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
+                                <button type="button" onclick="togglePassword('user-password')" 
+                                        class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600">
+                                    <i class="fas fa-eye" id="password-toggle-icon"></i>
+                                </button>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">Minimum 6 characters required</p>
+                        </div>
+                        
+                        <div>
+                            <label for="user-password-confirm" class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-check mr-1"></i>Confirm Password <span class="text-red-500" id="confirm-required">*</span>
+                            </label>
+                            <input id="user-password-confirm" name="password_confirm" type="password" 
+                                   placeholder="Confirm password..."
+                                   class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
+                            <p class="text-xs text-gray-500 mt-1">Must match the password above</p>
+                        </div>
+                    </div>
                 </div>
-                <div class="flex justify-end space-x-2">
-                    <button type="button" onclick="hideUserModal()" class="bg-gray-300 px-4 py-2 rounded">Cancel</button>
-                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">Save</button>
+                
+                <!-- Form Actions -->
+                <div class="flex flex-col sm:flex-row sm:justify-end sm:space-x-3 space-y-2 sm:space-y-0 pt-6 border-t border-gray-200">
+                    <button type="button" onclick="hideUserModal()" 
+                            class="w-full sm:w-auto bg-gray-100 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-200 transition-colors duration-200 font-medium">
+                        <i class="fas fa-times mr-2"></i>Cancel
+                    </button>
+                    <button type="submit" id="submit-btn"
+                            class="w-full sm:w-auto bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium flex items-center justify-center">
+                        <i class="fas fa-save mr-2"></i>
+                        <span id="submit-text">Save User</span>
+                        <div id="submit-loading" class="hidden ml-2">
+                            <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        </div>
+                    </button>
                 </div>
             </form>
         </div>
     </div>
     <script>
-        // Fetch and display users
+        // Global variables
+        let allUsers = [];
+        let filteredUsers = [];
+        let isLoading = false;
+        
+        // Enhanced fetch and display users
         async function fetchUsers() {
-            const token = localStorage.getItem('token');
-            const res = await fetch('/api/v1/admin/users', { 
-                credentials: 'include',
-                headers: {
-                    'Authorization': `Bearer ${token}`
+            try {
+                showLoading();
+                const token = localStorage.getItem('token');
+                
+                if (!token) {
+                    window.location.href = '/login.html';
+                    return;
                 }
-            });
-            const data = await res.json();
+                
+                const res = await fetch('/api/v1/admin/users', { 
+                    credentials: 'include',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (!res.ok) {
+                    if (res.status === 401) {
+                        localStorage.removeItem('token');
+                        localStorage.removeItem('user');
+                        window.location.href = '/login.html';
+                        return;
+                    } else if (res.status === 403) {
+                        showMessage('Access denied. You do not have permission to view users.', 'error');
+                        return;
+                    }
+                    throw new Error('Failed to fetch users');
+                }
+                
+                const data = await res.json();
+                allUsers = data || [];
+                filteredUsers = [...allUsers];
+                displayUsers(filteredUsers);
+                updateUserCount();
+            } catch (error) {
+                console.error('Error fetching users:', error);
+                showMessage('Failed to load users. Please try again.', 'error');
+                showEmptyState();
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        // Enhanced display users function
+        function displayUsers(users) {
+            hideLoading();
             const tbody = document.getElementById('user-table-body');
             tbody.innerHTML = '';
-            (data || []).forEach((u, i) => {
-                tbody.innerHTML += `
-                    <tr>
-                        <td class="px-6 py-4 whitespace-nowrap">${i+1}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">${u.name}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">${u.email}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">${u.role}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <button onclick='editUser(${JSON.stringify(u)})' class="text-blue-600 hover:underline mr-2">Edit</button>
-                            <button onclick='deleteUser(${u.id})' class="text-red-600 hover:underline">Delete</button>
-                        </td>
-                    </tr>`;
+            
+            if (users.length === 0) {
+                showEmptyState();
+                return;
+            }
+            
+            hideEmptyState();
+            
+            users.forEach((user, index) => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50 transition-colors duration-150';
+                
+                const roleInfo = getRoleInfo(user.role);
+                const statusBadge = getStatusBadge(user.status || 'active');
+                
+                row.innerHTML = `
+                    <td class="px-6 py-4 text-sm font-medium text-gray-900">${index + 1}</td>
+                    <td class="px-6 py-4">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 h-10 w-10">
+                                <div class="h-10 w-10 rounded-full bg-gradient-to-r ${roleInfo.gradient} flex items-center justify-center">
+                                    <span class="text-white font-medium text-sm">${user.name.charAt(0).toUpperCase()}</span>
+                                </div>
+                            </div>
+                            <div class="ml-4">
+                                <div class="text-sm font-medium text-gray-900">${user.name}</div>
+                                <div class="text-sm text-gray-500 mobile-hidden">${user.email}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 text-sm text-gray-900 mobile-hidden">${user.email}</td>
+                    <td class="px-6 py-4">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${roleInfo.badge}">
+                            ${roleInfo.icon} ${roleInfo.label}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4">${statusBadge}</td>
+                    <td class="px-6 py-4 text-right">
+                        <div class="flex items-center justify-end space-x-2">
+                            <button onclick='viewUser(${JSON.stringify(user)})' 
+                                    class="inline-flex items-center px-2.5 py-1.5 text-xs font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 transition-colors duration-150"
+                                    title="View Details">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button onclick='editUser(${JSON.stringify(user)})' 
+                                    class="inline-flex items-center px-2.5 py-1.5 text-xs font-medium rounded-md text-green-700 bg-green-100 hover:bg-green-200 transition-colors duration-150"
+                                    title="Edit User">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            ${user.id !== getCurrentUserId() ? `
+                                <button onclick='deleteUser(${user.id}, "${user.name}")' 
+                                        class="inline-flex items-center px-2.5 py-1.5 text-xs font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 transition-colors duration-150"
+                                        title="Delete User">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            ` : '<span class="text-xs text-gray-400">Current User</span>'}
+                        </div>
+                    </td>
+                `;
+                
+                // Add row animation
+                row.style.opacity = '0';
+                row.style.transform = 'translateY(10px)';
+                tbody.appendChild(row);
+                
+                // Trigger animation
+                setTimeout(() => {
+                    row.style.transition = 'all 0.3s ease-out';
+                    row.style.opacity = '1';
+                    row.style.transform = 'translateY(0)';
+                }, index * 50);
             });
         }
-        fetchUsers();
 
-        // Modal logic
+        // Helper functions
+        function getRoleInfo(role) {
+            const roles = {
+                'admin': {
+                    label: 'Admin',
+                    icon: '👑',
+                    badge: 'bg-purple-100 text-purple-800',
+                    gradient: 'from-purple-400 to-purple-600'
+                },
+                'manager': {
+                    label: 'Manager',
+                    icon: '🏢',
+                    badge: 'bg-blue-100 text-blue-800',
+                    gradient: 'from-blue-400 to-blue-600'
+                },
+                'employee': {
+                    label: 'Employee',
+                    icon: '👤',
+                    badge: 'bg-green-100 text-green-800',
+                    gradient: 'from-green-400 to-green-600'
+                }
+            };
+            return roles[role] || roles['employee'];
+        }
+        
+        function getStatusBadge(status) {
+            const badges = {
+                'active': '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 status-badge">✅ Active</span>',
+                'inactive': '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 status-badge">❌ Inactive</span>',
+                'pending': '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 status-badge">⏳ Pending</span>'
+            };
+            return badges[status] || badges['active'];
+        }
+        
+        function getCurrentUserId() {
+            const userInfo = JSON.parse(localStorage.getItem('user') || '{}');
+            return userInfo.id;
+        }
+        
+        // Enhanced modal functions
         function showAddUserModal() {
-            document.getElementById('modal-title').innerText = 'Add User';
+            document.getElementById('modal-title').innerText = 'Add New User';
+            document.querySelector('#modal-title').nextElementSibling.innerText = 'Create a new user account for the system';
             document.getElementById('user-form').reset();
             document.getElementById('user-id').value = '';
+            
+            // Show password fields for new users
+            document.getElementById('password-section').style.display = 'block';
+            document.getElementById('user-password').required = true;
+            document.getElementById('user-password-confirm').required = true;
+            document.getElementById('password-required').style.display = 'inline';
+            document.getElementById('confirm-required').style.display = 'inline';
+            
+            document.getElementById('submit-text').innerText = 'Create User';
+            hideMessage();
             document.getElementById('user-modal').classList.remove('hidden');
+            
+            // Focus on first input
+            setTimeout(() => {
+                document.getElementById('user-name').focus();
+            }, 100);
         }
+        
         function hideUserModal() {
             document.getElementById('user-modal').classList.add('hidden');
+            hideMessage();
         }
-        function editUser(u) {
+        
+        function editUser(user) {
             document.getElementById('modal-title').innerText = 'Edit User';
-            document.getElementById('user-id').value = u.id;
-            document.getElementById('user-name').value = u.name;
-            document.getElementById('user-email').value = u.email;
-            document.getElementById('user-role').value = u.role;
+            document.querySelector('#modal-title').nextElementSibling.innerText = 'Update user information and permissions';
+            document.getElementById('user-id').value = user.id;
+            document.getElementById('user-name').value = user.name;
+            document.getElementById('user-email').value = user.email;
+            document.getElementById('user-role').value = user.role;
+            document.getElementById('user-department').value = user.department || '';
+            
+            // Hide password fields for editing
+            document.getElementById('password-section').style.display = 'none';
+            document.getElementById('user-password').required = false;
+            document.getElementById('user-password-confirm').required = false;
+            
+            document.getElementById('submit-text').innerText = 'Update User';
+            hideMessage();
             document.getElementById('user-modal').classList.remove('hidden');
         }
-        // Add/Edit user submit
+        
+        function viewUser(user) {
+            // Create a simple view modal
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50';
+            modal.innerHTML = `
+                <div class="relative top-20 mx-auto p-6 border w-full max-w-lg shadow-lg rounded-lg bg-white">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-bold text-gray-800">User Details</h3>
+                        <button onclick="this.parentElement.parentElement.parentElement.remove()" class="text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="space-y-3">
+                        <div><strong>Name:</strong> ${user.name}</div>
+                        <div><strong>Email:</strong> ${user.email}</div>
+                        <div><strong>Role:</strong> ${getRoleInfo(user.role).icon} ${getRoleInfo(user.role).label}</div>
+                        <div><strong>Department:</strong> ${user.department || 'Not assigned'}</div>
+                        <div><strong>Status:</strong> ${getStatusBadge(user.status || 'active')}</div>
+                        <div><strong>Created:</strong> ${user.created_at ? new Date(user.created_at).toLocaleDateString() : 'Unknown'}</div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+        // Enhanced form submission
         document.getElementById('user-form').onsubmit = async function(e) {
             e.preventDefault();
+            
+            // Validate passwords for new users
             const id = document.getElementById('user-id').value;
-            const payload = {
-                name: document.getElementById('user-name').value,
-                email: document.getElementById('user-email').value,
-                role: document.getElementById('user-role').value
-            };
-            let url = '/api/v1/admin/users', method = 'POST';
-            if (id) {
-                url += '/' + id;
-                method = 'PUT';
+            const password = document.getElementById('user-password').value;
+            const confirmPassword = document.getElementById('user-password-confirm').value;
+            
+            if (!id) { // New user
+                if (!password || password.length < 6) {
+                    showMessage('Password must be at least 6 characters long.', 'error');
+                    return;
+                }
+                
+                if (password !== confirmPassword) {
+                    showMessage('Passwords do not match.', 'error');
+                    return;
+                }
             }
-            const res = await fetch(url, {
-                method,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload),
-                credentials: 'include'
-            });
-            if (res.ok) {
-                hideUserModal();
-                fetchUsers();
-            } else {
-                alert('Failed to save user');
+            
+            const submitBtn = document.getElementById('submit-btn');
+            const submitText = document.getElementById('submit-text');
+            const submitLoading = document.getElementById('submit-loading');
+            
+            // Show loading state
+            submitBtn.disabled = true;
+            submitText.style.display = 'none';
+            submitLoading.classList.remove('hidden');
+            
+            try {
+                const payload = {
+                    name: document.getElementById('user-name').value.trim(),
+                    email: document.getElementById('user-email').value.trim(),
+                    role: document.getElementById('user-role').value,
+                    department: document.getElementById('user-department').value
+                };
+                
+                // Add password for new users
+                if (!id && password) {
+                    payload.password = password;
+                }
+                
+                let url = '/api/v1/admin/users';
+                let method = 'POST';
+                if (id) {
+                    url += '/' + id;
+                    method = 'PUT';
+                }
+                
+                const token = localStorage.getItem('token');
+                const res = await fetch(url, {
+                    method,
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(payload),
+                    credentials: 'include'
+                });
+                
+                if (res.ok) {
+                    const successMessage = id ? 'User updated successfully!' : 'User created successfully!';
+                    showMessage(successMessage, 'success');
+                    
+                    setTimeout(() => {
+                        hideUserModal();
+                        fetchUsers();
+                    }, 1500);
+                } else {
+                    const errorData = await res.json();
+                    const errorMessage = errorData.error || errorData.message || 'Failed to save user';
+                    showMessage(errorMessage, 'error');
+                }
+            } catch (error) {
+                console.error('Error saving user:', error);
+                showMessage('Network error. Please try again.', 'error');
+            } finally {
+                // Reset loading state
+                submitBtn.disabled = false;
+                submitText.style.display = 'inline';
+                submitLoading.classList.add('hidden');
             }
         };
-        // Delete user
-        async function deleteUser(id) {
-            if (!confirm('Delete this user?')) return;
-            const res = await fetch('/api/v1/admin/users/' + id, { method: 'DELETE', credentials: 'include' });
-            if (res.ok) fetchUsers();
-            else alert('Failed to delete user');
+        // Enhanced delete user
+        async function deleteUser(id, name) {
+            if (!confirm(`Are you sure you want to delete user "${name}"?\n\nThis action cannot be undone and will:\n- Remove the user from the system\n- Revoke all access permissions\n- Clear user sessions`)) {
+                return;
+            }
+            
+            try {
+                const token = localStorage.getItem('token');
+                const res = await fetch('/api/v1/admin/users/' + id, { 
+                    method: 'DELETE', 
+                    credentials: 'include',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (res.ok) {
+                    showMessage(`User "${name}" deleted successfully!`, 'success');
+                    fetchUsers();
+                } else if (res.status === 403) {
+                    showMessage('Access denied. You cannot delete this user.', 'error');
+                } else if (res.status === 404) {
+                    showMessage('User not found. It may have already been deleted.', 'error');
+                    fetchUsers(); // Refresh to update the list
+                } else {
+                    const errorData = await res.json();
+                    showMessage(errorData.error || 'Failed to delete user', 'error');
+                }
+            } catch (error) {
+                console.error('Error deleting user:', error);
+                showMessage('Network error. Please try again.', 'error');
+            }
         }
 
         // Initialize burger menu functionality
@@ -228,6 +809,123 @@
             window.location.href = '/login.html';
         }
 
+        // Enhanced utility functions
+        function showLoading() {
+            isLoading = true;
+            document.getElementById('table-loading').classList.remove('hidden');
+            document.getElementById('table-container').classList.add('hidden');
+            document.getElementById('empty-state').classList.add('hidden');
+        }
+        
+        function hideLoading() {
+            isLoading = false;
+            document.getElementById('table-loading').classList.add('hidden');
+            document.getElementById('table-container').classList.remove('hidden');
+        }
+        
+        function showEmptyState() {
+            document.getElementById('table-container').classList.add('hidden');
+            document.getElementById('empty-state').classList.remove('hidden');
+        }
+        
+        function hideEmptyState() {
+            document.getElementById('empty-state').classList.add('hidden');
+        }
+        
+        function showMessage(message, type) {
+            const messageDiv = document.getElementById('modal-message');
+            const messageIcon = document.getElementById('modal-message-icon');
+            const messageText = document.getElementById('modal-message-text');
+            
+            messageText.textContent = message;
+            
+            if (type === 'success') {
+                messageDiv.className = 'mb-4 p-4 rounded-lg bg-green-100 text-green-800';
+                messageIcon.className = 'fas fa-check-circle mr-2';
+            } else if (type === 'error') {
+                messageDiv.className = 'mb-4 p-4 rounded-lg bg-red-100 text-red-800';
+                messageIcon.className = 'fas fa-exclamation-circle mr-2';
+            }
+            
+            messageDiv.classList.remove('hidden');
+        }
+        
+        function hideMessage() {
+            document.getElementById('modal-message').classList.add('hidden');
+        }
+        
+        function updateUserCount() {
+            const count = filteredUsers.length;
+            const totalCount = allUsers.length;
+            const countText = count === totalCount ? 
+                `${count} user${count !== 1 ? 's' : ''} found` : 
+                `${count} of ${totalCount} users shown`;
+            document.getElementById('user-count').textContent = countText;
+        }
+        
+        // Enhanced search and filter functions
+        function filterUsers() {
+            const searchTerm = document.getElementById('search-filter').value.toLowerCase().trim();
+            const roleFilter = document.getElementById('role-filter').value;
+            const clearButton = document.getElementById('clear-search');
+            
+            // Show/hide clear button
+            if (searchTerm.length > 0) {
+                clearButton.classList.remove('hidden');
+            } else {
+                clearButton.classList.add('hidden');
+            }
+            
+            filteredUsers = allUsers.filter(user => {
+                const matchesSearch = !searchTerm || 
+                    user.name.toLowerCase().includes(searchTerm) || 
+                    user.email.toLowerCase().includes(searchTerm);
+                const matchesRole = !roleFilter || user.role === roleFilter;
+                return matchesSearch && matchesRole;
+            });
+            
+            displayUsers(filteredUsers);
+            updateUserCount();
+            
+            // Show filter status
+            const filterStatus = document.getElementById('filter-status');
+            if (searchTerm || roleFilter) {
+                filterStatus.classList.remove('hidden');
+            } else {
+                filterStatus.classList.add('hidden');
+            }
+        }
+        
+        function clearSearch() {
+            document.getElementById('search-filter').value = '';
+            document.getElementById('clear-search').classList.add('hidden');
+            filterUsers();
+        }
+        
+        function clearFilters() {
+            document.getElementById('search-filter').value = '';
+            document.getElementById('role-filter').value = '';
+            document.getElementById('clear-search').classList.add('hidden');
+            filterUsers();
+        }
+        
+        function refreshUsers() {
+            fetchUsers();
+        }
+        
+        function togglePassword(fieldId) {
+            const field = document.getElementById(fieldId);
+            const icon = document.getElementById('password-toggle-icon');
+            
+            if (field.type === 'password') {
+                field.type = 'text';
+                icon.className = 'fas fa-eye-slash';
+            } else {
+                field.type = 'password';
+                icon.className = 'fas fa-eye';
+            }
+        }
+        
         // Initialize everything when page loads
         document.addEventListener('DOMContentLoaded', function() {
             // Set user name if available
@@ -238,7 +936,13 @@
             
             // Initialize burger menu
             initializeBurgerMenu();
+            
+            // Load users
+            fetchUsers();
         });
+        
+        // Initialize on page load
+        fetchUsers();
     </script>
 </body>
 </html>

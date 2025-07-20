@@ -1901,12 +1901,6 @@
             const totalPayments = payment_history.reduce((sum, payment) => sum + (payment.amount || 0), 0);
             
             const content = `
-                <div class="px-4 py-3 bg-gray-50 border-b">
-                    <div class="flex justify-between items-center">
-                        <h4 class="font-medium text-gray-800">Payment Records</h4>
-                        <span class="text-sm text-gray-600">Total: <span class="font-bold text-green-600">$${totalPayments.toFixed(2)}</span></span>
-                    </div>
-                </div>
                 <div class="overflow-x-auto">
                     <table class="min-w-full table-auto">
                         <thead>

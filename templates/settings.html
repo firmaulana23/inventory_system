@@ -3,15 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Settings - Inventory System</title>
+    <title>System Settings - Inventory System</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Enhanced mobile responsiveness */
+        @media (max-width: 768px) {
+            .container {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+            
+            .grid.md\:grid-cols-2 {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .mobile-hidden {
+                display: none;
+            }
+            
+            button {
+                min-height: 44px;
+                min-width: 44px;
+            }
+        }
+        
+        /* Focus states for accessibility */
+        input:focus, select:focus, button:focus, textarea:focus {
+            outline: 2px solid #8b5cf6;
+            outline-offset: 2px;
+        }
+        
+        /* Card hover effects */
+        .settings-card {
+            transition: all 0.3s ease;
+        }
+        
+        .settings-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Button animations */
+        .btn-hover {
+            transition: all 0.2s ease;
+        }
+        
+        .btn-hover:hover {
+            transform: scale(1.02);
+        }
+        
+        /* Custom scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
 </head>
 <body class="bg-gray-100">
-    <nav class="bg-gray-800 text-white p-4">
+    <nav class="bg-purple-800 text-white p-4">
         <div class="container mx-auto flex justify-between items-center">
             <h1 class="text-xl font-bold">
-                <i class="fas fa-cog mr-2"></i>Settings
+                <i class="fas fa-cog mr-2"></i>System Settings
             </h1>
             <div class="flex items-center space-x-4">
                 <span id="user-name" class="text-sm"></span>
@@ -30,7 +96,7 @@
                                 Dashboard
                             </a>
                             <a href="/purchase_orders" class="flex items-center px-4 py-2 text-gray-800 hover:bg-gray-100">
-                                <i class="fas fa-file-invoice-dollar mr-3 text-red-500"></i>
+                                <i class="fas fa-file-invoice-dollar mr-3 text-purple-500"></i>
                                 Manage Purchase
                             </a>
                             <a href="/manage_products" class="flex items-center px-4 py-2 text-gray-800 hover:bg-gray-100">
@@ -58,79 +124,257 @@
             </div>
         </div>
     </nav>
+    
     <div class="container mx-auto p-6">
-        <h2 class="text-2xl font-bold mb-6">System Settings</h2>
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-4">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-900">System Configuration</h2>
+                <p class="text-gray-600 text-sm mt-1">Manage your system settings and preferences</p>
+            </div>
+            <div class="flex items-center space-x-3">
+                <button onclick="resetSettings()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg transition-colors duration-200">
+                    <i class="fas fa-undo mr-2"></i>Reset
+                </button>
+                <button onclick="saveAllSettings()" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors duration-200">
+                    <i class="fas fa-save mr-2"></i>Save All
+                </button>
+            </div>
+        </div>
         
-        <!-- Logo Settings Section -->
-        <div class="bg-white rounded-lg shadow p-6 mb-8">
-            <h3 class="text-lg font-semibold mb-4">
-                <i class="fas fa-image mr-2"></i>Invoice Logo Settings
-            </h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Upload Company Logo</label>
-                        <input type="file" id="logo-upload" accept="image/*" 
-                               class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                               onchange="handleLogoUpload()">
-                        <p class="text-sm text-gray-500 mt-1">Recommended: PNG, JPG, or GIF. Max size: 2MB</p>
+        <!-- Settings Grid Layout -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            
+            <!-- Company Branding Section -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 settings-card">
+                <div class="flex items-center mb-6">
+                    <div class="p-3 rounded-full bg-purple-100 text-purple-600 mr-4">
+                        <i class="fas fa-palette text-xl"></i>
                     </div>
-                    <div class="flex space-x-2">
-                        <button onclick="saveLogoSettings()" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition">
-                            <i class="fas fa-save mr-2"></i>Save Logo
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900">Company Branding</h3>
+                        <p class="text-sm text-gray-600">Customize your company logo and branding</p>
+                    </div>
+                </div>
+                
+                <div class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-image mr-1"></i>Company Logo
+                        </label>
+                        <div class="flex items-center space-x-4">
+                            <div id="logo-preview" class="w-24 h-24 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-gray-50">
+                                <span class="text-gray-400 text-xs text-center">No logo</span>
+                            </div>
+                            <div class="flex-1">
+                                <input type="file" id="logo-upload" accept="image/*" 
+                                       class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200"
+                                       onchange="handleLogoUpload()">
+                                <p class="text-xs text-gray-500 mt-1">PNG, JPG, or GIF. Max 2MB</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label for="invoice-company-name" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-building mr-1"></i>Company Name
+                        </label>
+                        <input type="text" id="invoice-company-name" placeholder="Enter company name..." 
+                               class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200"
+                               value="INVENTORY SYSTEM">
+                    </div>
+                    
+                    <div class="flex space-x-3">
+                        <button onclick="saveLogoSettings()" class="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 btn-hover">
+                            <i class="fas fa-save mr-2"></i>Save
                         </button>
-                        <button onclick="removeLogo()" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition">
-                            <i class="fas fa-trash mr-2"></i>Remove Logo
+                        <button onclick="removeLogo()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors duration-200">
+                            <i class="fas fa-trash mr-1"></i>Remove
                         </button>
                     </div>
                 </div>
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Logo Preview</label>
-                        <div id="logo-preview" class="w-full h-32 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-gray-50">
-                            <span class="text-gray-400 text-sm">No logo selected</span>
-                        </div>
+            </div>
+
+            <!-- System Configuration Section -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 settings-card">
+                <div class="flex items-center mb-6">
+                    <div class="p-3 rounded-full bg-blue-100 text-blue-600 mr-4">
+                        <i class="fas fa-cog text-xl"></i>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Company Name for Invoice</label>
-                        <input type="text" id="invoice-company-name" placeholder="Enter company name for invoice..." 
-                               class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                               value="INVENTORY SYSTEM">
+                        <h3 class="text-lg font-semibold text-gray-900">System Configuration</h3>
+                        <p class="text-sm text-gray-600">Configure general system settings</p>
+                    </div>
+                </div>
+                
+                <form id="general-settings-form" class="space-y-4">
+                    <div>
+                        <label for="company-name" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-building mr-1"></i>Business Name
+                        </label>
+                        <input id="company-name" name="company_name" type="text" 
+                               placeholder="Enter your business name..."
+                               class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200">
+                    </div>
+                    
+                    <div>
+                        <label for="timezone" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-clock mr-1"></i>Timezone
+                        </label>
+                        <select id="timezone" name="timezone" 
+                                class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200">
+                            <option value="">Select Timezone</option>
+                            <option value="Asia/Jakarta">Asia/Jakarta (WIB)</option>
+                            <option value="Asia/Makassar">Asia/Makassar (WITA)</option>
+                            <option value="Asia/Jayapura">Asia/Jayapura (WIT)</option>
+                            <option value="UTC">UTC</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label for="currency" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-money-bill mr-1"></i>Default Currency
+                        </label>
+                        <select id="currency" name="currency" 
+                                class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200">
+                            <option value="">Select Currency</option>
+                            <option value="IDR">Indonesian Rupiah (IDR)</option>
+                            <option value="USD">US Dollar (USD)</option>
+                            <option value="EUR">Euro (EUR)</option>
+                            <option value="SGD">Singapore Dollar (SGD)</option>
+                        </select>
+                    </div>
+                    
+                    <button type="submit" class="w-full bg-purple-600 hover:bg-purple-700 text-white px-4 py-3 rounded-lg transition-colors duration-200 btn-hover">
+                        <i class="fas fa-save mr-2"></i>Save Settings
+                    </button>
+                </form>
+            </div>
+            
+            <!-- Notification Settings Section -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 settings-card">
+                <div class="flex items-center mb-6">
+                    <div class="p-3 rounded-full bg-orange-100 text-orange-600 mr-4">
+                        <i class="fas fa-bell text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900">Notifications</h3>
+                        <p class="text-sm text-gray-600">Manage your notification preferences</p>
+                    </div>
+                </div>
+                
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <label class="text-sm font-medium text-gray-700">Low Stock Alerts</label>
+                            <p class="text-xs text-gray-500">Get notified when products are running low</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="low-stock-alerts" class="sr-only peer">
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                        </label>
+                    </div>
+                    
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <label class="text-sm font-medium text-gray-700">Order Notifications</label>
+                            <p class="text-xs text-gray-500">Get notified about new orders</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="order-notifications" class="sr-only peer" checked>
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                        </label>
+                    </div>
+                    
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <label class="text-sm font-medium text-gray-700">Email Reports</label>
+                            <p class="text-xs text-gray-500">Receive daily/weekly email reports</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="email-reports" class="sr-only peer">
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                        </label>
+                    </div>
+                    
+                    <button onclick="saveNotificationSettings()" class="w-full bg-orange-600 hover:bg-orange-700 text-white px-4 py-3 rounded-lg transition-colors duration-200 btn-hover">
+                        <i class="fas fa-save mr-2"></i>Save Notifications
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Security Settings Section -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 settings-card">
+                <div class="flex items-center mb-6">
+                    <div class="p-3 rounded-full bg-red-100 text-red-600 mr-4">
+                        <i class="fas fa-shield-alt text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900">Security & Backup</h3>
+                        <p class="text-sm text-gray-600">Manage security and backup settings</p>
+                    </div>
+                </div>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-key mr-1"></i>Session Timeout (minutes)
+                        </label>
+                        <select id="session-timeout" 
+                                class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200">
+                            <option value="30">30 minutes</option>
+                            <option value="60" selected>1 hour</option>
+                            <option value="120">2 hours</option>
+                            <option value="240">4 hours</option>
+                        </select>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <label class="text-sm font-medium text-gray-700">Auto Backup</label>
+                                <p class="text-xs text-gray-500">Automatically backup data daily</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="auto-backup" class="sr-only peer" checked>
+                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                            </label>
+                        </div>
+                        
+                        <button onclick="createBackup()" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200">
+                            <i class="fas fa-download mr-2"></i>Create Manual Backup
+                        </button>
+                        
+                        <button onclick="saveSecuritySettings()" class="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors duration-200">
+                            <i class="fas fa-save mr-2"></i>Save Security Settings
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
-
-        <!-- General Settings Section -->
-        <div class="bg-white rounded-lg shadow p-6">
-            <h3 class="text-lg font-semibold mb-4">
-                <i class="fas fa-cog mr-2"></i>General Settings
-            </h3>
-            <form class="space-y-4">
-                <div>
-                    <label for="company-name" class="block text-sm font-medium text-gray-700">Company Name</label>
-                    <input id="company-name" name="company_name" type="text" class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
-                </div>
-                <div>
-                    <label for="timezone" class="block text-sm font-medium text-gray-700">Timezone</label>
-                    <input id="timezone" name="timezone" type="text" class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
-                </div>
-                <div>
-                    <label for="currency" class="block text-sm font-medium text-gray-700">Currency</label>
-                    <input id="currency" name="currency" type="text" class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
-                </div>
-                <div class="flex justify-end">
-                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">Save Settings</button>
-                </div>
-            </form>
-        </div>
     </div>
 
     <script>
-        // Logo handling functions
+        // Settings data
         let companyLogo = null;
         let companyName = 'INVENTORY SYSTEM';
+        let settings = {
+            company: {
+                name: '',
+                timezone: 'Asia/Jakarta',
+                currency: 'IDR'
+            },
+            notifications: {
+                lowStock: false,
+                orders: true,
+                emailReports: false
+            },
+            security: {
+                sessionTimeout: 60,
+                autoBackup: true
+            }
+        };
 
+        // Logo handling functions
         function handleLogoUpload() {
             const fileInput = document.getElementById('logo-upload');
             const file = fileInput.files[0];
@@ -138,7 +382,7 @@
             if (file) {
                 // Check file size (2MB limit)
                 if (file.size > 2 * 1024 * 1024) {
-                    alert('File size must be less than 2MB');
+                    showAlert('File size must be less than 2MB', 'error');
                     fileInput.value = '';
                     return;
                 }
@@ -154,7 +398,7 @@
 
         function showLogoPreview(logoData) {
             const preview = document.getElementById('logo-preview');
-            preview.innerHTML = `<img src="${logoData}" alt="Company Logo" class="max-w-full max-h-full object-contain rounded">`;
+            preview.innerHTML = `<img src="${logoData}" alt="Company Logo" class="w-full h-full object-contain rounded">`;
         }
 
         function saveLogoSettings() {
@@ -165,15 +409,15 @@
             localStorage.setItem('companyLogo', companyLogo);
             localStorage.setItem('companyName', companyName);
             
-            alert('Logo settings saved successfully!');
+            showAlert('Logo settings saved successfully!', 'success');
         }
 
         function removeLogo() {
             companyLogo = null;
-            document.getElementById('logo-preview').innerHTML = '<span class="text-gray-400 text-sm">No logo selected</span>';
+            document.getElementById('logo-preview').innerHTML = '<span class="text-gray-400 text-xs text-center">No logo</span>';
             document.getElementById('logo-upload').value = '';
             localStorage.removeItem('companyLogo');
-            alert('Logo removed successfully!');
+            showAlert('Logo removed successfully!', 'success');
         }
 
         function loadLogoSettings() {
@@ -191,10 +435,189 @@
             }
         }
 
+        // General settings functions
+        function loadGeneralSettings() {
+            const savedSettings = localStorage.getItem('systemSettings');
+            if (savedSettings) {
+                settings = { ...settings, ...JSON.parse(savedSettings) };
+            }
+            
+            // Update form fields
+            document.getElementById('company-name').value = settings.company.name;
+            document.getElementById('timezone').value = settings.company.timezone;
+            document.getElementById('currency').value = settings.company.currency;
+        }
+
+        // Notification settings functions
+        function loadNotificationSettings() {
+            document.getElementById('low-stock-alerts').checked = settings.notifications.lowStock;
+            document.getElementById('order-notifications').checked = settings.notifications.orders;
+            document.getElementById('email-reports').checked = settings.notifications.emailReports;
+        }
+
+        function saveNotificationSettings() {
+            settings.notifications = {
+                lowStock: document.getElementById('low-stock-alerts').checked,
+                orders: document.getElementById('order-notifications').checked,
+                emailReports: document.getElementById('email-reports').checked
+            };
+            
+            localStorage.setItem('systemSettings', JSON.stringify(settings));
+            showAlert('Notification settings saved successfully!', 'success');
+        }
+
+        // Security settings functions
+        function loadSecuritySettings() {
+            document.getElementById('session-timeout').value = settings.security.sessionTimeout;
+            document.getElementById('auto-backup').checked = settings.security.autoBackup;
+        }
+
+        function saveSecuritySettings() {
+            settings.security = {
+                sessionTimeout: parseInt(document.getElementById('session-timeout').value),
+                autoBackup: document.getElementById('auto-backup').checked
+            };
+            
+            localStorage.setItem('systemSettings', JSON.stringify(settings));
+            showAlert('Security settings saved successfully!', 'success');
+        }
+
+        function createBackup() {
+            // Simulate backup creation
+            const backupData = {
+                settings: settings,
+                companyLogo: companyLogo,
+                companyName: companyName,
+                timestamp: new Date().toISOString()
+            };
+            
+            const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `inventory_backup_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            
+            showAlert('Backup created and downloaded successfully!', 'success');
+        }
+
+        // Global settings functions
+        function saveAllSettings() {
+            // Save general settings
+            settings.company = {
+                name: document.getElementById('company-name').value,
+                timezone: document.getElementById('timezone').value,
+                currency: document.getElementById('currency').value
+            };
+            
+            // Save notification settings
+            settings.notifications = {
+                lowStock: document.getElementById('low-stock-alerts').checked,
+                orders: document.getElementById('order-notifications').checked,
+                emailReports: document.getElementById('email-reports').checked
+            };
+            
+            // Save security settings
+            settings.security = {
+                sessionTimeout: parseInt(document.getElementById('session-timeout').value),
+                autoBackup: document.getElementById('auto-backup').checked
+            };
+            
+            // Save logo settings
+            const companyNameInput = document.getElementById('invoice-company-name');
+            companyName = companyNameInput.value || 'INVENTORY SYSTEM';
+            
+            // Save to localStorage
+            localStorage.setItem('systemSettings', JSON.stringify(settings));
+            localStorage.setItem('companyLogo', companyLogo);
+            localStorage.setItem('companyName', companyName);
+            
+            showAlert('All settings saved successfully!', 'success');
+        }
+
+        function resetSettings() {
+            if (confirm('Are you sure you want to reset all settings to default values? This action cannot be undone.')) {
+                // Reset to default values
+                settings = {
+                    company: {
+                        name: '',
+                        timezone: 'Asia/Jakarta',
+                        currency: 'IDR'
+                    },
+                    notifications: {
+                        lowStock: false,
+                        orders: true,
+                        emailReports: false
+                    },
+                    security: {
+                        sessionTimeout: 60,
+                        autoBackup: true
+                    }
+                };
+                
+                // Clear logo
+                companyLogo = null;
+                companyName = 'INVENTORY SYSTEM';
+                
+                // Clear localStorage
+                localStorage.removeItem('systemSettings');
+                localStorage.removeItem('companyLogo');
+                localStorage.removeItem('companyName');
+                
+                // Reload the page to reset all form values
+                location.reload();
+            }
+        }
+
+        // Alert function
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `fixed top-4 right-4 max-w-md z-50 p-4 rounded-lg ${
+                type === 'success' ? 'bg-green-100 border border-green-400 text-green-700' : 
+                'bg-red-100 border border-red-400 text-red-700'
+            }`;
+            alertDiv.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'} mr-2"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            document.body.appendChild(alertDiv);
+            
+            setTimeout(() => {
+                if (document.body.contains(alertDiv)) {
+                    document.body.removeChild(alertDiv);
+                }
+            }, 3000);
+        }
+
+        // Form submission handler
+        document.addEventListener('DOMContentLoaded', function() {
+            // Handle general settings form submission
+            document.getElementById('general-settings-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                settings.company = {
+                    name: document.getElementById('company-name').value,
+                    timezone: document.getElementById('timezone').value,
+                    currency: document.getElementById('currency').value
+                };
+                
+                localStorage.setItem('systemSettings', JSON.stringify(settings));
+                showAlert('General settings saved successfully!', 'success');
+            });
+        });
+
         // Initialize burger menu functionality
         function initializeBurgerMenu() {
             const burgerButton = document.getElementById('burger-menu');
             const dropdownMenu = document.getElementById('dropdown-menu');
+            
+            if (!burgerButton || !dropdownMenu) return;
             
             // Toggle dropdown on burger button click
             burgerButton.addEventListener('click', function(e) {
@@ -235,7 +658,25 @@
             // Initialize burger menu
             initializeBurgerMenu();
             
+            // Load all settings
             loadLogoSettings();
+            loadGeneralSettings();
+            loadNotificationSettings();
+            loadSecuritySettings();
+            
+            // Handle general settings form submission
+            document.getElementById('general-settings-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                settings.company = {
+                    name: document.getElementById('company-name').value,
+                    timezone: document.getElementById('timezone').value,
+                    currency: document.getElementById('currency').value
+                };
+                
+                localStorage.setItem('systemSettings', JSON.stringify(settings));
+                showAlert('General settings saved successfully!', 'success');
+            });
         });
     </script>
 </body>
