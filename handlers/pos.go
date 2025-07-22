@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"slices"
 	"strconv"
+	"strings"
 	"time"
 
 	"inventory_system/database"
@@ -406,10 +407,76 @@ func GetSalesReport(c *gin.Context) {
 	c.JSON(http.StatusOK, report)
 }
 
-// generateSaleNumber generates a unique sale number
+// generateSaleNumber generates a unique sale number with format A-0001, B-0001, etc.
 func generateSaleNumber() string {
-	now := time.Now()
-	return fmt.Sprintf("SALE-%s-%d", now.Format("20060102"), now.Unix())
+	// Get the last sale number from database
+	var lastSale models.Sale
+	result := database.DB.Order("id DESC").First(&lastSale)
+	
+	if result.Error != nil {
+		// If no previous sales, start with A-0001
+		return "A-0001"
+	}
+	
+	// Parse the last sale number and increment it
+	return incrementSaleNumber(lastSale.SaleNumber)
+}
+
+// incrementSaleNumber increments the sale number alphabetically
+func incrementSaleNumber(lastNumber string) string {
+	if lastNumber == "" {
+		return "A-0001"
+	}
+	
+	// Split the number (e.g., "A-0001" -> "A", "0001")
+	parts := strings.Split(lastNumber, "-")
+	if len(parts) != 2 {
+		return "A-0001" // fallback if format is unexpected
+	}
+	
+	prefix := parts[0]
+	numStr := parts[1]
+	
+	// Parse the number part
+	num, err := strconv.Atoi(numStr)
+	if err != nil {
+		return "A-0001" // fallback if number parsing fails
+	}
+	
+	// Increment logic
+	if num < 9999 {
+		// Increment number within same prefix
+		num++
+		return fmt.Sprintf("%s-%04d", prefix, num)
+	}
+	
+	// Number reached 9999, need to increment prefix
+	newPrefix := incrementPrefix(prefix)
+	return fmt.Sprintf("%s-0001", newPrefix)
+}
+
+// incrementPrefix increments the alphabetic prefix
+func incrementPrefix(prefix string) string {
+	if prefix == "" {
+		return "A"
+	}
+	
+	runes := []rune(prefix)
+	
+	// Start from the last character and work backwards
+	for i := len(runes) - 1; i >= 0; i-- {
+		if runes[i] < 'Z' {
+			// Can increment this character
+			runes[i]++
+			return string(runes)
+		}
+		// Character is Z, set to A and continue to next position
+		runes[i] = 'A'
+	}
+	
+	// All characters were Z, need to add a new character
+	// Z -> AA, ZZ -> AAA, etc.
+	return "A" + string(runes)
 }
 
 // VoidSale cancels a sale (manager/admin only)
@@ -862,7 +929,7 @@ func ExportSales(c *gin.Context) {
 				if item.Product.ID != 0 {
 					productName = item.Product.Name
 				}
-				itemsSummary += fmt.Sprintf("%s (Qty: %d, Price: $%.2f)", productName, item.Quantity, item.Price)
+				itemsSummary += fmt.Sprintf("%s (Qty: %d, Price: Rp%.2f)", productName, item.Quantity, item.Price)
 			}
 		}
 
@@ -1071,7 +1138,7 @@ func ExportSalesExcel(c *gin.Context) {
 				if item.Product.ID != 0 {
 					productName = item.Product.Name
 				}
-				itemsSummary += fmt.Sprintf("%s (Qty: %d, Price: $%.2f)", productName, item.Quantity, item.Price)
+				itemsSummary += fmt.Sprintf("%s (Qty: %d, Price: Rp%.2f)", productName, item.Quantity, item.Price)
 			}
 		}
 

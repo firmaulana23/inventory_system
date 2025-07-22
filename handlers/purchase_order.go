@@ -201,25 +201,33 @@ func CreatePurchaseOrder(c *gin.Context) {
 	po.DownPayment = req.DownPayment
 
 	// Calculate amounts based on payment method
-	if req.PaymentMethod == "credit" && req.DownPayment > 0 {
-		// Validate downpayment doesn't exceed total
-		if req.DownPayment > totalAmount {
-			tx.Rollback()
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Downpayment cannot exceed total amount"})
-			return
-		}
-		po.AmountPaid = req.DownPayment
-		po.AmountDue = totalAmount - req.DownPayment
+	if req.PaymentMethod == "credit" {
+		// For credit payments, handle downpayment
+		if req.DownPayment > 0 {
+			// Validate downpayment doesn't exceed total
+			if req.DownPayment > totalAmount {
+				tx.Rollback()
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Downpayment cannot exceed total amount"})
+				return
+			}
+			po.AmountPaid = req.DownPayment
+			po.AmountDue = totalAmount - req.DownPayment
 
-		// If downpayment covers the full amount, mark as paid
-		if po.AmountDue <= 0.01 {
-			po.PaymentStatus = "paid"
-			now := time.Now()
-			po.PaidDate = &now
+			// If downpayment covers the full amount, mark as paid
+			if po.AmountDue <= 0.01 {
+				po.PaymentStatus = "paid"
+				now := time.Now()
+				po.PaidDate = &now
+			}
+		} else {
+			// Credit with no downpayment - nothing paid yet
+			po.AmountPaid = 0
+			po.AmountDue = totalAmount
 		}
 	} else {
+		// For cash or transfer, mark as paid immediately
 		po.AmountDue = 0
-		po.AmountPaid = totalAmount // For cash or transfer, mark as paid immediately
+		po.AmountPaid = totalAmount
 	}
 
 	if err := tx.Save(&po).Error; err != nil {
@@ -772,7 +780,7 @@ func UpdatePurchaseOrder(c *gin.Context) {
 		// Record payment history for the adjustment
 		if paymentDifference != 0 {
 			paymentType := "adjustment"
-			notes := fmt.Sprintf("Downpayment adjusted from $%.2f to $%.2f", originalDownPayment, req.DownPayment)
+			notes := fmt.Sprintf("Downpayment adjusted from Rp%.2f to Rp%.2f", originalDownPayment, req.DownPayment)
 
 			payment := models.PurchasePayment{
 				PurchaseOrderID: po.ID,

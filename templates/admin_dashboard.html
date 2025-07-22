@@ -287,6 +287,11 @@
             window.location.href = '/login.html';
         }
 
+        // Format number function
+        function formatNumber(num) {
+            return new Intl.NumberFormat('id-ID').format(num);
+        }
+
         // Set authorization header for all requests
         function makeRequest(url, options = {}) {
             return fetch(url, {
@@ -315,12 +320,12 @@
                 document.getElementById('total-products').textContent = data.total_products;
                 document.getElementById('total-sales').textContent = data.total_sales;
                 document.getElementById('today-sales').textContent = data.today_sales;
-                document.getElementById('total-revenue').textContent = `Rp${data.total_revenue}`;
-                document.getElementById('today-revenue').textContent = `Rp${data.today_revenue}`;
-                document.getElementById('total-profit').textContent = `Rp${data.total_profit}`;
-                document.getElementById('today-profit').textContent = `Rp${data.today_profit}`;
-                document.getElementById('total-purchasing').textContent = `Rp${data.total_purchasing}`;
-                document.getElementById('purchasing-due').textContent = `Rp${data.total_purchasing_due}`;
+                document.getElementById('total-revenue').textContent = `Rp ${formatNumber(data.total_revenue)}`;
+                document.getElementById('today-revenue').textContent = `Rp ${formatNumber(data.today_revenue)}`;
+                document.getElementById('total-profit').textContent = `Rp ${formatNumber(data.total_profit)}`;
+                document.getElementById('today-profit').textContent = `Rp ${formatNumber(data.today_profit)}`;
+                document.getElementById('total-purchasing').textContent = `Rp ${formatNumber(data.total_purchasing)}`;
+                document.getElementById('purchasing-due').textContent = `Rp ${formatNumber(data.total_purchasing_due)}`;
                 document.getElementById('low-stock').textContent = data.low_stock_products;
                 
                 // Load overdue data
@@ -430,7 +435,7 @@
                         <span class="font-medium">${index + 1}. ${product.product_name}</span>
                         <span class="text-sm text-gray-500 ml-2">(${product.total_sold} sold)</span>
                     </div>
-                    <span class="font-semibold text-green-600">Rp${product.revenue.toFixed(2)}</span>
+                    <span class="font-semibold text-green-600">Rp ${formatNumber(product.revenue)}</span>
                 `;
                 container.appendChild(productDiv);
             });
@@ -446,7 +451,7 @@
                 row.innerHTML = `
                     <td class="px-4 py-2 text-sm">${sale.sale_number}</td>
                     <td class="px-4 py-2 text-sm">${sale.customer_name || 'Walk-in'}</td>
-                    <td class="px-4 py-2 text-sm font-medium text-green-600">Rp${sale.total.toFixed(2)}</td>
+                    <td class="px-4 py-2 text-sm font-medium text-green-600">Rp ${formatNumber(sale.total)}</td>
                     <td class="px-4 py-2 text-sm text-gray-500">${new Date(sale.created_at).toLocaleDateString()}</td>
                 `;
                 tbody.appendChild(row);

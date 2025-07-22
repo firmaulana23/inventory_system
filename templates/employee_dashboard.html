@@ -412,7 +412,7 @@
                             <div class="font-medium">${product.name}</div>
                             <div class="text-sm text-gray-500">${product.sku} | Stock: ${product.quantity}</div>
                         </div>
-                        <div class="text-green-600 font-bold">$${product.price.toFixed(2)}</div>
+                        <div class="text-green-600 font-bold">Rp ${formatNumber(product.price)}</div>
                     </div>
                 `;
                 div.onclick = () => addToCart(product);
@@ -523,9 +523,9 @@
             
             if (cart.length === 0) {
                 cartContainer.innerHTML = '<p class="text-gray-500 text-center py-4">Cart is empty</p>';
-                subtotalElement.textContent = '$0.00';
-                taxElement.textContent = '$0.00';
-                totalElement.textContent = '$0.00';
+                subtotalElement.textContent = 'Rp 0';
+                taxElement.textContent = 'Rp 0';
+                totalElement.textContent = 'Rp 0';
                 completeButton.disabled = true;
                 return;
             }
@@ -542,7 +542,7 @@
                 div.innerHTML = `
                     <div class="flex-1">
                         <div class="font-medium">${item.name}</div>
-                        <div class="text-sm text-gray-500">$${item.price.toFixed(2)} each</div>
+                        <div class="text-sm text-gray-500">Rp ${formatNumber(item.price)} each</div>
                     </div>
                     <div class="flex items-center space-x-2">
                         <button onclick="updateQuantity(${item.product_id}, ${item.quantity - 1})" 
@@ -553,7 +553,7 @@
                         <button onclick="removeFromCart(${item.product_id})" 
                                 class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-sm ml-2">×</button>
                     </div>
-                    <div class="w-20 text-right font-medium">Rp${itemTotal.toFixed(2)}</div>
+                    <div class="w-20 text-right font-medium">Rp ${formatNumber(itemTotal)}</div>
                 `;
                 cartContainer.appendChild(div);
             });
@@ -574,10 +574,10 @@
             const tax = 0; // 8% tax
             const total = subtotal - discountAmount + tax;
             
-            subtotalElement.textContent = `Rp${subtotal.toFixed(2)}`;
-            document.getElementById('discount-display').textContent = `Rp${discountAmount.toFixed(2)}`;
-            taxElement.textContent = `Rp${tax.toFixed(2)}`;
-            totalElement.textContent = `Rp${total.toFixed(2)}`;
+            subtotalElement.textContent = `Rp ${formatNumber(subtotal)}`;
+            document.getElementById('discount-display').textContent = `Rp ${formatNumber(discountAmount)}`;
+            taxElement.textContent = `Rp ${formatNumber(tax)}`;
+            totalElement.textContent = `Rp ${formatNumber(total)}`;
             completeButton.disabled = false;
             
             // Update down payment display
@@ -657,8 +657,8 @@
                 doc.text(`${index + 1}`, 20, y);
                 doc.text(item.name, 35, y);
                 doc.text(item.quantity.toString(), 120, y);
-                doc.text(`Rp${item.price.toFixed(2)}`, 140, y);
-                doc.text(`Rp${itemTotal.toFixed(2)}`, 170, y);
+                doc.text(`Rp ${formatNumber(item.price)}`, 140, y);
+                doc.text(`Rp ${formatNumber(itemTotal)}`, 170, y);
                 y += 10;
             });
             
@@ -667,22 +667,22 @@
             y += 10;
             
             doc.text('Subtotal:', 140, y);
-            doc.text(`Rp${saleData.subtotal.toFixed(2)}`, 170, y);
+            doc.text(`Rp ${formatNumber(saleData.subtotal)}`, 170, y);
             y += 10;
             
             if (saleData.discount > 0) {
                 doc.text('Discount:', 140, y);
-                doc.text(`-Rp${saleData.discount.toFixed(2)}`, 170, y);
+                doc.text(`-Rp ${formatNumber(saleData.discount)}`, 170, y);
                 y += 10;
             }
             
             doc.text('Tax:', 140, y);
-            doc.text(`Rp${saleData.tax.toFixed(2)}`, 170, y);
+            doc.text(`Rp ${formatNumber(saleData.tax)}`, 170, y);
             y += 10;
             
             doc.setFont(undefined, 'bold');
             doc.text('TOTAL:', 140, y);
-            doc.text(`Rp${saleData.total.toFixed(2)}`, 170, y);
+            doc.text(`Rp ${formatNumber(saleData.total)}`, 170, y);
             
             // Footer
             y += 5;
@@ -781,8 +781,8 @@
                 const total = subtotal - discountAmount; // + tax - discount
                 const due = Math.max(0, total - downPaymentValue);
                 
-                downPaymentAmount.textContent = `Rp${downPaymentValue.toFixed(2)}`;
-                amountDue.textContent = `Rp${due.toFixed(2)}`;
+                downPaymentAmount.textContent = `Rp ${formatNumber(downPaymentValue)}`;
+                amountDue.textContent = `Rp ${formatNumber(due)}`;
                 downPaymentDisplay.classList.remove('hidden');
             } else {
                 downPaymentDisplay.classList.add('hidden');
@@ -876,6 +876,10 @@
         function viewSales() {
             // Implement sales view
             alert('Sales view functionality to be implemented');
+        }
+
+        function formatNumber(num) {
+            return new Intl.NumberFormat('id-ID').format(num);
         }
 
         function searchProducts() {
