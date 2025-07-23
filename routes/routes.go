@@ -63,10 +63,11 @@ func SetupRoutes() *gin.Engine {
 		products := protected.Group("/products")
 		{
 			products.GET("", handlers.GetProducts)
-			products.GET("/:id", handlers.GetProduct)
 			products.GET("/search", handlers.SearchProducts)
 			products.GET("/categories", handlers.GetProductCategories)
 			products.GET("/low-stock", handlers.GetLowStockProducts)
+			products.GET("/:id", handlers.GetProduct)
+			products.GET("/:id/suppliers", handlers.GetProductSuppliers)
 		}
 
 		// POS (all authenticated users can make sales)
@@ -101,7 +102,10 @@ func SetupRoutes() *gin.Engine {
 			// Product management
 			manager.POST("/products", handlers.CreateProduct)
 			manager.PUT("/products/:id", handlers.UpdateProduct)
-			manager.POST("/products/:id/adjust-stock", handlers.AdjustStock)
+			manager.POST("/products/:id/suppliers", handlers.AddProductSupplier)
+			manager.PUT("/products/:id/suppliers/:supplier_id", handlers.UpdateProductSupplier)
+			manager.DELETE("/products/:id/suppliers/:supplier_id", handlers.RemoveProductSupplier)
+			manager.POST("/products/:id/suppliers/:supplier_id/adjust-stock", handlers.AdjustSupplierStock)
 			
 			// Supplier management
 			manager.POST("/suppliers", handlers.CreateSupplier)

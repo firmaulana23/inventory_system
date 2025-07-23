@@ -500,92 +500,21 @@
                                       class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"></textarea>
                             <p class="text-xs text-gray-500 mt-1">Optional product description</p>
                         </div>
-                    </div>\n                </div>
+                    </div>
+                </div>
                 
-                <!-- Inventory & Pricing Section -->
-                <div class="bg-gray-50 p-4 rounded-lg">
-                    <h4 class="text-md font-medium text-gray-800 mb-3">
-                        <i class="fas fa-warehouse mr-2"></i>Inventory & Pricing
-                    </h4>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                            <label for="product-stock" class="block text-sm font-medium text-gray-700 mb-2">
-                                <i class="fas fa-cubes mr-1"></i>Current Stock <span class="text-red-500">*</span>
-                            </label>
-                            <div class="relative">
-                                <input id="product-stock" name="stock" type="number" min="0" required 
-                                       placeholder="0"
-                                       class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
-                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
-                                    <span class="text-gray-500 text-sm">units</span>
-                                </div>
-                            </div>
-                            <p class="text-xs text-gray-500 mt-1">Current quantity in stock</p>
+                <!-- Note Section -->
+                <div class="bg-blue-50 p-4 rounded-lg">
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-info-circle text-blue-500 mt-1"></i>
                         </div>
-                        
-                        <div>
-                            <label for="product-min-stock" class="block text-sm font-medium text-gray-700 mb-2">
-                                <i class="fas fa-exclamation-triangle mr-1"></i>Minimum Stock
-                            </label>
-                            <input id="product-min-stock" name="min_stock" type="number" min="0" 
-                                   placeholder="5"
-                                   class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
-                            <p class="text-xs text-gray-500 mt-1">Alert when stock falls below this</p>
-                        </div>
-                        
-                        <div>
-                            <label for="product-max-stock" class="block text-sm font-medium text-gray-700 mb-2">
-                                <i class="fas fa-layer-group mr-1"></i>Maximum Stock
-                            </label>
-                            <input id="product-max-stock" name="max_stock" type="number" min="0" 
-                                   placeholder="100"
-                                   class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
-                            <p class="text-xs text-gray-500 mt-1">Maximum recommended stock</p>
-                        </div>
-                    </div>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                        <div>
-                            <label for="product-cost" class="block text-sm font-medium text-gray-700 mb-2">
-                                <i class="fas fa-coins mr-1"></i>Cost Price <span class="text-red-500">*</span>
-                            </label>
-                            <div class="relative">
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center">
-                                    <span class="text-gray-500">Rp</span>
-                                </div>
-                                <input id="product-cost" name="cost" type="number" min="0" step="0.01" required 
-                                       placeholder="0.00"
-                                       class="w-full pl-12 pr-4 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-                                       onchange="calculateMargin()">
-                            </div>
-                            <p class="text-xs text-gray-500 mt-1">Cost price (COGS)</p>
-                        </div>
-                        
-                        <div>
-                            <label for="product-price" class="block text-sm font-medium text-gray-700 mb-2">
-                                <i class="fas fa-dollar-sign mr-1"></i>Selling Price <span class="text-red-500">*</span>
-                            </label>
-                            <div class="relative">
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center">
-                                    <span class="text-gray-500">Rp</span>
-                                </div>
-                                <input id="product-price" name="price" type="number" min="0" step="0.01" required 
-                                       placeholder="0.00"
-                                       class="w-full pl-12 pr-4 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-                                       onchange="calculateMargin()">
-                            </div>
-                            <p class="text-xs text-gray-500 mt-1">Customer selling price</p>
-                        </div>
-                    </div>
-                    
-                    <!-- Profit Margin Display -->
-                    <div class="mt-4 p-3 bg-blue-50 rounded-lg">
-                        <div class="flex items-center justify-between">
-                            <span class="text-sm font-medium text-gray-700">Profit Margin:</span>
-                            <div class="text-right">
-                                <span id="profit-amount" class="text-lg font-semibold text-green-600">Rp 0</span>\n                                <span class="text-sm text-gray-500">(<span id="profit-percentage">0%</span>)</span>
-                            </div>
+                        <div class="ml-3">
+                            <h4 class="text-sm font-medium text-blue-800">Pricing & Stock Management</h4>
+                            <p class="text-sm text-blue-700 mt-1">
+                                Stock levels, pricing, and costs are now managed per supplier. 
+                                After creating the product, you can add suppliers with their specific pricing and inventory.
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -596,7 +525,7 @@
                         <i class="fas fa-plus-circle mr-2"></i>Additional Information
                     </h4>
                     
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label for="product-barcode" class="block text-sm font-medium text-gray-700 mb-2">
                                 <i class="fas fa-qrcode mr-1"></i>Barcode
@@ -608,16 +537,6 @@
                         </div>
                         
                         <div>
-                            <label for="product-supplier" class="block text-sm font-medium text-gray-700 mb-2">
-                                <i class="fas fa-truck mr-1"></i>Supplier
-                            </label>
-                            <input id="product-supplier" name="supplier" type="text" 
-                                   placeholder="Enter supplier name..."
-                                   class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
-                            <p class="text-xs text-gray-500 mt-1">Primary supplier</p>
-                        </div>
-                        
-                        <div>
                             <label for="product-location" class="block text-sm font-medium text-gray-700 mb-2">
                                 <i class="fas fa-map-marker-alt mr-1"></i>Storage Location
                             </label>
@@ -626,6 +545,23 @@
                                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
                             <p class="text-xs text-gray-500 mt-1">Warehouse location</p>
                         </div>
+                    </div>
+                </div>
+                
+                <!-- Supplier Management Section -->
+                <div class="bg-gray-50 p-4 rounded-lg" id="supplier-management-section" style="display: none;">
+                    <div class="flex justify-between items-center mb-3">
+                        <h4 class="text-md font-medium text-gray-800">
+                            <i class="fas fa-truck mr-2"></i>Supplier Management
+                        </h4>
+                        <button type="button" onclick="showAddSupplierModal()" 
+                                class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm transition-colors duration-200">
+                            <i class="fas fa-plus mr-1"></i>Add Supplier
+                        </button>
+                    </div>
+                    
+                    <div id="product-suppliers-list" class="space-y-2 max-h-60 overflow-y-auto">
+                        <!-- Suppliers will be loaded here -->
                     </div>
                 </div>
                 
@@ -647,6 +583,188 @@
             </form>
         </div>
     </div>
+
+    <!-- Add Supplier to Product Modal -->
+    <div id="add-supplier-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 hidden">
+        <div class="relative top-20 mx-auto p-6 border w-full max-w-2xl shadow-lg rounded-lg bg-white modal-enter">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h3 class="text-xl font-bold text-gray-800">Add Supplier to Product</h3>
+                    <p class="text-sm text-gray-600 mt-1">Configure supplier-specific pricing and stock</p>
+                </div>
+                <button onclick="hideAddSupplierModal()" class="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <form id="add-supplier-form" class="space-y-4">
+                <input type="hidden" id="supplier-product-id">
+                
+                <div>
+                    <label for="supplier-select" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-truck mr-1"></i>Select Supplier <span class="text-red-500">*</span>
+                    </label>
+                    <select id="supplier-select" required 
+                            class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
+                        <option value="">Choose a supplier...</option>
+                    </select>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="supplier-cost" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-coins mr-1"></i>Cost Price <span class="text-red-500">*</span>
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center">
+                                <span class="text-gray-500">Rp</span>
+                            </div>
+                            <input id="supplier-cost" type="number" min="0" step="0.01" required 
+                                   placeholder="0.00"
+                                   class="w-full pl-12 pr-4 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label for="supplier-price" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-dollar-sign mr-1"></i>Selling Price <span class="text-red-500">*</span>
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center">
+                                <span class="text-gray-500">Rp</span>
+                            </div>
+                            <input id="supplier-price" type="number" min="0" step="0.01" required 
+                                   placeholder="0.00"
+                                   class="w-full pl-12 pr-4 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="supplier-stock" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-cubes mr-1"></i>Initial Stock
+                        </label>
+                        <input id="supplier-stock" type="number" min="0" 
+                               placeholder="0"
+                               class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
+                    </div>
+                    
+                    <div>
+                        <label for="supplier-min-stock" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-exclamation-triangle mr-1"></i>Minimum Stock
+                        </label>
+                        <input id="supplier-min-stock" type="number" min="0" 
+                               placeholder="5"
+                               class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
+                    </div>
+                </div>
+                
+                <div class="flex flex-col sm:flex-row sm:justify-end sm:space-x-3 space-y-2 sm:space-y-0 pt-4">
+                    <button type="button" onclick="hideAddSupplierModal()" 
+                            class="w-full sm:w-auto bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors duration-200">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            class="w-full sm:w-auto bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200">
+                        <i class="fas fa-plus mr-2"></i>Add Supplier
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Product Supplier Modal -->
+    <div id="edit-supplier-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 hidden">
+        <div class="relative top-20 mx-auto p-6 border w-full max-w-2xl shadow-lg rounded-lg bg-white modal-enter">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h3 class="text-xl font-bold text-gray-800">Edit Product Supplier</h3>
+                    <p class="text-sm text-gray-600 mt-1">Update supplier-specific pricing and stock</p>
+                </div>
+                <button onclick="hideEditSupplierModal()" class="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <form id="edit-supplier-form" class="space-y-4">
+                <input type="hidden" id="edit-product-id">
+                <input type="hidden" id="edit-supplier-id">
+                
+                <div class="bg-gray-50 p-4 rounded-lg mb-4">
+                    <h4 class="font-medium text-gray-800">Supplier Information</h4>
+                    <p id="edit-supplier-name" class="text-sm text-gray-600 mt-1"></p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="edit-supplier-cost" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-coins mr-1"></i>Cost Price <span class="text-red-500">*</span>
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center">
+                                <span class="text-gray-500">Rp</span>
+                            </div>
+                            <input id="edit-supplier-cost" type="number" min="0" step="0.01" required 
+                                   placeholder="0.00"
+                                   class="w-full pl-12 pr-4 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label for="edit-supplier-price" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-dollar-sign mr-1"></i>Selling Price <span class="text-red-500">*</span>
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center">
+                                <span class="text-gray-500">Rp</span>
+                            </div>
+                            <input id="edit-supplier-price" type="number" min="0" step="0.01" required 
+                                   placeholder="0.00"
+                                   class="w-full pl-12 pr-4 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="edit-supplier-stock" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-cubes mr-1"></i>Current Stock
+                        </label>
+                        <input id="edit-supplier-stock" type="number" min="0" 
+                               placeholder="0"
+                               class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
+                    </div>
+                    
+                    <div>
+                        <label for="edit-supplier-min-stock" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-exclamation-triangle mr-1"></i>Minimum Stock
+                        </label>
+                        <input id="edit-supplier-min-stock" type="number" min="0" 
+                               placeholder="5"
+                               class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
+                    </div>
+                </div>
+
+                <div class="flex items-center">
+                    <input id="edit-supplier-active" type="checkbox" class="mr-2">
+                    <label for="edit-supplier-active" class="text-sm font-medium text-gray-700">Active Supplier</label>
+                </div>
+                
+                <div class="flex flex-col sm:flex-row sm:justify-end sm:space-x-3 space-y-2 sm:space-y-0 pt-4">
+                    <button type="button" onclick="hideEditSupplierModal()" 
+                            class="w-full sm:w-auto bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors duration-200">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            class="w-full sm:w-auto bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200">
+                        <i class="fas fa-save mr-2"></i>Update Supplier
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         // Global variables
         const API_BASE = '/api/v1';
@@ -754,8 +872,8 @@
                 const row = document.createElement('tr');
                 row.className = 'hover:bg-gray-50 transition-colors duration-150';
                 
-                const stock = product.quantity ?? product.stock ?? 0;
-                const stockBadge = getStockBadge(stock, product.min_stock || 5);
+                const stock = getTotalStock(product);
+                const stockBadge = getStockBadge(stock, 5);
                 
                 row.innerHTML = `
                     <td class="px-6 py-3 text-sm font-medium text-gray-900">${index + 1}</td>
@@ -781,8 +899,8 @@
                         </span>
                     </td>
                     <td class="px-6 py-3">${stockBadge}</td>
-                    <td class="px-6 py-3 text-sm font-semibold text-green-600">Rp ${formatNumber(product.price)}</td>
-                    <td class="px-6 py-3 text-sm text-gray-600 mobile-hidden">Rp ${formatNumber(product.cost || 0)}</td>
+                    <td class="px-6 py-3 text-sm font-semibold text-green-600">Rp ${formatNumber(getLowestPrice(product))}</td>
+                    <td class="px-6 py-3 text-sm text-gray-600 mobile-hidden">Rp ${formatNumber(getLowestCost(product))}</td>
                     <td class="px-6 py-3 text-right">
                         <div class="flex items-center justify-end space-x-2">
                             <button onclick='viewProduct(${JSON.stringify(product)})' 
@@ -823,8 +941,8 @@
             container.innerHTML = '';
             
             products.forEach((product, index) => {
-                const stock = product.quantity ?? product.stock ?? 0;
-                const stockBadge = getStockBadge(stock, product.min_stock || 5);
+                const stock = getTotalStock(product);
+                const stockBadge = getStockBadge(stock, 5);
                 
                 const card = document.createElement('div');
                 card.className = 'bg-white rounded-lg shadow-sm border border-gray-200 p-6 product-card';
@@ -857,7 +975,7 @@
                         </div>
                         <div class="flex justify-between text-sm">
                             <span class="text-gray-600">Price:</span>
-                            <span class="font-semibold text-green-600">Rp ${formatNumber(product.price)}</span>
+                            <span class="font-semibold text-green-600">Rp ${formatNumber(getLowestPrice(product))}</span>
                         </div>
                     </div>
                     
@@ -913,6 +1031,47 @@
         function formatNumber(num) {
             return new Intl.NumberFormat('id-ID').format(num);
         }
+
+        // Helper functions for product calculations
+        function getTotalStock(product) {
+            if (!product.suppliers || product.suppliers.length === 0) {
+                return 0;
+            }
+            return product.suppliers
+                .filter(s => s.is_active)
+                .reduce((total, supplier) => total + (supplier.stock || 0), 0);
+        }
+
+        function getLowestPrice(product) {
+            if (!product.suppliers || product.suppliers.length === 0) {
+                return 0;
+            }
+            const prices = product.suppliers
+                .filter(s => s.is_active)
+                .map(s => s.price)
+                .filter(p => p > 0);
+            return prices.length > 0 ? Math.min(...prices) : 0;
+        }
+
+        function getLowestCost(product) {
+            if (!product.suppliers || product.suppliers.length === 0) {
+                return 0;
+            }
+            const costs = product.suppliers
+                .filter(s => s.is_active)
+                .map(s => s.cost)
+                .filter(c => c > 0);
+            return costs.length > 0 ? Math.min(...costs) : 0;
+        }
+
+        function isLowStock(product) {
+            if (!product.suppliers || product.suppliers.length === 0) {
+                return false;
+            }
+            return product.suppliers
+                .filter(s => s.is_active)
+                .some(s => s.stock <= s.min_stock);
+        }
         
         // Enhanced modal functions
         function showAddProductModal() {
@@ -922,6 +1081,10 @@
             document.getElementById('product-id').value = '';
             document.getElementById('submit-text').innerText = 'Save Product';
             hideMessage();
+            
+            // Hide supplier management section for new products
+            document.getElementById('supplier-management-section').style.display = 'none';
+            
             document.getElementById('product-modal').classList.remove('hidden');
             
             // Focus on first input
@@ -943,19 +1106,16 @@
             document.getElementById('product-sku').value = product.sku || '';
             document.getElementById('product-category').value = product.category || '';
             document.getElementById('product-description').value = product.description || '';
-            document.getElementById('product-stock').value = product.quantity ?? product.stock ?? 0;
-            document.getElementById('product-min-stock').value = product.min_stock || '';
-            document.getElementById('product-max-stock').value = product.max_stock || '';
-            document.getElementById('product-price').value = product.price;
-            document.getElementById('product-cost').value = product.cost || 0;
             document.getElementById('product-barcode').value = product.barcode || '';
-            document.getElementById('product-supplier').value = product.supplier || '';
             document.getElementById('product-location').value = product.location || '';
             
-            calculateMargin();
             document.getElementById('submit-text').innerText = 'Update Product';
             hideMessage();
             document.getElementById('product-modal').classList.remove('hidden');
+            
+            // Show supplier management section for existing products
+            document.getElementById('supplier-management-section').style.display = 'block';
+            loadProductSuppliers(product.id);
         }
         
         function viewProduct(product) {
@@ -976,7 +1136,6 @@
                             <div><strong>Category:</strong> ${getCategoryIcon(product.category)} ${product.category || 'Uncategorized'}</div>
                             <div><strong>Description:</strong> ${product.description || 'No description'}</div>
                             <div><strong>Barcode:</strong> ${product.barcode || 'N/A'}</div>
-                            <div><strong>Supplier:</strong> ${product.supplier || 'N/A'}</div>
                         </div>
                         <div class="space-y-3">
                             <div><strong>Stock:</strong> ${getStockBadge(product.quantity ?? product.stock ?? 0, product.min_stock || 5)}</div>
@@ -999,16 +1158,235 @@
             document.getElementById('product-sku').value = `${prefix}-${timestamp}-${random}`;
         }
         
-        function calculateMargin() {
-            const cost = parseFloat(document.getElementById('product-cost').value) || 0;
-            const price = parseFloat(document.getElementById('product-price').value) || 0;
-            
-            const profit = price - cost;
-            const margin = cost > 0 ? (profit / cost) * 100 : 0;
-            
-            document.getElementById('profit-amount').textContent = `Rp ${formatNumber(profit)}`;
-            document.getElementById('profit-percentage').textContent = `${margin.toFixed(1)}%`;
+
+        // Supplier Management Functions
+        async function loadProductSuppliers(productId) {
+            try {
+                const response = await makeRequest(`${API_BASE}/products/${productId}/suppliers`);
+                if (response.ok) {
+                    const suppliers = await response.json();
+                    displayProductSuppliers(suppliers);
+                }
+            } catch (error) {
+                console.error('Error loading suppliers:', error);
+            }
         }
+
+        function displayProductSuppliers(suppliers) {
+            const container = document.getElementById('product-suppliers-list');
+            
+            if (!suppliers || suppliers.length === 0) {
+                container.innerHTML = '<div class="text-gray-500 text-sm p-3 text-center">No suppliers configured for this product</div>';
+                return;
+            }
+
+            container.innerHTML = suppliers.map(ps => `
+                <div class="bg-white border border-gray-200 rounded-lg p-3 flex justify-between items-center">
+                    <div class="flex-1">
+                        <div class="flex items-center justify-between">
+                            <h5 class="font-medium text-gray-900">${ps.supplier.name}</h5>
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${ps.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                                ${ps.is_active ? 'Active' : 'Inactive'}
+                            </span>
+                        </div>
+                        <div class="mt-1 text-sm text-gray-600 grid grid-cols-2 gap-2">
+                            <div>Cost: <span class="font-medium">Rp ${formatNumber(ps.cost)}</span></div>
+                            <div>Price: <span class="font-medium">Rp ${formatNumber(ps.price)}</span></div>
+                            <div>Stock: <span class="font-medium">${ps.stock}</span></div>
+                            <div>Min Stock: <span class="font-medium">${ps.min_stock}</span></div>
+                        </div>
+                    </div>
+                    <div class="ml-4 flex items-center space-x-2">
+                        <button onclick="editProductSupplier(${JSON.stringify(ps).replace(/"/g, '&quot;')})" 
+                                class="text-blue-600 hover:text-blue-800" title="Edit">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button onclick="removeProductSupplier(${ps.product_id}, ${ps.supplier_id}, '${ps.supplier.name}')" 
+                                class="text-red-600 hover:text-red-800" title="Remove">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function showAddSupplierModal() {
+            const productId = document.getElementById('product-id').value;
+            if (!productId) {
+                showMessage('Please save the product first before adding suppliers.', 'error');
+                return;
+            }
+
+            document.getElementById('supplier-product-id').value = productId;
+            
+            // Load available suppliers
+            console.log('Loading suppliers...');
+            await loadAvailableSuppliers();
+            
+            document.getElementById('add-supplier-modal').classList.remove('hidden');
+        }
+
+        function hideAddSupplierModal() {
+            document.getElementById('add-supplier-modal').classList.add('hidden');
+            document.getElementById('add-supplier-form').reset();
+        }
+
+        async function loadAvailableSuppliers() {
+            try {
+                const response = await makeRequest(`${API_BASE}/suppliers`);
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('Suppliers response:', data); // Debug log
+                    
+                    // Handle different response formats
+                    let suppliers = [];
+                    if (data.success && data.data) {
+                        suppliers = data.data;
+                    } else if (data.suppliers) {
+                        suppliers = data.suppliers;
+                    } else if (Array.isArray(data)) {
+                        suppliers = data;
+                    }
+                    
+                    const select = document.getElementById('supplier-select');
+                    select.innerHTML = '<option value="">Choose a supplier...</option>';
+                    
+                    if (suppliers.length === 0) {
+                        const option = document.createElement('option');
+                        option.value = '';
+                        option.textContent = 'No suppliers available';
+                        option.disabled = true;
+                        select.appendChild(option);
+                        return;
+                    }
+                    
+                    suppliers.forEach(supplier => {
+                        if (supplier.is_active !== false) { // Include active suppliers
+                            const option = document.createElement('option');
+                            option.value = supplier.id;
+                            option.textContent = supplier.name;
+                            select.appendChild(option);
+                        }
+                    });
+                } else {
+                    console.error('Failed to load suppliers:', response.status);
+                }
+            } catch (error) {
+                console.error('Error loading suppliers:', error);
+            }
+        }
+
+        // Handle add supplier form submission
+        document.getElementById('add-supplier-form').onsubmit = async function(e) {
+            e.preventDefault();
+            
+            const productId = document.getElementById('supplier-product-id').value;
+            const payload = {
+                supplier_id: parseInt(document.getElementById('supplier-select').value),
+                cost: parseFloat(document.getElementById('supplier-cost').value),
+                price: parseFloat(document.getElementById('supplier-price').value),
+                stock: parseInt(document.getElementById('supplier-stock').value) || 0,
+                min_stock: parseInt(document.getElementById('supplier-min-stock').value) || 5
+            };
+
+            try {
+                const response = await makeRequest(`${API_BASE}/products/${productId}/suppliers`, {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    showMessage('Supplier added successfully!', 'success');
+                    hideAddSupplierModal();
+                    loadProductSuppliers(productId);
+                } else {
+                    const errorData = await response.json();
+                    showMessage(errorData.error || 'Failed to add supplier', 'error');
+                }
+            } catch (error) {
+                console.error('Error adding supplier:', error);
+                showMessage('Network error. Please try again.', 'error');
+            }
+        };
+
+        async function removeProductSupplier(productId, supplierId, supplierName) {
+            if (!confirm(`Remove supplier "${supplierName}" from this product?`)) {
+                return;
+            }
+
+            try {
+                const response = await makeRequest(`${API_BASE}/products/${productId}/suppliers/${supplierId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    showMessage('Supplier removed successfully!', 'success');
+                    loadProductSuppliers(productId);
+                } else {
+                    const errorData = await response.json();
+                    showMessage(errorData.error || 'Failed to remove supplier', 'error');
+                }
+            } catch (error) {
+                console.error('Error removing supplier:', error);
+                showMessage('Network error. Please try again.', 'error');
+            }
+        }
+
+        function editProductSupplier(productSupplier) {
+            // Set the form values
+            document.getElementById('edit-product-id').value = productSupplier.product_id;
+            document.getElementById('edit-supplier-id').value = productSupplier.supplier_id;
+            document.getElementById('edit-supplier-name').textContent = productSupplier.supplier.name;
+            document.getElementById('edit-supplier-cost').value = productSupplier.cost;
+            document.getElementById('edit-supplier-price').value = productSupplier.price;
+            document.getElementById('edit-supplier-stock').value = productSupplier.stock;
+            document.getElementById('edit-supplier-min-stock').value = productSupplier.min_stock;
+            document.getElementById('edit-supplier-active').checked = productSupplier.is_active;
+
+            // Show the modal
+            document.getElementById('edit-supplier-modal').classList.remove('hidden');
+        }
+
+        function hideEditSupplierModal() {
+            document.getElementById('edit-supplier-modal').classList.add('hidden');
+            document.getElementById('edit-supplier-form').reset();
+        }
+
+        // Handle edit supplier form submission
+        document.getElementById('edit-supplier-form').onsubmit = async function(e) {
+            e.preventDefault();
+            
+            const productId = document.getElementById('edit-product-id').value;
+            const supplierId = document.getElementById('edit-supplier-id').value;
+            
+            const formData = {
+                cost: parseFloat(document.getElementById('edit-supplier-cost').value),
+                price: parseFloat(document.getElementById('edit-supplier-price').value),
+                stock: parseInt(document.getElementById('edit-supplier-stock').value) || 0,
+                min_stock: parseInt(document.getElementById('edit-supplier-min-stock').value) || 0,
+                is_active: document.getElementById('edit-supplier-active').checked
+            };
+
+            try {
+                const response = await makeRequest(`${API_BASE}/products/${productId}/suppliers/${supplierId}`, {
+                    method: 'PUT',
+                    body: JSON.stringify(formData)
+                });
+
+                if (response.ok) {
+                    showMessage('Supplier updated successfully!', 'success');
+                    hideEditSupplierModal();
+                    loadProductSuppliers(productId);
+                } else {
+                    const errorData = await response.json();
+                    showMessage(errorData.error || 'Failed to update supplier', 'error');
+                }
+            } catch (error) {
+                console.error('Error updating supplier:', error);
+                showMessage('Network error. Please try again.', 'error');
+            }
+        };
+
         // Enhanced form submission
         document.getElementById('product-form').onsubmit = async function(e) {
             e.preventDefault();
@@ -1031,13 +1409,6 @@
                     sku: document.getElementById('product-sku').value.trim(),
                     category: category === 'other' ? document.getElementById('product-category-custom').value.trim() : category,
                     description: document.getElementById('product-description').value.trim(),
-                    quantity: +document.getElementById('product-stock').value,
-                    min_stock: +document.getElementById('product-min-stock').value || null,
-                    max_stock: +document.getElementById('product-max-stock').value || null,
-                    price: +document.getElementById('product-price').value,
-                    cost: +document.getElementById('product-cost').value,
-                    barcode: document.getElementById('product-barcode').value.trim() || null,
-                    supplier: document.getElementById('product-supplier').value.trim() || null,
                     location: document.getElementById('product-location').value.trim() || null
                 };
                 
@@ -1239,8 +1610,31 @@
         }
         
         function showMessage(message, type) {
-            // Global message for non-modal contexts
-            console.log(`${type.toUpperCase()}: ${message}`);
+            // Show message in modal context
+            const messageDiv = document.getElementById('modal-message');
+            const messageIcon = document.getElementById('modal-message-icon');
+            const messageText = document.getElementById('modal-message-text');
+            
+            if (messageDiv && messageIcon && messageText) {
+                messageDiv.className = `mb-4 p-4 rounded-lg ${type === 'success' ? 'bg-green-100 border border-green-200' : 'bg-red-100 border border-red-200'}`;
+                messageIcon.className = `fas ${type === 'success' ? 'fa-check-circle text-green-500' : 'fa-exclamation-circle text-red-500'}`;
+                messageText.textContent = message;
+                messageDiv.classList.remove('hidden');
+                
+                // Auto hide after 3 seconds for success messages
+                if (type === 'success') {
+                    setTimeout(() => {
+                        messageDiv.classList.add('hidden');
+                    }, 3000);
+                }
+            } else {
+                // Fallback to console
+                console.log(`${type.toUpperCase()}: ${message}`);
+                // Also show browser alert for important messages
+                if (type === 'error') {
+                    alert(`Error: ${message}`);
+                }
+            }
         }
         
         function hideMessage() {
@@ -1249,8 +1643,8 @@
         
         function updateProductStats() {
             const totalProducts = allProducts.length;
-            const lowStockItems = allProducts.filter(p => (p.quantity ?? p.stock ?? 0) <= (p.min_stock || 5)).length;
-            const totalValue = allProducts.reduce((sum, p) => sum + ((p.quantity ?? p.stock ?? 0) * p.price), 0);
+            const lowStockItems = allProducts.filter(p => isLowStock(p)).length;
+            const totalValue = allProducts.reduce((sum, p) => sum + (getTotalStock(p) * getLowestPrice(p)), 0);
             const categories = [...new Set(allProducts.map(p => p.category).filter(Boolean))].length;
             
             document.getElementById('total-products').textContent = totalProducts;

@@ -77,6 +77,7 @@
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
                 </thead>
@@ -93,16 +94,28 @@
             <form id="supplier-form" class="space-y-4">
                 <input type="hidden" id="supplier-id">
                 <div>
-                    <label for="supplier-name" class="block text-sm font-medium text-gray-700">Name</label>
+                    <label for="supplier-name" class="block text-sm font-medium text-gray-700">Name <span class="text-red-500">*</span></label>
                     <input id="supplier-name" name="name" type="text" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
                 </div>
                 <div>
-                    <label for="supplier-contact" class="block text-sm font-medium text-gray-700">Contact</label>
-                    <input id="supplier-contact" name="contact" type="text" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                    <label for="supplier-contact" class="block text-sm font-medium text-gray-700">Contact Person</label>
+                    <input id="supplier-contact" name="contact_person" type="text" class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
                 </div>
                 <div>
                     <label for="supplier-email" class="block text-sm font-medium text-gray-700">Email</label>
-                    <input id="supplier-email" name="email" type="email" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                    <input id="supplier-email" name="email" type="email" class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                </div>
+                <div>
+                    <label for="supplier-phone" class="block text-sm font-medium text-gray-700">Phone</label>
+                    <input id="supplier-phone" name="phone" type="text" class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                </div>
+                <div>
+                    <label for="supplier-address" class="block text-sm font-medium text-gray-700">Address</label>
+                    <textarea id="supplier-address" name="address" rows="2" class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"></textarea>
+                </div>
+                <div>
+                    <label for="supplier-website" class="block text-sm font-medium text-gray-700">Website</label>
+                    <input id="supplier-website" name="website" type="url" class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
                 </div>
                 <div class="flex justify-end space-x-2">
                     <button type="button" onclick="hideSupplierModal()" class="bg-gray-300 px-4 py-2 rounded">Cancel</button>
@@ -112,15 +125,181 @@
         </div>
     </div>
     <script>
-        // JS functions for modal and fetching suppliers would go here
+        // Global variables
+        const API_BASE = '/api/v1';
+        const token = localStorage.getItem('token');
+        let allSuppliers = [];
+
+        // Check authentication
+        if (!token) {
+            window.location.href = '/login.html';
+        }
+
+        // Set authorization header for all requests
+        function makeRequest(url, options = {}) {
+            return fetch(url, {
+                ...options,
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                    ...options.headers
+                }
+            });
+        }
+
+        // Fetch and display suppliers
+        async function fetchSuppliers() {
+            try {
+                const response = await makeRequest(`${API_BASE}/suppliers`);
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        localStorage.removeItem('token');
+                        localStorage.removeItem('user');
+                        window.location.href = '/login.html';
+                        return;
+                    }
+                    throw new Error('Failed to fetch suppliers');
+                }
+                
+                const data = await response.json();
+                allSuppliers = data.success ? data.data : data.suppliers || data;
+                displaySuppliers(allSuppliers);
+            } catch (error) {
+                console.error('Error fetching suppliers:', error);
+                alert('Failed to load suppliers. Please refresh the page.');
+            }
+        }
+
+        // Display suppliers in table
+        function displaySuppliers(suppliers) {
+            const tbody = document.getElementById('supplier-table-body');
+            if (!tbody) return;
+
+            tbody.innerHTML = '';
+
+            if (suppliers.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-gray-500">No suppliers found</td></tr>';
+                return;
+            }
+
+            suppliers.forEach((supplier, index) => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50';
+                
+                row.innerHTML = `
+                    <td class="px-6 py-4 text-sm font-medium text-gray-900">${index + 1}</td>
+                    <td class="px-6 py-4 text-sm text-gray-900">${supplier.name}</td>
+                    <td class="px-6 py-4 text-sm text-gray-900">${supplier.contact_person || supplier.contact || 'N/A'}</td>
+                    <td class="px-6 py-4 text-sm text-gray-900">${supplier.email || 'N/A'}</td>
+                    <td class="px-6 py-4 text-sm text-gray-900">${supplier.phone || 'N/A'}</td>
+                    <td class="px-6 py-4 text-sm text-gray-900">
+                        <div class="flex space-x-2">
+                            <button onclick="editSupplier(${JSON.stringify(supplier).replace(/"/g, '&quot;')})" 
+                                    class="text-blue-600 hover:text-blue-800" title="Edit">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="deleteSupplier(${supplier.id}, '${supplier.name}')" 
+                                    class="text-red-600 hover:text-red-800" title="Delete">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+        }
+
+        // Show add supplier modal
         function showAddSupplierModal() {
             document.getElementById('modal-title').innerText = 'Add Supplier';
             document.getElementById('supplier-form').reset();
             document.getElementById('supplier-id').value = '';
             document.getElementById('supplier-modal').classList.remove('hidden');
         }
+
+        // Show edit supplier modal
+        function editSupplier(supplier) {
+            document.getElementById('modal-title').innerText = 'Edit Supplier';
+            document.getElementById('supplier-id').value = supplier.id;
+            document.getElementById('supplier-name').value = supplier.name;
+            document.getElementById('supplier-contact').value = supplier.contact_person || '';
+            document.getElementById('supplier-email').value = supplier.email || '';
+            document.getElementById('supplier-phone').value = supplier.phone || '';
+            document.getElementById('supplier-address').value = supplier.address || '';
+            document.getElementById('supplier-website').value = supplier.website || '';
+            document.getElementById('supplier-modal').classList.remove('hidden');
+        }
+
+        // Hide supplier modal
         function hideSupplierModal() {
             document.getElementById('supplier-modal').classList.add('hidden');
+        }
+
+        // Handle form submission
+        document.getElementById('supplier-form').onsubmit = async function(e) {
+            e.preventDefault();
+            
+            const id = document.getElementById('supplier-id').value;
+            const payload = {
+                name: document.getElementById('supplier-name').value.trim(),
+                contact_person: document.getElementById('supplier-contact').value.trim(),
+                email: document.getElementById('supplier-email').value.trim(),
+                phone: document.getElementById('supplier-phone').value.trim(),
+                address: document.getElementById('supplier-address').value.trim(),
+                website: document.getElementById('supplier-website').value.trim()
+            };
+
+            try {
+                let url = `${API_BASE}/suppliers`;
+                let method = 'POST';
+                if (id) {
+                    url += '/' + id;
+                    method = 'PUT';
+                }
+
+                const response = await makeRequest(url, {
+                    method,
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    const message = id ? 'Supplier updated successfully!' : 'Supplier created successfully!';
+                    alert(message);
+                    hideSupplierModal();
+                    fetchSuppliers();
+                } else {
+                    const errorData = await response.json();
+                    alert(errorData.error || 'Failed to save supplier');
+                }
+            } catch (error) {
+                console.error('Error saving supplier:', error);
+                alert('Network error. Please try again.');
+            }
+        };
+
+        // Delete supplier
+        async function deleteSupplier(id, name) {
+            if (!confirm(`Are you sure you want to delete supplier "${name}"?`)) {
+                return;
+            }
+
+            try {
+                const response = await makeRequest(`${API_BASE}/suppliers/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    alert('Supplier deleted successfully!');
+                    fetchSuppliers();
+                } else {
+                    const errorData = await response.json();
+                    alert(errorData.error || 'Failed to delete supplier');
+                }
+            } catch (error) {
+                console.error('Error deleting supplier:', error);
+                alert('Network error. Please try again.');
+            }
         }
 
         // Initialize burger menu functionality
@@ -168,6 +347,9 @@
             
             // Initialize burger menu
             initializeBurgerMenu();
+            
+            // Load suppliers
+            fetchSuppliers();
         });
     </script>
 </body>

@@ -21,22 +21,80 @@ type User struct {
 
 // Product represents an inventory item
 type Product struct {
-	ID          uint           `json:"id" gorm:"primaryKey"`
-	Name        string         `json:"name" gorm:"not null"`
-	SKU         string         `json:"sku" gorm:"unique;not null"`
-	Description string         `json:"description"`
-	Category    string         `json:"category"`
-	Price       float64        `json:"price" gorm:"not null"`
-	Cost        float64        `json:"cost" gorm:"not null"`
-	Quantity    int            `json:"quantity" gorm:"default:0"`
-	MinStock    int            `json:"min_stock" gorm:"default:10"`
-	MaxStock    int            `json:"max_stock" gorm:"default:1000"`
-	Location    string         `json:"location"`
-	Supplier    string         `json:"supplier"`
-	IsActive    bool           `json:"is_active" gorm:"default:true"`
-	CreatedAt   time.Time      `json:"created_at"`
-	UpdatedAt   time.Time      `json:"updated_at"`
-	DeletedAt   gorm.DeletedAt `json:"-" gorm:"index"`
+	ID          uint              `json:"id" gorm:"primaryKey"`
+	Name        string            `json:"name" gorm:"not null"`
+	SKU         string            `json:"sku" gorm:"unique;not null"`
+	Description string            `json:"description"`
+	Category    string            `json:"category"`
+	Location    string            `json:"location"`
+	Suppliers   []ProductSupplier `json:"suppliers" gorm:"foreignKey:ProductID"` // Multiple suppliers relationship
+	IsActive    bool              `json:"is_active" gorm:"default:true"`
+	CreatedAt   time.Time         `json:"created_at"`
+	UpdatedAt   time.Time         `json:"updated_at"`
+	DeletedAt   gorm.DeletedAt    `json:"-" gorm:"index"`
+}
+
+// GetTotalStock returns total stock across all suppliers
+func (p *Product) GetTotalStock() int {
+	total := 0
+	for _, supplier := range p.Suppliers {
+		if supplier.IsActive {
+			total += supplier.Stock
+		}
+	}
+	return total
+}
+
+// GetLowestPrice returns the lowest selling price among suppliers
+func (p *Product) GetLowestPrice() float64 {
+	if len(p.Suppliers) == 0 {
+		return 0
+	}
+	
+	lowest := float64(0)
+	first := true
+	
+	for _, supplier := range p.Suppliers {
+		if supplier.IsActive {
+			if first || supplier.Price < lowest {
+				lowest = supplier.Price
+				first = false
+			}
+		}
+	}
+	
+	return lowest
+}
+
+// GetLowestCost returns the lowest cost among suppliers
+func (p *Product) GetLowestCost() float64 {
+	if len(p.Suppliers) == 0 {
+		return 0
+	}
+	
+	lowest := float64(0)
+	first := true
+	
+	for _, supplier := range p.Suppliers {
+		if supplier.IsActive {
+			if first || supplier.Cost < lowest {
+				lowest = supplier.Cost
+				first = false
+			}
+		}
+	}
+	
+	return lowest
+}
+
+// IsLowStock checks if any supplier has low stock
+func (p *Product) IsLowStock() bool {
+	for _, supplier := range p.Suppliers {
+		if supplier.IsActive && supplier.Stock <= supplier.MinStock {
+			return true
+		}
+	}
+	return false
 }
 
 // StockMovement represents inventory movements
@@ -134,14 +192,16 @@ type PurchaseOrder struct {
 
 // PurchaseOrderItem represents items in a purchase order
 type PurchaseOrderItem struct {
-	ID               uint    `json:"id" gorm:"primaryKey"`
-	PurchaseOrderID  uint    `json:"purchase_order_id" gorm:"not null"`
-	ProductID        uint    `json:"product_id" gorm:"not null"`
-	Product          Product `json:"product" gorm:"foreignKey:ProductID"`
-	QuantityOrdered  int     `json:"quantity_ordered" gorm:"not null"`
-	QuantityReceived int     `json:"quantity_received" gorm:"default:0"`
-	UnitCost         float64 `json:"unit_cost" gorm:"not null"`
-	Total            float64 `json:"total" gorm:"not null"`
+	ID                 uint            `json:"id" gorm:"primaryKey"`
+	PurchaseOrderID    uint            `json:"purchase_order_id" gorm:"not null"`
+	ProductID          uint            `json:"product_id" gorm:"not null"`
+	Product            Product         `json:"product" gorm:"foreignKey:ProductID"`
+	ProductSupplierID  *uint           `json:"product_supplier_id"` // Link to specific supplier for this product
+	ProductSupplier    *ProductSupplier `json:"product_supplier" gorm:"foreignKey:ProductSupplierID"`
+	QuantityOrdered    int             `json:"quantity_ordered" gorm:"not null"`
+	QuantityReceived   int             `json:"quantity_received" gorm:"default:0"`
+	UnitCost           float64         `json:"unit_cost" gorm:"not null"`
+	Total              float64         `json:"total" gorm:"not null"`
 }
 
 // PurchasePayment represents payment history for purchase orders
@@ -170,6 +230,23 @@ type SalePayment struct {
 	PaymentType   string    `json:"payment_type" gorm:"not null"` // downpayment, payment, adjustment
 	Notes         string    `json:"notes"`
 	CreatedAt     time.Time `json:"created_at"`
+}
+
+// ProductSupplier represents the relationship between products and suppliers with pricing
+type ProductSupplier struct {
+	ID         uint           `json:"id" gorm:"primaryKey"`
+	ProductID  uint           `json:"product_id" gorm:"not null"`
+	Product    Product        `json:"product" gorm:"foreignKey:ProductID"`
+	SupplierID uint           `json:"supplier_id" gorm:"not null"`
+	Supplier   Supplier       `json:"supplier" gorm:"foreignKey:SupplierID"`
+	Cost       float64        `json:"cost" gorm:"not null"`        // Cost from this supplier
+	Price      float64        `json:"price" gorm:"not null"`       // Selling price for this supplier's stock
+	Stock      int            `json:"stock" gorm:"default:0"`      // Current stock from this supplier
+	MinStock   int            `json:"min_stock" gorm:"default:10"` // Minimum stock for this supplier
+	IsActive   bool           `json:"is_active" gorm:"default:true"`
+	CreatedAt  time.Time      `json:"created_at"`
+	UpdatedAt  time.Time      `json:"updated_at"`
+	DeletedAt  gorm.DeletedAt `json:"-" gorm:"index"`
 }
 
 // ActivityLog represents system activity logs

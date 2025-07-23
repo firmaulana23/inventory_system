@@ -27,12 +27,13 @@ type CreatePurchaseOrderRequest struct {
 
 // CreatePurchaseOrderItem represents an item in the purchase order request
 type CreatePurchaseOrderItem struct {
-	SKU         string  `json:"sku" binding:"required"`
-	ProductName string  `json:"product_name"`
-	Category    string  `json:"category"`
-	Description string  `json:"description"`
-	Quantity    int     `json:"quantity" binding:"required,min=1"`
-	UnitCost    float64 `json:"unit_cost" binding:"required,min=0"`
+	SKU               string  `json:"sku" binding:"required"`
+	ProductName       string  `json:"product_name"`
+	Category          string  `json:"category"`
+	Description       string  `json:"description"`
+	Quantity          int     `json:"quantity" binding:"required,min=1"`
+	UnitCost          float64 `json:"unit_cost" binding:"required,min=0"`
+	ProductSupplierID *uint   `json:"product_supplier_id"` // Link to specific supplier for existing products
 }
 
 // CreatePurchaseOrder creates a new purchase order with SKU-based product handling
@@ -146,19 +147,21 @@ func CreatePurchaseOrder(c *gin.Context) {
 	// Process each item
 	for _, item := range req.Items {
 		// Find or create product by SKU
-		product, err := findOrCreateProduct(tx, item)
+		product, productSupplier, err := findOrCreateProductWithSupplier(tx, item, req.SupplierID)
 		if err != nil {
 			tx.Rollback()
 			c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to process product with SKU %s: %v", item.SKU, err)})
 			return
 		}
 
-		// Update product quantity by adding the ordered quantity
-		product.Quantity += item.Quantity
-		if err := tx.Save(product).Error; err != nil {
-			tx.Rollback()
-			c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to update quantity for product %s", item.SKU)})
-			return
+		// Update supplier-specific stock
+		if productSupplier != nil {
+			productSupplier.Stock += item.Quantity
+			if err := tx.Save(productSupplier).Error; err != nil {
+				tx.Rollback()
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update supplier stock"})
+				return
+			}
 		}
 
 		// Create stock movement record
@@ -185,6 +188,11 @@ func CreatePurchaseOrder(c *gin.Context) {
 			QuantityReceived: item.Quantity, // Mark as received since we're updating inventory
 			UnitCost:         item.UnitCost,
 			Total:            total,
+		}
+
+		// Link to specific product-supplier relationship if available
+		if productSupplier != nil {
+			poItem.ProductSupplierID = &productSupplier.ID
 		}
 
 		if err := tx.Create(&poItem).Error; err != nil {
@@ -259,7 +267,7 @@ func CreatePurchaseOrder(c *gin.Context) {
 
 	// Load complete purchase order with relationships
 	var completePO models.PurchaseOrder
-	database.DB.Preload("User").Preload("Items.Product").First(&completePO, po.ID)
+	database.DB.Preload("User").Preload("Supplier").Preload("Items.Product").Preload("Items.ProductSupplier.Supplier").First(&completePO, po.ID)
 
 	c.JSON(http.StatusCreated, gin.H{
 		"success": true,
@@ -267,36 +275,64 @@ func CreatePurchaseOrder(c *gin.Context) {
 	})
 }
 
-// findOrCreateProduct finds an existing product by SKU or creates a new one
-func findOrCreateProduct(tx *gorm.DB, item CreatePurchaseOrderItem) (*models.Product, error) {
+// findOrCreateProductWithSupplier finds an existing product by SKU or creates a new one, and handles supplier relationship
+func findOrCreateProductWithSupplier(tx *gorm.DB, item CreatePurchaseOrderItem, supplierID uint) (*models.Product, *models.ProductSupplier, error) {
 	var product models.Product
 
 	// Try to find existing product by SKU
 	result := tx.Where("sku = ?", item.SKU).First(&product)
-	if result.Error == nil {
-		// Product exists, return it
-		return &product, nil
+	if result.Error != nil {
+		// Product doesn't exist, create new one
+		product = models.Product{
+			Name:        getProductName(item),
+			SKU:         item.SKU,
+			Description: item.Description,
+			Category:    item.Category,
+			IsActive:    true,
+		}
+
+		if err := tx.Create(&product).Error; err != nil {
+			return nil, nil, err
+		}
 	}
 
-	// Product doesn't exist, create new one
-	product = models.Product{
-		Name:        getProductName(item),
-		SKU:         item.SKU,
-		Description: item.Description,
-		Category:    item.Category,
-		Price:       0,
-		Cost:        item.UnitCost,
-		Quantity:    0, // Initial quantity is 0, will be updated when PO is received
-		MinStock:    10,
-		MaxStock:    1000,
-		IsActive:    true,
+	// Handle product-supplier relationship
+	var productSupplier models.ProductSupplier
+	
+	// If ProductSupplierID is provided, use that specific relationship
+	if item.ProductSupplierID != nil {
+		if err := tx.Where("id = ? AND product_id = ? AND supplier_id = ?", 
+			*item.ProductSupplierID, product.ID, supplierID).First(&productSupplier).Error; err != nil {
+			return nil, nil, fmt.Errorf("invalid product_supplier_id: %v", err)
+		}
+		return &product, &productSupplier, nil
 	}
 
-	if err := tx.Create(&product).Error; err != nil {
-		return nil, err
+	// Check if product-supplier relationship exists
+	result = tx.Where("product_id = ? AND supplier_id = ?", product.ID, supplierID).First(&productSupplier)
+	if result.Error != nil {
+		// Create new product-supplier relationship
+		productSupplier = models.ProductSupplier{
+			ProductID:  product.ID,
+			SupplierID: supplierID,
+			Cost:       item.UnitCost,
+			Price:      item.UnitCost * 1.2, // Default markup of 20%
+			Stock:      0,                   // Will be updated by caller
+			MinStock:   10,                  // Default minimum stock
+			IsActive:   true,
+		}
+
+		if err := tx.Create(&productSupplier).Error; err != nil {
+			return nil, nil, err
+		}
+	} else {
+		// Update cost if different (in case prices changed)
+		if productSupplier.Cost != item.UnitCost {
+			productSupplier.Cost = item.UnitCost
+		}
 	}
 
-	return &product, nil
+	return &product, &productSupplier, nil
 }
 
 // getProductName returns the product name, using SKU as fallback
@@ -349,7 +385,7 @@ func GetPurchaseOrder(c *gin.Context) {
 	}
 
 	var po models.PurchaseOrder
-	result := database.DB.Preload("User").Preload("Supplier").Preload("Items.Product").First(&po, id)
+	result := database.DB.Preload("User").Preload("Supplier").Preload("Items.Product").Preload("Items.ProductSupplier.Supplier").First(&po, id)
 	if result.Error != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Purchase order not found"})
 		return
@@ -457,7 +493,7 @@ func RecordPurchasePayment(c *gin.Context) {
 func GetOverduePurchaseOrders(c *gin.Context) {
 	var purchaseOrders []models.PurchaseOrder
 
-	query := database.DB.Preload("User").Preload("Supplier").Preload("Items.Product").
+	query := database.DB.Preload("User").Preload("Supplier").Preload("Items.Product").Preload("Items.ProductSupplier.Supplier").
 		Where("payment_status = ? OR (payment_status = ? AND due_date < ?)",
 			"overdue", "pending", time.Now())
 
@@ -501,7 +537,7 @@ func DeletePurchaseOrder(c *gin.Context) {
 	tx := database.DB.Begin()
 
 	var po models.PurchaseOrder
-	if err := tx.Preload("Items.Product").First(&po, id).Error; err != nil {
+	if err := tx.Preload("Items.Product").Preload("Items.ProductSupplier").First(&po, id).Error; err != nil {
 		tx.Rollback()
 		c.JSON(http.StatusNotFound, gin.H{"error": "Purchase order not found"})
 		return
@@ -516,12 +552,23 @@ func DeletePurchaseOrder(c *gin.Context) {
 				continue
 			}
 
-			// Reverse the stock addition (subtract the quantity that was added)
-			product.Quantity -= item.QuantityReceived
-			if err := tx.Save(&product).Error; err != nil {
-				tx.Rollback()
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to reverse stock changes"})
-				return
+			// Reverse supplier-specific stock if ProductSupplierID is linked
+			if item.ProductSupplierID != nil {
+				var productSupplier models.ProductSupplier
+				if err := tx.First(&productSupplier, *item.ProductSupplierID).Error; err == nil {
+					// Reduce supplier stock by the received quantity
+					newStock := productSupplier.Stock - item.QuantityReceived
+					if newStock < 0 {
+						newStock = 0 // Don't allow negative stock
+					}
+					productSupplier.Stock = newStock
+					
+					if err := tx.Save(&productSupplier).Error; err != nil {
+						tx.Rollback()
+						c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to reverse supplier stock"})
+						return
+					}
+				}
 			}
 
 			// Create a reversing stock movement record
@@ -842,7 +889,7 @@ func UpdatePurchaseOrder(c *gin.Context) {
 
 	// Load complete purchase order with relationships
 	var updatedPO models.PurchaseOrder
-	database.DB.Preload("User").Preload("Items.Product").First(&updatedPO, po.ID)
+	database.DB.Preload("User").Preload("Supplier").Preload("Items.Product").Preload("Items.ProductSupplier.Supplier").First(&updatedPO, po.ID)
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Purchase order updated successfully",

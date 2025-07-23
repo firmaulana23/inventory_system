@@ -67,11 +67,12 @@ func InitDatabase() {
 	err = DB.AutoMigrate(
 		&models.User{},
 		&models.Product{},
+		&models.Supplier{},
+		&models.ProductSupplier{},
 		&models.StockMovement{},
 		&models.Sale{},
 		&models.SaleItem{},
 		&models.SalePayment{},
-		&models.Supplier{},
 		&models.PurchaseOrder{},
 		&models.PurchaseOrderItem{},
 		&models.PurchasePayment{},
