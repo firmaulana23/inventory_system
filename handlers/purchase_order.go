@@ -18,7 +18,7 @@ import (
 type CreatePurchaseOrderRequest struct {
 	SupplierID    uint                      `json:"supplier_id" binding:"required"`
 	PaymentMethod string                    `json:"payment_method"`
-	PaymentTerm   string                    `json:"payment_term"`
+	PaymentDays   int                       `json:"payment_days"` // Number of days for payment due
 	DownPayment   float64                   `json:"down_payment"`
 	Notes         string                    `json:"notes"`
 	OrderDate     string                    `json:"order_date" binding:"required"`
@@ -44,7 +44,7 @@ func CreatePurchaseOrder(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	
+
 	fmt.Printf("Received purchase order request: %+v\n", req)
 
 	// Get user ID from context
@@ -54,12 +54,15 @@ func CreatePurchaseOrder(c *gin.Context) {
 		return
 	}
 
-	// Set default payment method and term if not provided
+	// Set default payment method and days if not provided
 	if req.PaymentMethod == "" {
 		req.PaymentMethod = "cash"
 	}
-	if req.PaymentTerm == "" {
-		req.PaymentTerm = "cash"
+	if req.PaymentDays == 0 {
+		if req.PaymentMethod == "credit" {
+			req.PaymentDays = 30
+		}
+		// For non-credit payments, PaymentDays remains 0 (immediate payment)
 	}
 
 	// Validate payment method
@@ -69,10 +72,9 @@ func CreatePurchaseOrder(c *gin.Context) {
 		return
 	}
 
-	// Validate payment term
-	validPaymentTerms := []string{"cash", "net7", "net15", "net30", "net60", "net90"}
-	if !slices.Contains(validPaymentTerms, req.PaymentTerm) {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid payment term"})
+	// Validate payment days
+	if req.PaymentDays < 0 || req.PaymentDays > 365 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Payment days must be between 0 and 365"})
 		return
 	}
 
@@ -86,27 +88,14 @@ func CreatePurchaseOrder(c *gin.Context) {
 	// Generate PO number
 	poNumber := generatePONumber()
 
-	// Calculate due date based on payment term
+	// Calculate due date based on payment days
 	var dueDate *time.Time
 	var paymentStatus string
 	var paidDate *time.Time
 
-	if req.PaymentMethod == "credit" {
+	if req.PaymentMethod == "credit" && req.PaymentDays >= 0 {
 		paymentStatus = "pending"
-		var days int
-		switch req.PaymentTerm {
-		case "net7":
-			days = 7
-		case "net15":
-			days = 15
-		case "net30":
-			days = 30
-		case "net60":
-			days = 60
-		case "net90":
-			days = 90
-		}
-		calculatedDueDate := orderDate.AddDate(0, 0, days)
+		calculatedDueDate := orderDate.AddDate(0, 0, req.PaymentDays)
 		dueDate = &calculatedDueDate
 	} else {
 		paymentStatus = "paid" // Will be paid upon receipt
@@ -123,7 +112,7 @@ func CreatePurchaseOrder(c *gin.Context) {
 		SupplierID:    req.SupplierID,
 		UserID:        userID.(uint),
 		PaymentMethod: req.PaymentMethod,
-		PaymentTerm:   req.PaymentTerm,
+		PaymentDays:   req.PaymentDays,
 		PaymentStatus: paymentStatus,
 		PaidDate:      paidDate,
 		DueDate:       dueDate,
@@ -152,7 +141,7 @@ func CreatePurchaseOrder(c *gin.Context) {
 	// Process each item
 	for i, item := range req.Items {
 		fmt.Printf("Processing item %d: %+v\n", i+1, item)
-		
+
 		// Find or create product by SKU
 		product, productSupplier, err := findOrCreateProductWithSupplier(tx, item, req.SupplierID)
 		if err != nil {
@@ -306,10 +295,10 @@ func findOrCreateProductWithSupplier(tx *gorm.DB, item CreatePurchaseOrderItem, 
 
 	// Handle product-supplier relationship
 	var productSupplier models.ProductSupplier
-	
+
 	// If ProductSupplierID is provided, use that specific relationship
 	if item.ProductSupplierID != nil {
-		if err := tx.Where("id = ? AND product_id = ? AND supplier_id = ?", 
+		if err := tx.Where("id = ? AND product_id = ? AND supplier_id = ?",
 			*item.ProductSupplierID, product.ID, supplierID).First(&productSupplier).Error; err != nil {
 			return nil, nil, fmt.Errorf("invalid product_supplier_id: %v", err)
 		}
@@ -570,7 +559,7 @@ func DeletePurchaseOrder(c *gin.Context) {
 						newStock = 0 // Don't allow negative stock
 					}
 					productSupplier.Stock = newStock
-					
+
 					if err := tx.Save(&productSupplier).Error; err != nil {
 						tx.Rollback()
 						c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to reverse supplier stock"})
@@ -674,7 +663,7 @@ func GetPurchasePaymentHistory(c *gin.Context) {
 type UpdatePurchaseOrderRequest struct {
 	SupplierID    uint    `json:"supplier_id"`
 	PaymentMethod string  `json:"payment_method"`
-	PaymentTerm   string  `json:"payment_term"`
+	PaymentDays   int     `json:"payment_days"` // Number of days for payment due
 	Notes         string  `json:"notes"`
 	Status        string  `json:"status"`
 	DownPayment   float64 `json:"down_payment"`
@@ -732,7 +721,7 @@ func GetPurchaseOrdersSummary(c *gin.Context) {
 	// Calculate overdue payments (credit orders past due date with amount due > 0)
 	var overdueAmount float64
 	db.Model(&models.PurchaseOrder{}).
-		Where("created_at BETWEEN ? AND ? AND payment_method = ? AND amount_due > ? AND due_date < ?", 
+		Where("created_at BETWEEN ? AND ? AND payment_method = ? AND amount_due > ? AND due_date < ?",
 			start, end, "credit", 0, time.Now()).
 		Select("COALESCE(SUM(amount_due), 0)").
 		Scan(&overdueAmount)
@@ -783,7 +772,7 @@ func UpdatePurchaseOrder(c *gin.Context) {
 
 	// Store original values for comparison
 	originalDownPayment := po.DownPayment
-	originalPaymentTerm := po.PaymentTerm
+	originalPaymentDays := po.PaymentDays
 
 	// Validate payment method if provided
 	if req.PaymentMethod != "" {
@@ -796,15 +785,14 @@ func UpdatePurchaseOrder(c *gin.Context) {
 		po.PaymentMethod = req.PaymentMethod
 	}
 
-	// Validate payment term if provided
-	if req.PaymentTerm != "" {
-		validPaymentTerms := []string{"cash", "net7", "net15", "net30", "net60", "net90"}
-		if !slices.Contains(validPaymentTerms, req.PaymentTerm) {
+	// Validate payment days if provided
+	if req.PaymentDays != 0 {
+		if req.PaymentDays < 0 || req.PaymentDays > 365 {
 			tx.Rollback()
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid payment term"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Payment days must be between 0 and 365"})
 			return
 		}
-		po.PaymentTerm = req.PaymentTerm
+		po.PaymentDays = req.PaymentDays
 	}
 
 	// Update basic fields
@@ -864,23 +852,10 @@ func UpdatePurchaseOrder(c *gin.Context) {
 		}
 	}
 
-	// Update due date if payment term changed
-	if req.PaymentTerm != "" && req.PaymentTerm != originalPaymentTerm {
-		if req.PaymentMethod == "credit" {
-			var days int
-			switch req.PaymentTerm {
-			case "net7":
-				days = 7
-			case "net15":
-				days = 15
-			case "net30":
-				days = 30
-			case "net60":
-				days = 60
-			case "net90":
-				days = 90
-			}
-			calculatedDueDate := po.OrderDate.AddDate(0, 0, days)
+	// Update due date if payment days changed
+	if req.PaymentDays != 0 && req.PaymentDays != originalPaymentDays {
+		if req.PaymentMethod == "credit" && req.PaymentDays > 0 {
+			calculatedDueDate := po.OrderDate.AddDate(0, 0, req.PaymentDays)
 			po.DueDate = &calculatedDueDate
 		}
 	}

@@ -19,7 +19,7 @@ import (
 type SaleRequest struct {
 	CustomerName  string            `json:"customer_name"`
 	PaymentMethod string            `json:"payment_method" binding:"required"`
-	PaymentTerm   string            `json:"payment_term"`
+	PaymentDays   int               `json:"payment_days"`  // Number of days for payment due
 	DownPayment   float64           `json:"down_payment"`
 	Items         []SaleItemRequest `json:"items" binding:"required,min=1"`
 	Discount      float64           `json:"discount"`
@@ -50,19 +50,17 @@ func CreateSale(c *gin.Context) {
 		return
 	}
 
-	// Set default payment term if not provided
-	if request.PaymentTerm == "" {
+	// Set default payment days if not provided
+	if request.PaymentDays == 0 {
 		if request.PaymentMethod == "credit" {
-			request.PaymentTerm = "net30"
-		} else {
-			request.PaymentTerm = "cash"
+			request.PaymentDays = 30
 		}
+		// For non-credit payments, PaymentDays remains 0 (immediate payment)
 	}
 
-	// Validate payment term
-	validPaymentTerms := []string{"cash", "net7", "net15", "net30", "net60", "net90"}
-	if !slices.Contains(validPaymentTerms, request.PaymentTerm) {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid payment term"})
+	// Validate payment days
+	if request.PaymentDays < 0 || request.PaymentDays > 365 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Payment days must be between 0 and 365"})
 		return
 	}
 
@@ -75,29 +73,17 @@ func CreateSale(c *gin.Context) {
 	// Generate sale number
 	saleNumber := generateSaleNumber()
 
-	// Calculate due date based on payment term
+	// Calculate due date based on payment days
 	var dueDate *time.Time
 	var paymentStatus string
 
-	if request.PaymentTerm == "cash" {
+	if request.PaymentDays == 0 || request.PaymentMethod != "credit" {
 		paymentStatus = "paid"
 		now := time.Now()
 		dueDate = &now
 	} else {
 		paymentStatus = "pending"
-		var days int
-		switch request.PaymentTerm {
-		case "net7":
-			days = 7
-		case "net15":
-			days = 15
-		case "net30":
-			days = 30
-		case "net60":
-			days = 60
-		case "net90":
-			days = 90
-		}
+		days := request.PaymentDays
 		calculatedDueDate := time.Now().AddDate(0, 0, days)
 		dueDate = &calculatedDueDate
 	}
@@ -108,7 +94,7 @@ func CreateSale(c *gin.Context) {
 		UserID:        userID.(uint),
 		CustomerName:  request.CustomerName,
 		PaymentMethod: request.PaymentMethod,
-		PaymentTerm:   request.PaymentTerm,
+		PaymentDays:   request.PaymentDays,
 		PaymentStatus: paymentStatus,
 		DownPayment:   request.DownPayment,
 		DueDate:       dueDate,
@@ -268,8 +254,8 @@ func CreateSale(c *gin.Context) {
 	sale.Subtotal = subtotal
 	sale.Total = subtotal + request.Tax - request.Discount
 
-	// Set payment amounts based on payment term
-	if request.PaymentTerm == "cash" {
+	// Set payment amounts based on payment days
+	if request.PaymentDays == 0 || request.PaymentMethod != "credit" {
 		sale.AmountPaid = sale.Total
 		sale.AmountDue = 0
 		now := time.Now()

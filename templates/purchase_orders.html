@@ -471,14 +471,11 @@
                             </select>
                         </div>
                         <div id="payment-term-container">
-                            <label for="po-payment-term" class="block text-sm font-medium text-gray-700">Payment Term</label>
-                            <select id="po-payment-term" name="payment_term" class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
-                                <option value="net7">Net 7 (7 days)</option>
-                                <option value="net15">Net 15 (15 days)</option>
-                                <option value="net30">Net 30 (30 days)</option>
-                                <option value="net60">Net 60 (60 days)</option>
-                                <option value="net90">Net 90 (90 days)</option>
-                            </select>
+                            <label for="po-payment-days" class="block text-sm font-medium text-gray-700">Payment Due (Days)</label>
+                            <input type="number" id="po-payment-days" name="payment_days" min="1" max="365" value="30" 
+                                   class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                                   placeholder="Enter days (e.g., 30)">
+                            <div class="text-xs text-gray-500 mt-1">Payment due in specified number of days</div>
                         </div>
                         <div id="downpayment-container" style="display: none;">
                             <label for="po-downpayment" class="block text-sm font-medium text-gray-700">Down Payment ($)</label>
@@ -927,23 +924,23 @@
         function togglePaymentTerm(preserveDownpayment = false) {
             const paymentMethod = document.getElementById('po-payment-method').value;
             const paymentTermContainer = document.getElementById('payment-term-container');
-            const paymentTermSelect = document.getElementById('po-payment-term');
+            const paymentDaysInput = document.getElementById('po-payment-days');
             const downpaymentContainer = document.getElementById('downpayment-container');
             const downpaymentInput = document.getElementById('po-downpayment');
             
             if (paymentMethod === 'credit') {
                 paymentTermContainer.style.display = 'block';
                 downpaymentContainer.style.display = 'block';
-                paymentTermSelect.disabled = false;
+                paymentDaysInput.disabled = false;
                 if (!preserveDownpayment) {
-                    paymentTermSelect.value = 'net7';
+                    paymentDaysInput.value = '30';
                     downpaymentInput.value = '0';
                 }
             } else {
                 paymentTermContainer.style.display = 'none';
                 downpaymentContainer.style.display = 'none';
-                paymentTermSelect.value = 'cash'; // Set to cash term
-                paymentTermSelect.disabled = true;
+                paymentDaysInput.value = '0'; // Set to immediate payment
+                paymentDaysInput.disabled = true;
                 if (!preserveDownpayment) {
                     downpaymentInput.value = '0';
                 }
@@ -1507,7 +1504,7 @@
             const poData = {
                 supplier_id: supplierID,
                 payment_method: formData.get('payment_method'),
-                payment_term: formData.get('payment_term'),
+                payment_days: parseInt(formData.get('payment_days')) || 0,
                 down_payment: parseFloat(formData.get('down_payment')) || 0,
                 order_date: formData.get('order_date'),
                 notes: formData.get('notes'),
@@ -1656,7 +1653,6 @@
                             <div><span class="font-medium">PO Number:</span> ${po.po_number}</div>
                             <div><span class="font-medium">Supplier:</span> ${po.supplier ? po.supplier.name : 'Unknown'}</div>
                             <div><span class="font-medium">Order Date:</span> ${formatDate(po.order_date)}</div>
-                            <div><span class="font-medium">Status:</span> <span class="px-2 py-1 text-xs font-medium rounded-full ${statusClass}">${capitalizeFirst(po.status || 'pending')}</span></div>
                         </div>
                     </div>
                     
@@ -1664,7 +1660,6 @@
                         <h4 class="font-medium text-gray-800 mb-3">Payment Information</h4>
                         <div class="space-y-2 text-sm">
                             <div><span class="font-medium">Payment Method:</span> ${capitalizeFirst(po.payment_method || 'cash')}</div>
-                            <div><span class="font-medium">Payment Term:</span> ${capitalizeFirst(po.payment_term || 'net30')}</div>
                             <div><span class="font-medium">Payment Status:</span> ${paymentStatusBadge}</div>
                             <div class="font-medium text-lg"><span class="font-medium">Total:</span> <span class="text-green-600">Rp ${formatNumber(po.total || 0)}</span></div>
                             ${po.payment_method === 'credit' ? `

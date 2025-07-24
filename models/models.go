@@ -123,7 +123,7 @@ type Sale struct {
 	Discount      float64        `json:"discount" gorm:"default:0"`
 	Total         float64        `json:"total" gorm:"not null"`
 	PaymentMethod string         `json:"payment_method" gorm:"not null"`     // cash, card, transfer, credit
-	PaymentTerm   string         `json:"payment_term" gorm:"default:cash"`   // cash, net7, net15, net30, net60, net90
+	PaymentDays   int            `json:"payment_days" gorm:"default:0"`      // Number of days for payment due (0 = immediate)
 	PaymentStatus string         `json:"payment_status" gorm:"default:paid"` // paid, pending, overdue
 	DownPayment   float64        `json:"down_payment" gorm:"default:0"`      // downpayment amount for credit sales
 	DueDate       *time.Time     `json:"due_date"`
@@ -173,7 +173,7 @@ type PurchaseOrder struct {
 	UserID        uint                `json:"user_id" gorm:"not null"`
 	User          User                `json:"user" gorm:"foreignKey:UserID"`
 	PaymentMethod string              `json:"payment_method" gorm:"default:net30"`   // cash, net7, net15, net30, net60, net90, credit
-	PaymentTerm   string              `json:"payment_term" gorm:"default:net30"`     // cash, net7, net15, net30, net60, net90
+	PaymentDays   int                 `json:"payment_days" gorm:"default:30"`       // Number of days for payment due
 	PaymentStatus string              `json:"payment_status" gorm:"default:pending"` // pending, paid, overdue
 	Total         float64             `json:"total" gorm:"not null"`
 	DownPayment   float64             `json:"down_payment" gorm:"default:0"` // downpayment amount for credit orders

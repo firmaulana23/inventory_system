@@ -236,14 +236,11 @@
                             </div>
                             
                             <div id="payment-term-container" class="hidden">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Payment Terms</label>
-                                <select id="payment-term" class="w-full p-2 border rounded focus:ring-2 focus:ring-green-500 focus:border-transparent">
-                                    <option value="net7">Net 7 (7 days)</option>
-                                    <option value="net15">Net 15 (15 days)</option>
-                                    <option value="net30">Net 30 (30 days)</option>
-                                    <option value="net60">Net 60 (60 days)</option>
-                                    <option value="net90">Net 90 (90 days)</option>
-                                </select>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Payment Due (Days)</label>
+                                <input type="number" id="payment-days" min="1" max="365" value="30" 
+                                       class="w-full p-2 border rounded focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                       placeholder="Enter days (e.g., 30)">
+                                <div class="text-xs text-gray-500 mt-1">Payment due in specified number of days</div>
                             </div>
                             
                             <div id="down-payment-container" class="hidden">
@@ -338,8 +335,21 @@
                 const lowStockResponse = await makeRequest(`${API_BASE}/products/low-stock`);
                 if (lowStockResponse.ok) {
                     const lowStockResult = await lowStockResponse.json();
-                    document.getElementById('low-stock').textContent = lowStockResult.length || 0;
+                    const lowStockCount = lowStockResult.length || 0;
+                    document.getElementById('low-stock').textContent = lowStockCount;
+                    
+                    // Update the stat card color based on stock status
+                    const lowStockCard = document.getElementById('low-stock').closest('.bg-white');
+                    if (lowStockCount > 0) {
+                        lowStockCard.classList.add('border-l-4', 'border-l-orange-400');
+                    } else {
+                        lowStockCard.classList.remove('border-l-4', 'border-l-orange-400');
+                    }
+                    
                     loadLowStockItems(lowStockResult);
+                } else {
+                    console.error('Failed to load low stock items');
+                    document.getElementById('low-stock').textContent = 'Error';
                 }
 
             } catch (error) {
@@ -374,14 +384,40 @@
             container.innerHTML = '';
             
             items.forEach(item => {
+                // Calculate total stock across all active suppliers
+                const totalStock = getTotalStock(item);
+                
+                // Find which suppliers have low stock
+                const lowStockSuppliers = item.suppliers ? 
+                    item.suppliers.filter(s => s.is_active && s.stock <= s.min_stock) : [];
+                
                 const div = document.createElement('div');
-                div.className = 'flex justify-between items-center p-2 bg-red-50 border border-red-200 rounded';
+                div.className = 'flex justify-between items-start p-3 bg-orange-50 border border-orange-200 rounded mb-2';
+                
+                // Build supplier details
+                let supplierDetails = '';
+                if (lowStockSuppliers.length > 0) {
+                    supplierDetails = lowStockSuppliers.map(supplier => 
+                        `<div class="text-xs text-orange-600">
+                            ${supplier.supplier?.name || 'Unknown'}: ${supplier.stock}/${supplier.min_stock}
+                        </div>`
+                    ).join('');
+                }
+                
                 div.innerHTML = `
-                    <div>
-                        <span class="font-medium">${item.name}</span>
-                        <span class="text-sm text-gray-500 ml-2">(${item.sku})</span>
+                    <div class="flex-1">
+                        <div class="flex items-center">
+                            <span class="font-medium">${item.name}</span>
+                            <i class="fas fa-exclamation-triangle text-orange-500 ml-2" title="Low Stock Alert"></i>
+                        </div>
+                        <div class="text-sm text-gray-500">${item.sku}</div>
+                        ${item.category ? `<div class="text-xs text-gray-400">${item.category}</div>` : ''}
+                        ${supplierDetails}
                     </div>
-                    <span class="text-red-600 font-bold">${item.quantity} left</span>
+                    <div class="text-right">
+                        <div class="text-orange-600 font-bold">${totalStock} total</div>
+                        <div class="text-xs text-gray-500">${lowStockSuppliers.length} supplier${lowStockSuppliers.length !== 1 ? 's' : ''} low</div>
+                    </div>
                 `;
                 container.appendChild(div);
             });
@@ -425,7 +461,7 @@
                 const isLowStock = product.suppliers ? product.suppliers.some(s => s.is_active && s.stock <= s.min_stock) : false;
                 
                 const div = document.createElement('div');
-                div.className = `p-3 border-b border-gray-200 hover:bg-gray-50 cursor-pointer ${isLowStock ? 'border-l-4 border-l-orange-400' : ''}`;
+                div.className = `p-3 border-b border-gray-200 hover:bg-gray-50 cursor-pointer ${isLowStock ? 'border-l-4 border-l-orange-400 bg-orange-25' : ''}`;
                 
                 const categoryBadge = product.category ? 
                     `<span class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mr-2">${product.category}</span>` : '';
@@ -451,6 +487,7 @@
                             </div>
                             <div class="mt-1">
                                 ${categoryBadge}
+                                ${isLowStock ? '<span class="inline-block bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded mr-2"><i class="fas fa-exclamation-triangle mr-1"></i>Low Stock</span>' : ''}
                             </div>
                         </div>
                         <div class="text-green-600 font-bold">Rp ${formatNumber(lowestPrice)}</div>
@@ -574,6 +611,14 @@
             }
             
             filterByCategory(); // Reapply all filters
+            
+            // Update button text with count when filter is active
+            if (showLowStockOnly) {
+                const lowStockCount = allPOSProducts.filter(product => 
+                    product.suppliers && product.suppliers.some(s => s.is_active && s.stock <= s.min_stock)
+                ).length;
+                button.innerHTML = `<i class="fas fa-exclamation-triangle mr-1"></i>Low Stock (${lowStockCount})`;
+            }
         }
 
         function displayPOSProducts(products) {
@@ -594,10 +639,19 @@
                         <i class="fas fa-map-marker-alt mr-1"></i>${product.location}
                     </div>` : '';
                 
-                const lowStockWarning = isLowStock ? 
-                    `<div class="text-xs text-orange-600 font-medium mt-1">
-                        <i class="fas fa-exclamation-triangle mr-1"></i>Low Stock Warning
-                    </div>` : '';
+                // Enhanced low stock warning with supplier details
+                let lowStockWarning = '';
+                if (isLowStock) {
+                    const lowStockSuppliers = activeSuppliers.filter(s => s.stock <= s.min_stock);
+                    const supplierNames = lowStockSuppliers.map(s => s.supplier?.name || 'Unknown').join(', ');
+                    lowStockWarning = `
+                        <div class="text-xs text-orange-600 font-medium mt-1 p-2 bg-orange-100 rounded">
+                            <i class="fas fa-exclamation-triangle mr-1"></i>Low Stock Alert
+                            <div class="mt-1 text-xs">
+                                ${supplierNames} ${lowStockSuppliers.length === 1 ? 'has' : 'have'} stock below minimum
+                            </div>
+                        </div>`;
+                }
                 
                 const categoryInfo = product.category ? 
                     `<span class="inline-block bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded mt-1 mr-2">${product.category}</span>` : '';
@@ -764,10 +818,20 @@
             
             const supplierStock = supplier.stock || 0;
             const supplierPrice = supplier.price || 0;
+            const isLowStock = supplierStock <= (supplier.min_stock || 0);
             
             if (supplierStock <= 0) {
                 alert(`No stock available from ${supplier.supplier?.name || 'this supplier'}`);
                 return;
+            }
+            
+            // Warn about low stock
+            if (isLowStock) {
+                const supplierName = supplier.supplier?.name || 'this supplier';
+                const confirmAdd = confirm(`⚠️ LOW STOCK ALERT\n\n${product.name} from ${supplierName} has only ${supplierStock} items left (below minimum of ${supplier.min_stock}).\n\nDo you want to add it to cart anyway?`);
+                if (!confirmAdd) {
+                    return;
+                }
             }
             
             // Create a unique cart item key using product_id and supplier_id
@@ -1009,6 +1073,7 @@
 
         // Generate invoice PDF
         function generateInvoicePDF(saleResult, saleData) {
+            console.log(saleData)
             // Load latest logo settings from localStorage
             loadLogoForInvoice();
             
@@ -1032,19 +1097,23 @@
                 day: 'numeric',
             });
             
-            const detailsY = 50;
+            const detailsY = 45;
             doc.text(`Invoice Number     : ${saleResult.sale_number}`, 20, detailsY);
-            doc.text(`Date               : ${invoiceDate}`, 20, detailsY + 10);
-            doc.text(`Customer           : ${saleData.customer_name || 'Walk-in Customer'}`, 20, detailsY + 30);
-            doc.text(`Payment Method     : ${saleData.payment_method.toUpperCase()}`, 20, detailsY + 40);
+            doc.text(`Date               \t: ${invoiceDate}`, 20, detailsY + 5);
+            doc.text(`Customer        \t: ${saleData.customer_name || 'Walk-in Customer'}`, 20, detailsY + 10);
+            doc.text(`Payment Method    : ${saleData.payment_method.toUpperCase()}`, 20, detailsY + 15);
+            
+            // Add payment terms if credit with payment days
+            if (saleData.payment_method === 'credit' && saleData.payment_days > 0) {
+                doc.text(`Payment Due         : ${saleData.payment_days} days`, 20, detailsY + 20);
+            }
             
             // Table header
-            let y = detailsY + 70;
+            let y = detailsY + (saleData.payment_method === 'credit' && saleData.payment_days > 0 ? 30 : 25);
             const tableStartY = y;
             doc.setFont(undefined, 'bold');
             doc.text('No.', 20, y);
             doc.text('Item', 35, y);
-            doc.text('Supplier', 90, y);
             doc.text('Qty', 120, y);
             doc.text('Price', 140, y);
             doc.text('Total', 170, y);
@@ -1066,17 +1135,13 @@
                 }
                 doc.text(productName, 35, y);
                 
-                // Supplier name (truncated if too long)
-                const supplierName = item.supplier_name || 'N/A';
-                const truncatedSupplier = supplierName.length > 12 ? supplierName.substring(0, 12) + '...' : supplierName;
-                doc.text(truncatedSupplier, 90, y);
-                
                 doc.text(item.quantity.toString(), 120, y);
                 doc.text(`Rp ${formatNumber(item.price)}`, 140, y);
                 doc.text(`Rp ${formatNumber(itemTotal)}`, 170, y);
-                y += 10;
+                y += 3;
             });
             
+            y += 7; // Add some space after the last item
             // Summary section
             doc.line(120, y, 190, y);
             y += 10;
@@ -1090,17 +1155,24 @@
                 doc.text(`-Rp ${formatNumber(saleData.discount)}`, 170, y);
                 y += 10;
             }
-            
-            doc.text('Tax:', 140, y);
-            doc.text(`Rp ${formatNumber(saleData.tax)}`, 170, y);
-            y += 10;
+
+            if (saleData.down_payment > 0) {
+                doc.text('Down Payment:', 140, y);
+                doc.text(`-Rp ${formatNumber(saleData.down_payment)}`, 170, y);
+                y += 10;
+            }
+
+            if (saleData.tax > 0) {
+                doc.text(`Tax : Rp ${formatNumber(saleData.tax)}`, 170, y);
+                y += 10;
+            }
             
             doc.setFont(undefined, 'bold');
             doc.text('TOTAL:', 140, y);
             doc.text(`Rp ${formatNumber(saleData.total)}`, 170, y);
             
             // Footer
-            y += 5;
+            y += 10;
             const footerStartY = y;
             doc.setFont(undefined, 'normal');
             doc.setFontSize(8);
@@ -1148,19 +1220,19 @@
         function updatePaymentTerms() {
             const paymentMethod = document.getElementById('payment-method').value;
             const paymentTermContainer = document.getElementById('payment-term-container');
-            const paymentTerm = document.getElementById('payment-term');
+            const paymentDays = document.getElementById('payment-days');
             const downPaymentContainer = document.getElementById('down-payment-container');
             const downPayment = document.getElementById('down-payment');
             const downPaymentDisplay = document.getElementById('down-payment-display');
             
             if (paymentMethod === 'credit') {
-                paymentTerm.value = 'net7';
-                paymentTerm.disabled = false;
+                paymentDays.value = '30';
+                paymentDays.disabled = false;
                 paymentTermContainer.classList.remove('hidden');
                 downPaymentContainer.classList.remove('hidden');
             } else {
-                paymentTerm.value = 'cash';
-                paymentTerm.disabled = true;
+                paymentDays.value = '0';
+                paymentDays.disabled = true;
                 paymentTermContainer.classList.add('hidden');
                 downPaymentContainer.classList.add('hidden');
                 downPayment.value = '';
@@ -1208,7 +1280,7 @@
             if (cart.length === 0) return;
             
             const paymentMethod = document.getElementById('payment-method').value;
-            const paymentTerm = document.getElementById('payment-term').value;
+            const paymentDays = parseInt(document.getElementById('payment-days').value) || 0;
             const customerName = document.getElementById('customer-name').value;
             const downPayment = parseFloat(document.getElementById('down-payment').value) || 0;
             const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
@@ -1238,7 +1310,7 @@
             const saleData = {
                 customer_name: customerName,
                 payment_method: paymentMethod,
-                payment_term: paymentTerm,
+                payment_days: paymentDays,
                 down_payment: downPayment,
                 items: cart.map(item => ({
                     product_id: item.product_id,
@@ -1266,7 +1338,8 @@
                     generateInvoicePDF(result, {
                         customer_name: customerName,
                         payment_method: paymentMethod,
-                        payment_term: paymentTerm,
+                        payment_days: paymentDays,
+                        down_payment: downPayment,
                         items: cart,
                         subtotal: subtotal,
                         tax: tax,
