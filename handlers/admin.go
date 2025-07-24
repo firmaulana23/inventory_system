@@ -94,8 +94,13 @@ func GetDashboardStats(c *gin.Context) {
 	// Calculate total purchasing amount due
 	database.DB.Model(&models.PurchaseOrder{}).Select("COALESCE(SUM(amount_due), 0)").Scan(&stats.TotalPurchasingDue)
 
-	// Count low stock products (stock < 10)
-	database.DB.Model(&models.Product{}).Where("quantity < ?", 10).Count(&stats.LowStockProducts)
+	// Count low stock products (products where any supplier has stock <= min_stock)
+	database.DB.Raw(`
+		SELECT COUNT(DISTINCT p.id) 
+		FROM products p 
+		JOIN product_suppliers ps ON p.id = ps.product_id 
+		WHERE ps.is_active = true AND ps.stock <= ps.min_stock
+	`).Scan(&stats.LowStockProducts)
 
 	// Get recent sales (last 10)
 	database.DB.Preload("User").Preload("Items.Product").Order("created_at desc").Limit(10).Find(&stats.RecentSales)

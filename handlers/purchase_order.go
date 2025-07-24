@@ -40,9 +40,12 @@ type CreatePurchaseOrderItem struct {
 func CreatePurchaseOrder(c *gin.Context) {
 	var req CreatePurchaseOrderRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
+		fmt.Printf("Failed to bind JSON: %v\n", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	
+	fmt.Printf("Received purchase order request: %+v\n", req)
 
 	// Get user ID from context
 	userID, exists := c.Get("user_id")
@@ -130,7 +133,8 @@ func CreatePurchaseOrder(c *gin.Context) {
 
 	if err := tx.Create(&po).Error; err != nil {
 		tx.Rollback()
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create purchase order"})
+		fmt.Printf("Failed to create purchase order: %v\n", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to create purchase order: %v", err)})
 		return
 	}
 
@@ -138,18 +142,22 @@ func CreatePurchaseOrder(c *gin.Context) {
 	var supplier models.Supplier
 	if err := tx.First(&supplier, po.SupplierID).Error; err != nil {
 		tx.Rollback()
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid supplier ID"})
+		fmt.Printf("Failed to find supplier with ID %d: %v\n", po.SupplierID, err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Invalid supplier ID %d: %v", po.SupplierID, err)})
 		return
 	}
 
 	var totalAmount float64
 
 	// Process each item
-	for _, item := range req.Items {
+	for i, item := range req.Items {
+		fmt.Printf("Processing item %d: %+v\n", i+1, item)
+		
 		// Find or create product by SKU
 		product, productSupplier, err := findOrCreateProductWithSupplier(tx, item, req.SupplierID)
 		if err != nil {
 			tx.Rollback()
+			fmt.Printf("Failed to process product with SKU %s: %v\n", item.SKU, err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to process product with SKU %s: %v", item.SKU, err)})
 			return
 		}

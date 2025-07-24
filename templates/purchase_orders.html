@@ -507,7 +507,6 @@
                                         <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">SKU *</th>
                                         <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Product Name</th>
                                         <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
-                                        <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Supplier</th>
                                         <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Quantity *</th>
                                         <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Unit Cost *</th>
                                         <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
@@ -1408,12 +1407,6 @@
                 <td class="px-3 py-2 border-b">
                     <input type="text" name="category" class="w-full p-1 border rounded text-sm" placeholder="Category" readonly>
                 </td>
-                <td class="px-3 py-2 border-b relative">
-                    <select name="product_supplier_id" class="w-full p-1 border rounded text-sm" onchange="updateCostFromSupplier(this, '${rowId}')" disabled>
-                        <option value="">Select product first</option>
-                    </select>
-                    <input type="hidden" name="supplier_name" />
-                </td>
                 <td class="px-3 py-2 border-b">
                     <input type="number" name="quantity" min="1" required class="w-full p-1 border rounded text-sm" placeholder="Qty" onchange="calculateRowTotal(this)">
                 </td>
@@ -1477,7 +1470,7 @@
                 const productName = row.querySelector('input[name="product_name"]').value;
                 const category = row.querySelector('input[name="category"]').value;
                 const productSupplierIdSelect = row.querySelector('select[name="product_supplier_id"]');
-                const productSupplierId = productSupplierIdSelect.value ? parseInt(productSupplierIdSelect.value) : null;
+                const productSupplierId = productSupplierIdSelect?.value ? parseInt(productSupplierIdSelect.value) : null;
                 const quantity = parseInt(row.querySelector('input[name="quantity"]').value);
                 const unitCost = parseFloat(row.querySelector('input[name="unit_cost"]').value);
                 

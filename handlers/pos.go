@@ -28,8 +28,11 @@ type SaleRequest struct {
 
 // SaleItemRequest represents an item in a sale
 type SaleItemRequest struct {
-	ProductID uint `json:"product_id" binding:"required"`
-	Quantity  int  `json:"quantity" binding:"required,min=1"`
+	ProductID  uint    `json:"product_id" binding:"required"`
+	SupplierID *uint   `json:"supplier_id"` // Optional supplier selection
+	Quantity   int     `json:"quantity" binding:"required,min=1"`
+	Price      *float64 `json:"price"`      // Optional price override
+	Cost       *float64 `json:"cost"`       // Optional cost override
 }
 
 // CreateSale processes a new sale transaction
@@ -120,58 +123,119 @@ func CreateSale(c *gin.Context) {
 	// Process each item
 	for _, itemReq := range request.Items {
 		var product models.Product
-		if err := tx.Preload("Suppliers").First(&product, itemReq.ProductID).Error; err != nil {
+		if err := tx.Preload("Suppliers.Supplier").First(&product, itemReq.ProductID).Error; err != nil {
 			tx.Rollback()
 			c.JSON(http.StatusNotFound, gin.H{"error": fmt.Sprintf("Product with ID %d not found", itemReq.ProductID)})
 			return
 		}
 
-		// Get total stock and lowest price from suppliers
-		totalStock := product.GetTotalStock()
-		lowestPrice := product.GetLowestPrice()
-		lowestCost := product.GetLowestCost()
+		var usePrice, useCost float64
+		var supplierName string
 
-		// Check stock availability
-		if totalStock < itemReq.Quantity {
-			tx.Rollback()
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": fmt.Sprintf("Insufficient stock for product %s. Available: %d, Requested: %d",
-					product.Name, totalStock, itemReq.Quantity),
-			})
-			return
-		}
-
-		// Update stock from suppliers (FIFO approach - use cheapest supplier first)
-		remainingQty := itemReq.Quantity
-		for i, supplier := range product.Suppliers {
-			if remainingQty <= 0 || !supplier.IsActive {
-				continue
+		if itemReq.SupplierID != nil {
+			// User selected a specific supplier
+			fmt.Printf("Looking for supplier ID: %d\n", *itemReq.SupplierID)
+			var selectedSupplier *models.ProductSupplier
+			for _, supplier := range product.Suppliers {
+				fmt.Printf("Checking supplier - ProductSupplier ID: %d, Company SupplierID: %d, IsActive: %t\n", supplier.ID, supplier.SupplierID, supplier.IsActive)
+				// Check both ProductSupplier ID and actual supplier company ID
+				if (supplier.SupplierID == *itemReq.SupplierID || supplier.ID == *itemReq.SupplierID) && supplier.IsActive {
+					selectedSupplier = &supplier
+					break
+				}
 			}
 
-			if supplier.Stock > 0 {
-				deductQty := remainingQty
-				if supplier.Stock < remainingQty {
-					deductQty = supplier.Stock
+			if selectedSupplier == nil {
+				tx.Rollback()
+				c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Selected supplier ID %d not found or inactive for product %s", *itemReq.SupplierID, product.Name)})
+				return
+			}
+
+			// Check stock availability from selected supplier
+			if selectedSupplier.Stock < itemReq.Quantity {
+				tx.Rollback()
+				c.JSON(http.StatusBadRequest, gin.H{
+					"error": fmt.Sprintf("Insufficient stock for product %s from selected supplier. Available: %d, Requested: %d",
+						product.Name, selectedSupplier.Stock, itemReq.Quantity),
+				})
+				return
+			}
+
+			// Use supplier's price and cost (or override if provided)
+			if itemReq.Price != nil {
+				usePrice = *itemReq.Price
+			} else {
+				usePrice = selectedSupplier.Price
+			}
+
+			if itemReq.Cost != nil {
+				useCost = *itemReq.Cost
+			} else {
+				useCost = selectedSupplier.Cost
+			}
+
+			supplierName = selectedSupplier.Supplier.Name
+
+			// Update stock from selected supplier
+			for i, supplier := range product.Suppliers {
+				if supplier.ID == selectedSupplier.ID {
+					product.Suppliers[i].Stock -= itemReq.Quantity
+					if err := tx.Save(&product.Suppliers[i]).Error; err != nil {
+						tx.Rollback()
+						c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update supplier stock"})
+						return
+					}
+					break
+				}
+			}
+		} else {
+			// Legacy mode - use lowest price supplier (FIFO approach)
+			totalStock := product.GetTotalStock()
+			usePrice = product.GetLowestPrice()
+			useCost = product.GetLowestCost()
+
+			// Check stock availability
+			if totalStock < itemReq.Quantity {
+				tx.Rollback()
+				c.JSON(http.StatusBadRequest, gin.H{
+					"error": fmt.Sprintf("Insufficient stock for product %s. Available: %d, Requested: %d",
+						product.Name, totalStock, itemReq.Quantity),
+				})
+				return
+			}
+
+			// Update stock from suppliers (FIFO approach - use cheapest supplier first)
+			remainingQty := itemReq.Quantity
+			for i, supplier := range product.Suppliers {
+				if remainingQty <= 0 || !supplier.IsActive {
+					continue
 				}
 
-				product.Suppliers[i].Stock -= deductQty
-				remainingQty -= deductQty
+				if supplier.Stock > 0 {
+					deductQty := remainingQty
+					if supplier.Stock < remainingQty {
+						deductQty = supplier.Stock
+					}
 
-				if err := tx.Save(&product.Suppliers[i]).Error; err != nil {
-					tx.Rollback()
-					c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update supplier stock"})
-					return
+					product.Suppliers[i].Stock -= deductQty
+					remainingQty -= deductQty
+
+					if err := tx.Save(&product.Suppliers[i]).Error; err != nil {
+						tx.Rollback()
+						c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update supplier stock"})
+						return
+					}
 				}
 			}
 		}
 
 		// Create sale item
-		itemTotal := float64(itemReq.Quantity) * lowestPrice
+		itemTotal := float64(itemReq.Quantity) * usePrice
 		saleItem := models.SaleItem{
 			ProductID: product.ID,
 			Quantity:  itemReq.Quantity,
-			Price:     lowestPrice,
-			Cost:      lowestCost,
+			Price:     usePrice,
+			Cost:      useCost,
 			Total:     itemTotal,
 		}
 
@@ -179,13 +243,18 @@ func CreateSale(c *gin.Context) {
 		subtotal += itemTotal
 
 		// Create stock movement record
+		notes := "Sale transaction"
+		if supplierName != "" {
+			notes = fmt.Sprintf("Sale transaction - Supplier: %s", supplierName)
+		}
+		
 		movement := models.StockMovement{
 			ProductID: product.ID,
 			UserID:    userID.(uint),
 			Type:      "out",
 			Quantity:  itemReq.Quantity,
 			Reference: saleNumber,
-			Notes:     "Sale transaction",
+			Notes:     notes,
 		}
 
 		if err := tx.Create(&movement).Error; err != nil {
