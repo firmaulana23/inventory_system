@@ -1054,40 +1054,94 @@
             updateCart();
         }
 
-        // Logo variables for invoice generation
-        let companyLogo = null;
-        let companyName = 'INVENTORY SYSTEM';
+        // Company profile variables for invoice generation
+        let companyProfile = {
+            company_name: 'INVENTORY SYSTEM',
+            company_address: '',
+            company_phone: '',
+            company_email: '',
+            logo_base64: '',
+            invoice_footer: 'Thank you for your business!',
+            currency: 'IDR'
+        };
 
-        function loadLogoForInvoice() {
-            const savedLogo = localStorage.getItem('companyLogo');
-            const savedName = localStorage.getItem('companyName');
-            
-            if (savedLogo) {
-                companyLogo = savedLogo;
-            }
-            
-            if (savedName) {
-                companyName = savedName;
+        async function loadCompanyProfileForInvoice() {
+            try {
+                const response = await makeRequest(`${API_BASE}/company-profile/invoice`);
+                if (response.ok) {
+                    companyProfile = await response.json();
+                }
+            } catch (error) {
+                console.error('Error loading company profile:', error);
+                // Keep default values if API fails
             }
         }
 
         // Generate invoice PDF
-        function generateInvoicePDF(saleResult, saleData) {
+        async function generateInvoicePDF(saleResult, saleData) {
             console.log(saleData)
-            // Load latest logo settings from localStorage
-            loadLogoForInvoice();
+            // Load latest company profile from database
+            await loadCompanyProfileForInvoice();
             
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             
-            // Company header (text only)
+            // Add logo as background watermark first (so it appears behind all content)
+            if (companyProfile.logo_base64) {
+                try {
+                    const pageWidth = doc.internal.pageSize.getWidth();
+                    const pageHeight = doc.internal.pageSize.getHeight();
+                    
+                    // Set background logo size (larger watermark)
+                    const logoWidth = 120;
+                    const logoHeight = 120;
+                    const logoX = (pageWidth - logoWidth) / 2;
+                    const logoY = (pageHeight - logoHeight) / 2;
+                    
+                    // Save current graphics state
+                    doc.saveGraphicsState();
+                    
+                    // Set opacity to 15% for subtle watermark effect
+                    doc.setGState(doc.GState({opacity: 0.15}));
+                    
+                    // Add logo as background watermark centered on page
+                    doc.addImage(companyProfile.logo_base64, 'JPEG', logoX, logoY, logoWidth, logoHeight);
+                    
+                    // Restore graphics state
+                    doc.restoreGraphicsState();
+                } catch (error) {
+                    console.error('Error adding background logo watermark to PDF:', error);
+                }
+            }
+            
+            // Company header
             doc.setFontSize(20);
             doc.setFont(undefined, 'bold');
-            doc.text(companyName, 105, 20, { align: 'center' });
+            doc.text(companyProfile.company_name, 105, 20, { align: 'center' });
+            
+            // Company details (if available)
+            if (companyProfile.company_address || companyProfile.company_phone || companyProfile.company_email) {
+                doc.setFontSize(8);
+                doc.setFont(undefined, 'normal');
+                let headerY = 25;
+                
+                if (companyProfile.company_address) {
+                    doc.text(companyProfile.company_address, 105, headerY, { align: 'center' });
+                    headerY += 4;
+                }
+                if (companyProfile.company_phone) {
+                    doc.text(`Tel: ${companyProfile.company_phone}`, 105, headerY, { align: 'center' });
+                    headerY += 4;
+                }
+                if (companyProfile.company_email) {
+                    doc.text(`Email: ${companyProfile.company_email}`, 105, headerY, { align: 'center' });
+                    headerY += 4;
+                }
+            }
             
             doc.setFontSize(12);
             doc.setFont(undefined, 'normal');
-            doc.text('Invoice / Faktur', 105, 30, { align: 'center' });
+            doc.text('Invoice / Faktur', 105, 40, { align: 'center' });
             
             // Invoice details
             doc.setFontSize(10);
@@ -1176,40 +1230,8 @@
             const footerStartY = y;
             doc.setFont(undefined, 'normal');
             doc.setFontSize(8);
-            doc.text('Thank you for your business!', 105, y, { align: 'center' });
+            doc.text(companyProfile.invoice_footer || 'Thank you for your business!', 105, y, { align: 'center' });
             doc.text('This is a computer-generated invoice.', 105, y + 5, { align: 'center' });
-            
-            const finalContentY = y + 10;
-            
-            // Add logo as background image centered in content area with opacity
-            if (companyLogo) {
-                try {
-                    // Calculate content dimensions
-                    const contentStartY = 20; // Start from company header
-                    const contentHeight = finalContentY - contentStartY;
-                    const pageWidth = doc.internal.pageSize.getWidth();
-                    
-                    // Set background logo size (adjust as needed)
-                    const logoWidth = 80;
-                    const logoHeight = 80;
-                    const logoX = (pageWidth - logoWidth) / 2;
-                    const logoY = contentStartY + (contentHeight - logoHeight) / 2;
-                    
-                    // Save current graphics state
-                    doc.saveGraphicsState();
-                    
-                    // Set opacity to 40% (0.4)
-                    doc.setGState(doc.GState({opacity: 0.4}));
-                    
-                    // Add logo as background image centered in content area
-                    doc.addImage(companyLogo, 'JPEG', logoX, logoY, logoWidth, logoHeight);
-                    
-                    // Restore graphics state
-                    doc.restoreGraphicsState();
-                } catch (error) {
-                    console.error('Error adding background logo to PDF:', error);
-                }
-            }
             
             // Auto download
             const fileName = `Invoice_${saleResult.sale_number}_${new Date().toISOString().split('T')[0]}.pdf`;
@@ -1335,7 +1357,7 @@
                     const result = await response.json();
                     
                     // Generate and download invoice PDF
-                    generateInvoicePDF(result, {
+                    await generateInvoicePDF(result, {
                         customer_name: customerName,
                         payment_method: paymentMethod,
                         payment_days: paymentDays,
@@ -1387,7 +1409,7 @@
         }
 
         // Initialize dashboard
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
             // Set user name if available
             const userInfo = JSON.parse(localStorage.getItem('user') || '{}');
             if (userInfo.name) {
@@ -1405,8 +1427,8 @@
             // Initialize payment terms
             updatePaymentTerms();
             
-            // Load logo settings for invoice generation
-            loadLogoForInvoice();
+            // Load company profile for invoice generation
+            await loadCompanyProfileForInvoice();
             
             // Refresh dashboard every 2 minutes
             setInterval(loadDashboard, 2 * 60 * 1000);

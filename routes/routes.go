@@ -87,6 +87,9 @@ func SetupRoutes() *gin.Engine {
 		// Stock movements (view only for employees)
 		protected.GET("/stock-movements", handlers.GetStockMovements)
 		
+		// Company profile for invoices (accessible to all authenticated users)
+		protected.GET("/company-profile/invoice", handlers.GetCompanyProfileForInvoice)
+		
 		// Suppliers (view only for employees)
 		suppliers := protected.Group("/suppliers")
 		{
@@ -142,6 +145,13 @@ func SetupRoutes() *gin.Engine {
 
 			// System management
 			admin.PUT("/system/settings", handlers.UpdateSystemSettings)
+			
+			// Company profile management
+			admin.GET("/company-profile", handlers.GetCompanyProfile)
+			admin.POST("/company-profile", handlers.CreateOrUpdateCompanyProfile)
+			admin.PUT("/company-profile", handlers.CreateOrUpdateCompanyProfile)
+			admin.PUT("/company-profile/logo", handlers.UpdateCompanyLogo)
+			admin.DELETE("/company-profile/:id", handlers.DeleteCompanyProfile)
 			admin.POST("/system/backup", handlers.BackupDatabase)
 			admin.POST("/system/restore", handlers.RestoreDatabase)
 			admin.GET("/system/backups", handlers.ListBackups)

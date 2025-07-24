@@ -77,6 +77,7 @@ func InitDatabase() {
 		&models.PurchaseOrderItem{},
 		&models.PurchasePayment{},
 		&models.ActivityLog{},
+		&models.CompanyProfile{},
 	)
 	if err != nil {
 		log.Fatal("Failed to migrate database:", err)

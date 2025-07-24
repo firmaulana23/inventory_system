@@ -263,3 +263,23 @@ type ActivityLog struct {
 	CreatedAt  time.Time `json:"created_at"`
 }
 
+// CompanyProfile represents company information for invoices and system branding
+type CompanyProfile struct {
+	ID              uint           `json:"id" gorm:"primaryKey"`
+	CompanyName     string         `json:"company_name" gorm:"not null"`
+	CompanyAddress  string         `json:"company_address"`
+	CompanyPhone    string         `json:"company_phone"`
+	CompanyEmail    string         `json:"company_email"`
+	CompanyWebsite  string         `json:"company_website"`
+	TaxNumber       string         `json:"tax_number"`       // NPWP or tax identification number
+	BusinessLicense string         `json:"business_license"` // Business registration number
+	LogoBase64      string         `json:"logo_base64" gorm:"type:text"` // Company logo in base64 format
+	InvoiceFooter   string         `json:"invoice_footer"`   // Custom footer text for invoices
+	BankAccount     string         `json:"bank_account"`     // Bank account information
+	Currency        string         `json:"currency" gorm:"default:IDR"` // Default currency
+	IsActive        bool           `json:"is_active" gorm:"default:true"`
+	CreatedAt       time.Time      `json:"created_at"`
+	UpdatedAt       time.Time      `json:"updated_at"`
+	DeletedAt       gorm.DeletedAt `json:"-" gorm:"index"`
+}
+
