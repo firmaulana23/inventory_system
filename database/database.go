@@ -76,6 +76,11 @@ func InitDatabase() {
 		&models.PurchaseOrder{},
 		&models.PurchaseOrderItem{},
 		&models.PurchasePayment{},
+		&models.Return{},
+		&models.ReturnItem{},
+		&models.Exchange{},
+		&models.ExchangeOldItem{},
+		&models.ExchangeNewItem{},
 		&models.ActivityLog{},
 		&models.CompanyProfile{},
 	)

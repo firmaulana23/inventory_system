@@ -98,7 +98,6 @@ func CreateSale(c *gin.Context) {
 		PaymentStatus: paymentStatus,
 		DownPayment:   request.DownPayment,
 		DueDate:       dueDate,
-		Status:        "completed",
 		Discount:      request.Discount,
 		Tax:           request.Tax,
 	}

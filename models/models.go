@@ -231,6 +231,86 @@ type SalePayment struct {
 	CreatedAt     time.Time `json:"created_at"`
 }
 
+// Return represents a sale return transaction
+type Return struct {
+	ID           uint         `json:"id" gorm:"primaryKey"`
+	ReturnNumber string       `json:"return_number" gorm:"unique;not null"`
+	SaleID       uint         `json:"sale_id" gorm:"not null"`
+	Sale         Sale         `json:"sale" gorm:"foreignKey:SaleID"`
+	UserID       uint         `json:"user_id" gorm:"not null"`
+	User         User         `json:"user" gorm:"foreignKey:UserID"`
+	Subtotal     float64      `json:"subtotal" gorm:"not null"`
+	Tax          float64      `json:"tax" gorm:"default:0"`
+	Discount     float64      `json:"discount" gorm:"default:0"`
+	Total        float64      `json:"total" gorm:"not null"`
+	Reason       string       `json:"reason"`                           // Reason for return
+	RefundMethod string       `json:"refund_method" gorm:"not null"`    // cash, card, transfer, store_credit
+	RefundAmount float64      `json:"refund_amount" gorm:"not null"`    // Amount to be refunded
+	Items        []ReturnItem `json:"items" gorm:"foreignKey:ReturnID"`
+	CreatedAt    time.Time    `json:"created_at"`
+	UpdatedAt    time.Time    `json:"updated_at"`
+	DeletedAt    gorm.DeletedAt `json:"-" gorm:"index"`
+}
+
+// ReturnItem represents items in a return
+type ReturnItem struct {
+	ID         uint    `json:"id" gorm:"primaryKey"`
+	ReturnID   uint    `json:"return_id" gorm:"not null"`
+	SaleItemID uint    `json:"sale_item_id" gorm:"not null"`
+	SaleItem   SaleItem `json:"sale_item" gorm:"foreignKey:SaleItemID"`
+	ProductID  uint    `json:"product_id" gorm:"not null"`
+	Product    Product `json:"product" gorm:"foreignKey:ProductID"`
+	Quantity   int     `json:"quantity" gorm:"not null"`
+	Price      float64 `json:"price" gorm:"not null"`
+	Total      float64 `json:"total" gorm:"not null"`
+	Condition  string  `json:"condition" gorm:"not null"` // good, damaged, expired
+}
+
+// Exchange represents a product exchange transaction
+type Exchange struct {
+	ID             uint           `json:"id" gorm:"primaryKey"`
+	ExchangeNumber string         `json:"exchange_number" gorm:"unique;not null"`
+	SaleID         uint           `json:"sale_id" gorm:"not null"`
+	Sale           Sale           `json:"sale" gorm:"foreignKey:SaleID"`
+	UserID         uint           `json:"user_id" gorm:"not null"`
+	User           User           `json:"user" gorm:"foreignKey:UserID"`
+	Reason         string         `json:"reason"`                               // Reason for exchange
+	TotalOldValue  float64        `json:"total_old_value" gorm:"not null"`      // Total value of returned items
+	TotalNewValue  float64        `json:"total_new_value" gorm:"not null"`      // Total value of new items
+	Difference     float64        `json:"difference" gorm:"not null"`           // Price difference (+ customer pays, - customer gets refund)
+	PaymentMethod  string         `json:"payment_method"`                       // Method for difference payment/refund
+	OldItems       []ExchangeOldItem `json:"old_items" gorm:"foreignKey:ExchangeID"`
+	NewItems       []ExchangeNewItem `json:"new_items" gorm:"foreignKey:ExchangeID"`
+	CreatedAt      time.Time      `json:"created_at"`
+	UpdatedAt      time.Time      `json:"updated_at"`
+	DeletedAt      gorm.DeletedAt `json:"-" gorm:"index"`
+}
+
+// ExchangeOldItem represents items being returned in an exchange
+type ExchangeOldItem struct {
+	ID         uint     `json:"id" gorm:"primaryKey"`
+	ExchangeID uint     `json:"exchange_id" gorm:"not null"`
+	SaleItemID uint     `json:"sale_item_id" gorm:"not null"`
+	SaleItem   SaleItem `json:"sale_item" gorm:"foreignKey:SaleItemID"`
+	ProductID  uint     `json:"product_id" gorm:"not null"`
+	Product    Product  `json:"product" gorm:"foreignKey:ProductID"`
+	Quantity   int      `json:"quantity" gorm:"not null"`
+	Price      float64  `json:"price" gorm:"not null"`
+	Total      float64  `json:"total" gorm:"not null"`
+	Condition  string   `json:"condition" gorm:"not null"` // good, damaged, expired
+}
+
+// ExchangeNewItem represents new items given in an exchange
+type ExchangeNewItem struct {
+	ID         uint    `json:"id" gorm:"primaryKey"`
+	ExchangeID uint    `json:"exchange_id" gorm:"not null"`
+	ProductID  uint    `json:"product_id" gorm:"not null"`
+	Product    Product `json:"product" gorm:"foreignKey:ProductID"`
+	Quantity   int     `json:"quantity" gorm:"not null"`
+	Price      float64 `json:"price" gorm:"not null"`
+	Total      float64 `json:"total" gorm:"not null"`
+}
+
 // ProductSupplier represents the relationship between products and suppliers with pricing
 type ProductSupplier struct {
 	ID         uint           `json:"id" gorm:"primaryKey"`

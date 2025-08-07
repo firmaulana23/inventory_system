@@ -29,6 +29,7 @@ func SetupRoutes() *gin.Engine {
 	router.StaticFile("/activity_logs", "./templates/activity_logs.html")
 	router.StaticFile("/settings", "./templates/settings.html")
 	router.StaticFile("/contact_supplier", "./templates/contact_supplier.html")
+	router.StaticFile("/returns_exchanges", "./templates/returns_exchanges.html")
 	router.StaticFile("/404.html", "./templates/404.html")
 
 	// Redirect root to login
@@ -82,6 +83,17 @@ func SetupRoutes() *gin.Engine {
 			pos.GET("/sales/export-excel", handlers.ExportSalesExcel)
 			pos.GET("/reports", handlers.GetSalesReport)
 			pos.GET("/sales/overdue", handlers.GetOverdueSales)
+			
+			// Return operations
+			pos.POST("/returns", handlers.CreateReturn)
+			pos.GET("/returns", handlers.GetReturns)
+			pos.GET("/returns/:id", handlers.GetReturn)
+			pos.GET("/sales/:id/for-return", handlers.GetSaleForReturn)
+			
+			// Exchange operations
+			pos.POST("/exchanges", handlers.CreateExchange)
+			pos.GET("/exchanges", handlers.GetExchanges)
+			pos.GET("/exchanges/:id", handlers.GetExchange)
 		}
 
 		// Stock movements (view only for employees)

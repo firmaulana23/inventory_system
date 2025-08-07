@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Returns & Exchanges - Inventory System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-gray-100">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <h1 class="text-xl font-semibold">Returns & Exchanges Management</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button onclick="goBack()" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition">
+                        <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
+                    </button>
+                    <button onclick="logout()" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 py-6">
+        <!-- Page Header -->
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <h2 class="text-2xl font-bold mb-4">Returns & Exchanges History</h2>
+            <div class="flex flex-wrap gap-4 items-center">
+                <!-- Tab Navigation -->
+                <div class="flex bg-gray-100 rounded-lg p-1">
+                    <button onclick="switchTab('returns')" id="returnsTab" class="px-4 py-2 rounded-md bg-blue-500 text-white transition">
+                        <i class="fas fa-undo mr-2"></i>Returns
+                    </button>
+                    <button onclick="switchTab('exchanges')" id="exchangesTab" class="px-4 py-2 rounded-md hover:bg-gray-200 transition">
+                        <i class="fas fa-exchange-alt mr-2"></i>Exchanges
+                    </button>
+                </div>
+                
+                <!-- Filters -->
+                <div class="flex gap-2 flex-wrap">
+                    <input type="date" id="startDate" class="px-3 py-2 border border-gray-300 rounded-lg">
+                    <input type="date" id="endDate" class="px-3 py-2 border border-gray-300 rounded-lg">
+                    <select id="statusFilter" class="px-3 py-2 border border-gray-300 rounded-lg">
+                        <option value="">All Methods</option>
+                        <option value="cash">Cash</option>
+                        <option value="card">Card</option>
+                        <option value="transfer">Transfer</option>
+                        <option value="store_credit">Store Credit</option>
+                    </select>
+                    <button onclick="applyFilters()" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition">
+                        <i class="fas fa-filter mr-2"></i>Filter
+                    </button>
+                    <button onclick="resetFilters()" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition">
+                        <i class="fas fa-refresh mr-2"></i>Reset
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Returns Tab Content -->
+        <div id="returnsContent" class="bg-white rounded-lg shadow">
+            <!-- Returns Stats -->
+            <div class="p-6 border-b">
+                <h3 class="text-lg font-semibold mb-4">Returns Overview</h3>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="bg-blue-50 p-4 rounded-lg">
+                        <div class="text-2xl font-bold text-blue-600" id="totalReturns">0</div>
+                        <div class="text-sm text-gray-600">Total Returns</div>
+                    </div>
+                    <div class="bg-green-50 p-4 rounded-lg">
+                        <div class="text-2xl font-bold text-green-600" id="totalReturnAmount">Rp 0</div>
+                        <div class="text-sm text-gray-600">Total Amount</div>
+                    </div>
+                    <div class="bg-yellow-50 p-4 rounded-lg">
+                        <div class="text-2xl font-bold text-yellow-600" id="avgReturnAmount">Rp 0</div>
+                        <div class="text-sm text-gray-600">Average Amount</div>
+                    </div>
+                    <div class="bg-purple-50 p-4 rounded-lg">
+                        <div class="text-2xl font-bold text-purple-600" id="returnsToday">0</div>
+                        <div class="text-sm text-gray-600">Today's Returns</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Returns Table -->
+            <div class="overflow-x-auto">
+                <table class="min-w-full">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Return #</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sale #</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Method</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="returnsTable" class="bg-white divide-y divide-gray-200">
+                        <!-- Returns data will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination for Returns -->
+            <div class="px-6 py-3 border-t border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div class="text-sm text-gray-700" id="returnsPagination">
+                        <!-- Pagination info -->
+                    </div>
+                    <div class="flex space-x-2" id="returnsPaginationButtons">
+                        <!-- Pagination buttons -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Exchanges Tab Content -->
+        <div id="exchangesContent" class="bg-white rounded-lg shadow hidden">
+            <!-- Exchanges Stats -->
+            <div class="p-6 border-b">
+                <h3 class="text-lg font-semibold mb-4">Exchanges Overview</h3>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="bg-orange-50 p-4 rounded-lg">
+                        <div class="text-2xl font-bold text-orange-600" id="totalExchanges">0</div>
+                        <div class="text-sm text-gray-600">Total Exchanges</div>
+                    </div>
+                    <div class="bg-green-50 p-4 rounded-lg">
+                        <div class="text-2xl font-bold text-green-600" id="totalExchangeValue">Rp 0</div>
+                        <div class="text-sm text-gray-600">Total Value</div>
+                    </div>
+                    <div class="bg-blue-50 p-4 rounded-lg">
+                        <div class="text-2xl font-bold text-blue-600" id="totalDifference">Rp 0</div>
+                        <div class="text-sm text-gray-600">Net Difference</div>
+                    </div>
+                    <div class="bg-purple-50 p-4 rounded-lg">
+                        <div class="text-2xl font-bold text-purple-600" id="exchangesToday">0</div>
+                        <div class="text-sm text-gray-600">Today's Exchanges</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Exchanges Table -->
+            <div class="overflow-x-auto">
+                <table class="min-w-full">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Exchange #</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sale #</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Old Value</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">New Value</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Difference</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="exchangesTable" class="bg-white divide-y divide-gray-200">
+                        <!-- Exchanges data will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination for Exchanges -->
+            <div class="px-6 py-3 border-t border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div class="text-sm text-gray-700" id="exchangesPagination">
+                        <!-- Pagination info -->
+                    </div>
+                    <div class="flex space-x-2" id="exchangesPaginationButtons">
+                        <!-- Pagination buttons -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Return Detail Modal -->
+    <div id="returnDetailModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
+        <div class="relative top-20 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-white">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold">Return Details</h3>
+                <button onclick="closeReturnDetailModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="returnDetailContent">
+                <!-- Return details will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Exchange Detail Modal -->
+    <div id="exchangeDetailModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
+        <div class="relative top-20 mx-auto p-5 border w-11/12 max-w-6xl shadow-lg rounded-md bg-white">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold">Exchange Details</h3>
+                <button onclick="closeExchangeDetailModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="exchangeDetailContent">
+                <!-- Exchange details will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========================
+        // GLOBAL VARIABLES
+        // ========================
+        const API_BASE = '/api/v1';
+        let currentTab = 'returns';
+        let currentPage = 1;
+        let currentFilters = {};
+
+        // ========================
+        // AUTH & NAVIGATION
+        // ========================
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '/login.html';
+        }
+
+        function goBack() {
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            if (user.role === 'admin') {
+                window.location.href = '/admin-dashboard.html';
+            } else {
+                window.location.href = '/dashboard.html';
+            }
+        }
+
+        // ========================
+        // API CALLS
+        // ========================
+        async function makeRequest(url, options = {}) {
+            const token = localStorage.getItem('token');
+            const defaultOptions = {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            };
+
+            try {
+                const response = await fetch(url, { ...defaultOptions, ...options });
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return await response.json();
+            } catch (error) {
+                console.error('API request failed:', error);
+                throw error;
+            }
+        }
+
+        // ========================
+        // TAB MANAGEMENT
+        // ========================
+        function switchTab(tab) {
+            currentTab = tab;
+            currentPage = 1;
+
+            // Update tab buttons
+            document.getElementById('returnsTab').className = 'px-4 py-2 rounded-md hover:bg-gray-200 transition';
+            document.getElementById('exchangesTab').className = 'px-4 py-2 rounded-md hover:bg-gray-200 transition';
+            document.getElementById(tab + 'Tab').className = 'px-4 py-2 rounded-md bg-blue-500 text-white transition';
+
+            // Show/hide content
+            document.getElementById('returnsContent').classList.add('hidden');
+            document.getElementById('exchangesContent').classList.add('hidden');
+            document.getElementById(tab + 'Content').classList.remove('hidden');
+
+            // Load data
+            if (tab === 'returns') {
+                loadReturns();
+            } else {
+                loadExchanges();
+            }
+        }
+
+        // ========================
+        // RETURNS FUNCTIONALITY
+        // ========================
+        async function loadReturns(page = 1) {
+            try {
+                const params = new URLSearchParams({
+                    page: page,
+                    limit: 10,
+                    ...currentFilters
+                });
+
+                const response = await makeRequest(`${API_BASE}/pos/returns?${params}`);
+                displayReturns(response.returns || []);
+                updateReturnsPagination(response);
+                updateReturnsStats(response.returns || []);
+            } catch (error) {
+                console.error('Failed to load returns:', error);
+                alert('Failed to load returns data');
+            }
+        }
+
+        function displayReturns(returns) {
+            const tbody = document.getElementById('returnsTable');
+            tbody.innerHTML = '';
+
+            returns.forEach(returnItem => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50';
+                
+                const customerName = returnItem.sale?.customer_name || 'Walk-in Customer';
+                const createdAt = new Date(returnItem.created_at).toLocaleString();
+
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        ${returnItem.return_number}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${returnItem.sale?.sale_number || 'N/A'}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${customerName}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
+                        Rp ${formatNumber(returnItem.total)}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                            ${returnItem.refund_method}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${createdAt}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <button onclick="viewReturnDetails(${returnItem.id})" 
+                                class="text-blue-600 hover:text-blue-900 mr-3">
+                            <i class="fas fa-eye mr-1"></i>View
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            if (returns.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="px-6 py-4 text-center text-gray-500">
+                            No returns found
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        function updateReturnsStats(returns) {
+            const total = returns.length;
+            const totalAmount = returns.reduce((sum, r) => sum + r.total, 0);
+            const avgAmount = total > 0 ? totalAmount / total : 0;
+            const today = new Date().toDateString();
+            const todayReturns = returns.filter(r => new Date(r.created_at).toDateString() === today).length;
+
+            document.getElementById('totalReturns').textContent = total;
+            document.getElementById('totalReturnAmount').textContent = `Rp ${formatNumber(totalAmount)}`;
+            document.getElementById('avgReturnAmount').textContent = `Rp ${formatNumber(avgAmount)}`;
+            document.getElementById('returnsToday').textContent = todayReturns;
+        }
+
+        function updateReturnsPagination(response) {
+            const info = `Showing ${response.returns?.length || 0} of ${response.total || 0} returns`;
+            document.getElementById('returnsPagination').textContent = info;
+
+            const buttonsContainer = document.getElementById('returnsPaginationButtons');
+            buttonsContainer.innerHTML = '';
+
+            const totalPages = Math.ceil((response.total || 0) / 10);
+            
+            if (totalPages > 1) {
+                // Previous button
+                if (currentPage > 1) {
+                    const prevBtn = document.createElement('button');
+                    prevBtn.className = 'px-3 py-1 text-sm bg-gray-200 hover:bg-gray-300 rounded';
+                    prevBtn.textContent = 'Previous';
+                    prevBtn.onclick = () => {
+                        currentPage--;
+                        loadReturns(currentPage);
+                    };
+                    buttonsContainer.appendChild(prevBtn);
+                }
+
+                // Page numbers
+                for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) {
+                    const pageBtn = document.createElement('button');
+                    pageBtn.className = i === currentPage 
+                        ? 'px-3 py-1 text-sm bg-blue-500 text-white rounded' 
+                        : 'px-3 py-1 text-sm bg-gray-200 hover:bg-gray-300 rounded';
+                    pageBtn.textContent = i;
+                    pageBtn.onclick = () => {
+                        currentPage = i;
+                        loadReturns(currentPage);
+                    };
+                    buttonsContainer.appendChild(pageBtn);
+                }
+
+                // Next button
+                if (currentPage < totalPages) {
+                    const nextBtn = document.createElement('button');
+                    nextBtn.className = 'px-3 py-1 text-sm bg-gray-200 hover:bg-gray-300 rounded';
+                    nextBtn.textContent = 'Next';
+                    nextBtn.onclick = () => {
+                        currentPage++;
+                        loadReturns(currentPage);
+                    };
+                    buttonsContainer.appendChild(nextBtn);
+                }
+            }
+        }
+
+        async function viewReturnDetails(returnId) {
+            try {
+                const response = await makeRequest(`${API_BASE}/pos/returns/${returnId}`);
+                displayReturnDetails(response);
+                document.getElementById('returnDetailModal').classList.remove('hidden');
+            } catch (error) {
+                console.error('Failed to load return details:', error);
+                alert('Failed to load return details');
+            }
+        }
+
+        function displayReturnDetails(returnData) {
+            const createdAt = new Date(returnData.created_at).toLocaleString();
+            const customerName = returnData.sale?.customer_name || 'Walk-in Customer';
+
+            let html = `
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Return Information -->
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h4 class="font-semibold mb-3">Return Information</h4>
+                        <div class="space-y-2 text-sm">
+                            <div><span class="font-medium">Return Number:</span> ${returnData.return_number}</div>
+                            <div><span class="font-medium">Date:</span> ${createdAt}</div>
+                            <div><span class="font-medium">Processed by:</span> ${returnData.user?.name || 'N/A'}</div>
+                            <div><span class="font-medium">Reason:</span> ${returnData.reason || 'N/A'}</div>
+                            <div><span class="font-medium">Refund Method:</span> 
+                                <span class="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">${returnData.refund_method}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Original Sale Information -->
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h4 class="font-semibold mb-3">Original Sale</h4>
+                        <div class="space-y-2 text-sm">
+                            <div><span class="font-medium">Sale Number:</span> ${returnData.sale?.sale_number || 'N/A'}</div>
+                            <div><span class="font-medium">Customer:</span> ${customerName}</div>
+                            <div><span class="font-medium">Sale Date:</span> ${returnData.sale ? new Date(returnData.sale.created_at).toLocaleString() : 'N/A'}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Return Summary -->
+                <div class="mt-6 bg-gray-50 p-4 rounded-lg">
+                    <h4 class="font-semibold mb-3">Return Summary</h4>
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 text-center">
+                        <div class="bg-white p-3 rounded">
+                            <div class="text-lg font-bold text-gray-900">Rp ${formatNumber(returnData.subtotal)}</div>
+                            <div class="text-sm text-gray-600">Subtotal</div>
+                        </div>
+                        <div class="bg-white p-3 rounded">
+                            <div class="text-lg font-bold text-gray-900">Rp ${formatNumber(returnData.tax)}</div>
+                            <div class="text-sm text-gray-600">Tax</div>
+                        </div>
+                        <div class="bg-white p-3 rounded">
+                            <div class="text-lg font-bold text-gray-900">Rp ${formatNumber(returnData.discount)}</div>
+                            <div class="text-sm text-gray-600">Discount</div>
+                        </div>
+                        <div class="bg-white p-3 rounded">
+                            <div class="text-lg font-bold text-green-600">Rp ${formatNumber(returnData.total)}</div>
+                            <div class="text-sm text-gray-600">Total Refund</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Returned Items -->
+                <div class="mt-6">
+                    <h4 class="font-semibold mb-3">Returned Items</h4>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full bg-white border border-gray-200 rounded-lg">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Quantity</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Condition</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+            `;
+
+            returnData.items?.forEach(item => {
+                const conditionClass = item.condition === 'good' ? 'bg-green-100 text-green-800' :
+                                     item.condition === 'damaged' ? 'bg-red-100 text-red-800' :
+                                     'bg-yellow-100 text-yellow-800';
+                
+                html += `
+                    <tr>
+                        <td class="px-4 py-2 text-sm">
+                            <div class="font-medium">${item.product?.name || 'N/A'}</div>
+                            <div class="text-gray-500">${item.product?.sku || 'N/A'}</div>
+                        </td>
+                        <td class="px-4 py-2 text-sm">${item.quantity}</td>
+                        <td class="px-4 py-2 text-sm">Rp ${formatNumber(item.price)}</td>
+                        <td class="px-4 py-2">
+                            <span class="px-2 py-1 text-xs font-medium rounded-full ${conditionClass}">
+                                ${item.condition}
+                            </span>
+                        </td>
+                        <td class="px-4 py-2 text-sm font-medium">Rp ${formatNumber(item.total)}</td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('returnDetailContent').innerHTML = html;
+        }
+
+        function closeReturnDetailModal() {
+            document.getElementById('returnDetailModal').classList.add('hidden');
+        }
+
+        // ========================
+        // EXCHANGES FUNCTIONALITY
+        // ========================
+        async function loadExchanges(page = 1) {
+            try {
+                const params = new URLSearchParams({
+                    page: page,
+                    limit: 10,
+                    ...currentFilters
+                });
+
+                const response = await makeRequest(`${API_BASE}/pos/exchanges?${params}`);
+                displayExchanges(response.exchanges || []);
+                updateExchangesPagination(response);
+                updateExchangesStats(response.exchanges || []);
+            } catch (error) {
+                console.error('Failed to load exchanges:', error);
+                alert('Failed to load exchanges data');
+            }
+        }
+
+        function displayExchanges(exchanges) {
+            const tbody = document.getElementById('exchangesTable');
+            tbody.innerHTML = '';
+
+            exchanges.forEach(exchange => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50';
+                
+                const customerName = exchange.sale?.customer_name || 'Walk-in Customer';
+                const createdAt = new Date(exchange.created_at).toLocaleString();
+                const differenceClass = exchange.difference >= 0 ? 'text-green-600' : 'text-red-600';
+                const differenceText = exchange.difference >= 0 ? `+Rp ${formatNumber(exchange.difference)}` : `-Rp ${formatNumber(Math.abs(exchange.difference))}`;
+
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        ${exchange.exchange_number}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${exchange.sale?.sale_number || 'N/A'}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${customerName}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        Rp ${formatNumber(exchange.total_old_value)}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        Rp ${formatNumber(exchange.total_new_value)}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium ${differenceClass}">
+                        ${differenceText}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${createdAt}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <button onclick="viewExchangeDetails(${exchange.id})" 
+                                class="text-blue-600 hover:text-blue-900 mr-3">
+                            <i class="fas fa-eye mr-1"></i>View
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            if (exchanges.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="px-6 py-4 text-center text-gray-500">
+                            No exchanges found
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        function updateExchangesStats(exchanges) {
+            const total = exchanges.length;
+            const totalValue = exchanges.reduce((sum, e) => sum + e.total_new_value, 0);
+            const totalDifference = exchanges.reduce((sum, e) => sum + e.difference, 0);
+            const today = new Date().toDateString();
+            const todayExchanges = exchanges.filter(e => new Date(e.created_at).toDateString() === today).length;
+
+            document.getElementById('totalExchanges').textContent = total;
+            document.getElementById('totalExchangeValue').textContent = `Rp ${formatNumber(totalValue)}`;
+            document.getElementById('totalDifference').textContent = `Rp ${formatNumber(totalDifference)}`;
+            document.getElementById('exchangesToday').textContent = todayExchanges;
+        }
+
+        function updateExchangesPagination(response) {
+            const info = `Showing ${response.exchanges?.length || 0} of ${response.total || 0} exchanges`;
+            document.getElementById('exchangesPagination').textContent = info;
+
+            const buttonsContainer = document.getElementById('exchangesPaginationButtons');
+            buttonsContainer.innerHTML = '';
+
+            const totalPages = Math.ceil((response.total || 0) / 10);
+            
+            if (totalPages > 1) {
+                // Previous button
+                if (currentPage > 1) {
+                    const prevBtn = document.createElement('button');
+                    prevBtn.className = 'px-3 py-1 text-sm bg-gray-200 hover:bg-gray-300 rounded';
+                    prevBtn.textContent = 'Previous';
+                    prevBtn.onclick = () => {
+                        currentPage--;
+                        loadExchanges(currentPage);
+                    };
+                    buttonsContainer.appendChild(prevBtn);
+                }
+
+                // Page numbers
+                for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) {
+                    const pageBtn = document.createElement('button');
+                    pageBtn.className = i === currentPage 
+                        ? 'px-3 py-1 text-sm bg-blue-500 text-white rounded' 
+                        : 'px-3 py-1 text-sm bg-gray-200 hover:bg-gray-300 rounded';
+                    pageBtn.textContent = i;
+                    pageBtn.onclick = () => {
+                        currentPage = i;
+                        loadExchanges(currentPage);
+                    };
+                    buttonsContainer.appendChild(pageBtn);
+                }
+
+                // Next button
+                if (currentPage < totalPages) {
+                    const nextBtn = document.createElement('button');
+                    nextBtn.className = 'px-3 py-1 text-sm bg-gray-200 hover:bg-gray-300 rounded';
+                    nextBtn.textContent = 'Next';
+                    nextBtn.onclick = () => {
+                        currentPage++;
+                        loadExchanges(currentPage);
+                    };
+                    buttonsContainer.appendChild(nextBtn);
+                }
+            }
+        }
+
+        async function viewExchangeDetails(exchangeId) {
+            try {
+                const response = await makeRequest(`${API_BASE}/pos/exchanges/${exchangeId}`);
+                displayExchangeDetails(response);
+                document.getElementById('exchangeDetailModal').classList.remove('hidden');
+            } catch (error) {
+                console.error('Failed to load exchange details:', error);
+                alert('Failed to load exchange details');
+            }
+        }
+
+        function displayExchangeDetails(exchangeData) {
+            const createdAt = new Date(exchangeData.created_at).toLocaleString();
+            const customerName = exchangeData.sale?.customer_name || 'Walk-in Customer';
+            const differenceClass = exchangeData.difference >= 0 ? 'text-green-600' : 'text-red-600';
+            const differenceText = exchangeData.difference >= 0 ? `+Rp ${formatNumber(exchangeData.difference)}` : `-Rp ${formatNumber(Math.abs(exchangeData.difference))}`;
+
+            let html = `
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Exchange Information -->
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h4 class="font-semibold mb-3">Exchange Information</h4>
+                        <div class="space-y-2 text-sm">
+                            <div><span class="font-medium">Exchange Number:</span> ${exchangeData.exchange_number}</div>
+                            <div><span class="font-medium">Date:</span> ${createdAt}</div>
+                            <div><span class="font-medium">Processed by:</span> ${exchangeData.user?.name || 'N/A'}</div>
+                            <div><span class="font-medium">Reason:</span> ${exchangeData.reason || 'N/A'}</div>
+                            <div><span class="font-medium">Payment Method:</span> ${exchangeData.payment_method || 'N/A'}</div>
+                        </div>
+                    </div>
+
+                    <!-- Original Sale Information -->
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h4 class="font-semibold mb-3">Original Sale</h4>
+                        <div class="space-y-2 text-sm">
+                            <div><span class="font-medium">Sale Number:</span> ${exchangeData.sale?.sale_number || 'N/A'}</div>
+                            <div><span class="font-medium">Customer:</span> ${customerName}</div>
+                            <div><span class="font-medium">Sale Date:</span> ${exchangeData.sale ? new Date(exchangeData.sale.created_at).toLocaleString() : 'N/A'}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Exchange Summary -->
+                <div class="mt-6 bg-gray-50 p-4 rounded-lg">
+                    <h4 class="font-semibold mb-3">Exchange Summary</h4>
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 text-center">
+                        <div class="bg-white p-3 rounded">
+                            <div class="text-lg font-bold text-red-600">Rp ${formatNumber(exchangeData.total_old_value)}</div>
+                            <div class="text-sm text-gray-600">Old Items Value</div>
+                        </div>
+                        <div class="bg-white p-3 rounded">
+                            <div class="text-lg font-bold text-green-600">Rp ${formatNumber(exchangeData.total_new_value)}</div>
+                            <div class="text-sm text-gray-600">New Items Value</div>
+                        </div>
+                        <div class="bg-white p-3 rounded">
+                            <div class="text-lg font-bold ${differenceClass}">${differenceText}</div>
+                            <div class="text-sm text-gray-600">Price Difference</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Items Details -->
+                <div class="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Old Items -->
+                    <div>
+                        <h4 class="font-semibold mb-3">Items Returned</h4>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full bg-white border border-gray-200 rounded-lg">
+                                <thead class="bg-red-50">
+                                    <tr>
+                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
+                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Qty</th>
+                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
+                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Condition</th>
+                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-200">
+            `;
+
+            exchangeData.old_items?.forEach(item => {
+                const conditionClass = item.condition === 'good' ? 'bg-green-100 text-green-800' :
+                                     item.condition === 'damaged' ? 'bg-red-100 text-red-800' :
+                                     'bg-yellow-100 text-yellow-800';
+                
+                html += `
+                    <tr>
+                        <td class="px-4 py-2 text-sm">
+                            <div class="font-medium">${item.product?.name || 'N/A'}</div>
+                            <div class="text-gray-500">${item.product?.sku || 'N/A'}</div>
+                        </td>
+                        <td class="px-4 py-2 text-sm">${item.quantity}</td>
+                        <td class="px-4 py-2 text-sm">Rp ${formatNumber(item.price)}</td>
+                        <td class="px-4 py-2">
+                            <span class="px-2 py-1 text-xs font-medium rounded-full ${conditionClass}">
+                                ${item.condition}
+                            </span>
+                        </td>
+                        <td class="px-4 py-2 text-sm font-medium">Rp ${formatNumber(item.total)}</td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- New Items -->
+                    <div>
+                        <h4 class="font-semibold mb-3">Items Given</h4>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full bg-white border border-gray-200 rounded-lg">
+                                <thead class="bg-green-50">
+                                    <tr>
+                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
+                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Qty</th>
+                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
+                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-200">
+            `;
+
+            exchangeData.new_items?.forEach(item => {
+                html += `
+                    <tr>
+                        <td class="px-4 py-2 text-sm">
+                            <div class="font-medium">${item.product?.name || 'N/A'}</div>
+                            <div class="text-gray-500">${item.product?.sku || 'N/A'}</div>
+                        </td>
+                        <td class="px-4 py-2 text-sm">${item.quantity}</td>
+                        <td class="px-4 py-2 text-sm">Rp ${formatNumber(item.price)}</td>
+                        <td class="px-4 py-2 text-sm font-medium">Rp ${formatNumber(item.total)}</td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('exchangeDetailContent').innerHTML = html;
+        }
+
+        function closeExchangeDetailModal() {
+            document.getElementById('exchangeDetailModal').classList.add('hidden');
+        }
+
+        // ========================
+        // FILTERS
+        // ========================
+        function applyFilters() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+
+            currentFilters = {};
+            if (startDate) currentFilters.start_date = startDate;
+            if (endDate) currentFilters.end_date = endDate;
+            if (statusFilter) {
+                if (currentTab === 'returns') {
+                    currentFilters.refund_method = statusFilter;
+                } else {
+                    currentFilters.payment_method = statusFilter;
+                }
+            }
+
+            currentPage = 1;
+            if (currentTab === 'returns') {
+                loadReturns(1);
+            } else {
+                loadExchanges(1);
+            }
+        }
+
+        function resetFilters() {
+            document.getElementById('startDate').value = '';
+            document.getElementById('endDate').value = '';
+            document.getElementById('statusFilter').value = '';
+            
+            currentFilters = {};
+            currentPage = 1;
+            
+            if (currentTab === 'returns') {
+                loadReturns(1);
+            } else {
+                loadExchanges(1);
+            }
+        }
+
+        // ========================
+        // UTILITY FUNCTIONS
+        // ========================
+        function formatNumber(num) {
+            return new Intl.NumberFormat('id-ID').format(num);
+        }
+
+        // ========================
+        // INITIALIZATION
+        // ========================
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check authentication
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = '/login.html';
+                return;
+            }
+
+            // Load initial data
+            loadReturns();
+        });
+    </script>
+</body>
+</html>
