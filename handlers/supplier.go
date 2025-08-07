@@ -4,15 +4,29 @@ import (
 	"inventory_system/database"
 	"inventory_system/models"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
 
-// GetSuppliers returns all suppliers
+// GetSuppliers returns all suppliers with pagination support
 func GetSuppliers(c *gin.Context) {
 	var suppliers []models.Supplier
-	
-	if err := database.DB.Where("is_active = ?", true).Find(&suppliers).Error; err != nil {
+	var total int64
+
+	// Parse pagination parameters
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
+	offset := (page - 1) * limit
+
+	// Build base query
+	query := database.DB.Where("is_active = ?", true)
+
+	// Count total records
+	query.Model(&models.Supplier{}).Count(&total)
+
+	// Get paginated results
+	if err := query.Offset(offset).Limit(limit).Order("created_at DESC").Find(&suppliers).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
 			"error":   "Failed to fetch suppliers",
@@ -23,6 +37,9 @@ func GetSuppliers(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"data":    suppliers,
+		"total":   total,
+		"page":    page,
+		"limit":   limit,
 	})
 }
 

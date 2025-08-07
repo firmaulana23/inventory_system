@@ -8,6 +8,7 @@ require (
 	github.com/gin-gonic/gin v1.10.1
 	github.com/golang-jwt/jwt/v5 v5.0.0
 	github.com/joho/godotenv v1.4.0
+	github.com/xuri/excelize/v2 v2.9.1
 	golang.org/x/crypto v0.39.0
 	gorm.io/driver/postgres v1.6.0
 	gorm.io/gorm v1.30.0
@@ -45,7 +46,6 @@ require (
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.12 // indirect
 	github.com/xuri/efp v0.0.1 // indirect
-	github.com/xuri/excelize/v2 v2.9.1 // indirect
 	github.com/xuri/nfp v0.0.1 // indirect
 	golang.org/x/arch v0.8.0 // indirect
 	golang.org/x/net v0.40.0 // indirect

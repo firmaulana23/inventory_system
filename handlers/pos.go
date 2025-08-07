@@ -576,11 +576,6 @@ func VoidSale(c *gin.Context) {
 		return
 	}
 
-	if sale.Status == "cancelled" {
-		tx.Rollback()
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Sale is already cancelled"})
-		return
-	}
 
 	// Restore stock for each item (only if product still exists)
 	for _, item := range sale.Items {
@@ -611,8 +606,7 @@ func VoidSale(c *gin.Context) {
 		}
 	}
 
-	// Update sale status
-	sale.Status = "cancelled"
+	// Sale is now voided - no additional status tracking needed
 	if err := tx.Save(&sale).Error; err != nil {
 		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to void sale"})

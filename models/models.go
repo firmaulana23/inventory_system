@@ -130,7 +130,6 @@ type Sale struct {
 	PaidDate      *time.Time     `json:"paid_date"`
 	AmountPaid    float64        `json:"amount_paid" gorm:"default:0"`
 	AmountDue     float64        `json:"amount_due" gorm:"default:0"`
-	Status        string         `json:"status" gorm:"default:completed"` // pending, completed, cancelled
 	Items         []SaleItem     `json:"items" gorm:"foreignKey:SaleID"`
 	CreatedAt     time.Time      `json:"created_at"`
 	UpdatedAt     time.Time      `json:"updated_at"`

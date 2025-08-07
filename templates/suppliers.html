@@ -85,6 +85,39 @@
                     <!-- Supplier rows will be injected here by JS -->
                 </tbody>
             </table>
+            
+            <!-- Enhanced Pagination -->
+            <div id="pagination-container" class="px-6 py-4 border-t border-gray-200 bg-gray-50">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center text-sm text-gray-700">
+                        <span>Showing <span id="items-start">0</span> to <span id="items-end">0</span> of <span id="items-total">0</span> results</span>
+                        <div class="ml-4 flex items-center">
+                            <select id="items-per-page" class="mx-2 border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500">
+                                <option value="5">5</option>
+                                <option value="10">10</option>
+                                <option value="20">20</option>
+                                <option value="50">50</option>
+                                <option value="100">100</option>
+                            </select>
+                            <span>items per page</span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center space-x-2">
+                        <nav class="flex items-center space-x-1">
+                            <button id="prev-page" class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                                Previous
+                            </button>
+                            <div id="page-numbers" class="flex space-x-1">
+                                <!-- Page numbers will be generated here -->
+                            </div>
+                            <button id="next-page" class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                                Next
+                            </button>
+                        </nav>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     <!-- Add/Edit Supplier Modal (hidden by default) -->
@@ -129,6 +162,10 @@
         const API_BASE = '/api/v1';
         const token = localStorage.getItem('token');
         let allSuppliers = [];
+        let currentPage = 1;
+        let totalPages = 1;
+        let totalItems = 0;
+        let itemsPerPage = 5;
 
         // Check authentication
         if (!token) {
@@ -147,10 +184,10 @@
             });
         }
 
-        // Fetch and display suppliers
-        async function fetchSuppliers() {
+        // Fetch and display suppliers with pagination
+        async function fetchSuppliers(page = 1, limit = itemsPerPage) {
             try {
-                const response = await makeRequest(`${API_BASE}/suppliers`);
+                const response = await makeRequest(`${API_BASE}/suppliers?page=${page}&limit=${limit}`);
                 if (!response.ok) {
                     if (response.status === 401) {
                         localStorage.removeItem('token');
@@ -163,7 +200,14 @@
                 
                 const data = await response.json();
                 allSuppliers = data.success ? data.data : data.suppliers || data;
+                
+                // Update pagination data
+                currentPage = data.page || page;
+                totalItems = data.total || allSuppliers.length;
+                totalPages = Math.ceil(totalItems / limit);
+                
                 displaySuppliers(allSuppliers);
+                updatePagination();
             } catch (error) {
                 console.error('Error fetching suppliers:', error);
                 alert('Failed to load suppliers. Please refresh the page.');
@@ -187,7 +231,7 @@
                 row.className = 'hover:bg-gray-50';
                 
                 row.innerHTML = `
-                    <td class="px-6 py-4 text-sm font-medium text-gray-900">${index + 1}</td>
+                    <td class="px-6 py-4 text-sm font-medium text-gray-900">${(currentPage - 1) * itemsPerPage + index + 1}</td>
                     <td class="px-6 py-4 text-sm text-gray-900">${supplier.name}</td>
                     <td class="px-6 py-4 text-sm text-gray-900">${supplier.contact_person || supplier.contact || 'N/A'}</td>
                     <td class="px-6 py-4 text-sm text-gray-900">${supplier.email || 'N/A'}</td>
@@ -207,6 +251,131 @@
                 `;
                 
                 tbody.appendChild(row);
+            });
+        }
+
+        // Enhanced pagination functions
+        function updatePagination() {
+            // Update pagination info
+            const start = totalItems === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
+            const end = Math.min(currentPage * itemsPerPage, totalItems);
+            
+            document.getElementById('items-start').textContent = start;
+            document.getElementById('items-end').textContent = end;
+            document.getElementById('items-total').textContent = totalItems;
+            
+            // Update items per page selector
+            document.getElementById('items-per-page').value = itemsPerPage;
+            
+            // Update navigation buttons
+            const prevBtn = document.getElementById('prev-page');
+            const nextBtn = document.getElementById('next-page');
+            
+            prevBtn.disabled = currentPage <= 1;
+            nextBtn.disabled = currentPage >= totalPages;
+            
+            // Generate page numbers
+            generatePageNumbers();
+            
+            // Hide pagination only if no items exist
+            const paginationContainer = document.getElementById('pagination-container');
+            if (totalItems === 0) {
+                paginationContainer.style.display = 'none';
+            } else {
+                paginationContainer.style.display = 'block';
+            }
+        }
+        
+        function generatePageNumbers() {
+            const pageNumbersContainer = document.getElementById('page-numbers');
+            pageNumbersContainer.innerHTML = '';
+            
+            if (totalPages <= 1) {
+                // Still show current page for single page
+                addPageNumber(1);
+                return;
+            }
+            
+            // Calculate which page numbers to show
+            let startPage = Math.max(1, currentPage - 2);
+            let endPage = Math.min(totalPages, currentPage + 2);
+            
+            // Adjust if we're near the beginning or end
+            if (currentPage <= 3) {
+                endPage = Math.min(5, totalPages);
+            }
+            if (currentPage >= totalPages - 2) {
+                startPage = Math.max(totalPages - 4, 1);
+            }
+            
+            // First page and ellipsis
+            if (startPage > 1) {
+                addPageNumber(1);
+                if (startPage > 2) {
+                    addEllipsis();
+                }
+            }
+            
+            // Page numbers
+            for (let i = startPage; i <= endPage; i++) {
+                addPageNumber(i);
+            }
+            
+            // Last page and ellipsis
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                    addEllipsis();
+                }
+                addPageNumber(totalPages);
+            }
+        }
+        
+        function addPageNumber(page) {
+            const pageNumbersContainer = document.getElementById('page-numbers');
+            const button = document.createElement('button');
+            button.textContent = page;
+            button.className = `px-3 py-1 text-sm border rounded ${
+                page === currentPage 
+                    ? 'bg-purple-600 text-white border-purple-600' 
+                    : 'border-gray-300 hover:bg-gray-50'
+            }`;
+            button.onclick = () => goToPage(page);
+            pageNumbersContainer.appendChild(button);
+        }
+        
+        function addEllipsis() {
+            const pageNumbersContainer = document.getElementById('page-numbers');
+            const span = document.createElement('span');
+            span.textContent = '...';
+            span.className = 'px-2 py-1 text-sm text-gray-500';
+            pageNumbersContainer.appendChild(span);
+        }
+        
+        function goToPage(page) {
+            if (page !== currentPage && page >= 1 && page <= totalPages) {
+                currentPage = page;
+                fetchSuppliers(currentPage, itemsPerPage);
+            }
+        }
+        
+        // Initialize pagination controls
+        function initializePaginationControls() {
+            document.getElementById('items-per-page').addEventListener('change', function() {
+                itemsPerPage = parseInt(this.value);
+                currentPage = 1;
+                fetchSuppliers(currentPage, itemsPerPage);
+            });
+            
+            document.getElementById('prev-page').addEventListener('click', function() {
+                if (currentPage > 1) {
+                    goToPage(currentPage - 1);
+                }
+            });
+            
+            document.getElementById('next-page').addEventListener('click', function() {
+                if (currentPage < totalPages) {
+                    goToPage(currentPage + 1);
+                }
             });
         }
 
@@ -347,6 +516,9 @@
             
             // Initialize burger menu
             initializeBurgerMenu();
+            
+            // Initialize pagination controls
+            initializePaginationControls();
             
             // Load suppliers
             fetchSuppliers();

@@ -423,33 +423,33 @@
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-150" onclick="sortBy('sale_number')">
+                            <th class="px-6 py-3 text-left text-xs text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-150" onclick="sortBy('sale_number')">
                                 Sale Number
                                 <i id="sort-sale_number" class="fas fa-sort ml-1 text-gray-400"></i>
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-150" onclick="sortBy('customer_name')">
+                            <th class="px-6 py-3 text-left text-xs text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-150" onclick="sortBy('customer_name')">
                                 Customer
                                 <i id="sort-customer_name" class="fas fa-sort ml-1 text-gray-400"></i>
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-150" onclick="sortBy('created_at')">
+                            <th class="px-6 py-3 text-left text-xs text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-150" onclick="sortBy('created_at')">
                                 Date
                                 <i id="sort-created_at" class="fas fa-sort-down ml-1 text-purple-600"></i>
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th class="px-6 py-3 text-left text-xs text-gray-500 uppercase tracking-wider">
                                 Payment Method
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-150" onclick="sortBy('payment_status')">
+                            <th class="px-6 py-3 text-left text-xs text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-150" onclick="sortBy('payment_status')">
                                 Payment Status
                                 <i id="sort-payment_status" class="fas fa-sort ml-1 text-gray-400"></i>
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-150" onclick="sortBy('total')">
+                            <th class="px-6 py-3 text-left text-xs text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-150" onclick="sortBy('total')">
                                 Total
                                 <i id="sort-total" class="fas fa-sort ml-1 text-gray-400"></i>
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th class="px-6 py-3 text-left text-xs text-gray-500 uppercase tracking-wider">
                                 Cashier
                             </th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th class="px-6 py-3 text-right text-xs text-gray-500 uppercase tracking-wider">
                                 Actions
                             </th>
                         </tr>
@@ -471,12 +471,38 @@
                     Clear All Filters
                 </button>
             </div>
-        </div>
-        
-            <!-- Pagination -->
-            <div id="pagination" class="mt-4 flex justify-center space-x-2">
-                <!-- Pagination buttons will be added here -->
+            
+            <!-- Pagination Controls -->
+            <div id="pagination-container" class="px-6 py-4 border-t border-gray-200 bg-gray-50">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center text-sm text-gray-700">
+                        <span>Show</span>
+                        <select id="items-per-page" class="mx-2 border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500">
+                            <option value="5" selected>5</option>
+                            <option value="10">10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                        <span>items per page</span>
+                        <span class="ml-4">
+                            Showing <span id="items-start">0</span> to <span id="items-end">0</span> of <span id="items-total">0</span> results
+                        </span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button id="prev-page" class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                            <i class="fas fa-chevron-left mr-1"></i>Previous
+                        </button>
+                        <div id="page-numbers" class="flex space-x-1">
+                            <!-- Page numbers will be inserted here -->
+                        </div>
+                        <button id="next-page" class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                            Next<i class="fas fa-chevron-right ml-1"></i>
+                        </button>
+                    </div>
+                </div>
             </div>
+        </div>
         </div>
     </div>
 
@@ -564,6 +590,12 @@
         const API_BASE = '/api/v1';
         const token = localStorage.getItem('token');
 
+        // Pagination variables
+        let currentPage = 1;
+        let itemsPerPage = 5;
+        let totalItems = 0;
+        let totalPages = 0;
+
         // Check authentication
         if (!token) {
             window.location.href = '/login.html';
@@ -586,10 +618,10 @@
             });
         }
 
-        // Fetch and display sales
-        async function fetchSales(filters = {}) {
+        // Fetch and display sales with pagination
+        async function fetchSales(filters = {}, page = currentPage, limit = itemsPerPage) {
             try {
-                let url = `${API_BASE}/pos/sales?limit=100`;
+                let url = `${API_BASE}/pos/sales?page=${page}&limit=${limit}`;
                 
                 // Add all filters to URL (backend support)
                 if (filters.start_date) url += `&start_date=${filters.start_date}`;
@@ -616,11 +648,18 @@
 
                 const data = await response.json();
                 
+                // Update pagination data
+                totalItems = data.total || 0;
+                currentPage = data.page || 1;
+                itemsPerPage = data.limit || 50;
+                totalPages = Math.ceil(totalItems / itemsPerPage);
+                
                 // Apply client-side filtering as backup if backend doesn't support all filters
                 let salesData = data.sales || [];
                 salesData = applyClientSideFilters(salesData, filters);
                 
                 displaySales(salesData);
+                updatePagination();
             } catch (error) {
                 console.error('Error fetching sales:', error);
                 alert('Failed to load sales history: ' + error.message);
@@ -1364,16 +1403,22 @@
         function updateSortIcons() {
             // Reset all sort icons
             document.querySelectorAll('[id^="sort-"]').forEach(icon => {
-                icon.className = 'fas fa-sort ml-1 text-gray-400';
+                // Remove existing sort classes
+                icon.classList.remove('fa-sort-up', 'fa-sort-down', 'text-purple-600');
+                icon.classList.add('fa-sort');
             });
             
             // Update current sort icon
             const currentIcon = document.getElementById(`sort-${currentSort.field}`);
             if (currentIcon) {
+                // Remove old sort classes
+                currentIcon.classList.remove('fa-sort');
+                currentIcon.classList.add('text-purple-600');
+                
                 if (currentSort.direction === 'asc') {
-                    currentIcon.className = 'fas fa-sort-up ml-1 text-purple-600';
+                    currentIcon.classList.add('fa-sort-up');
                 } else {
-                    currentIcon.className = 'fas fa-sort-down ml-1 text-purple-600';
+                    currentIcon.classList.add('fa-sort-down');
                 }
             }
         }
@@ -1386,12 +1431,18 @@
             const compactBtn = document.getElementById('compact-view');
             const detailedBtn = document.getElementById('detailed-view');
             
+            // Reset button states
+            [compactBtn, detailedBtn].forEach(btn => {
+                btn.classList.remove('bg-white', 'text-gray-900', 'shadow-sm');
+                btn.classList.add('text-gray-600', 'hover:text-gray-900');
+            });
+            
             if (view === 'compact') {
-                compactBtn.className = 'px-3 py-1 text-sm rounded-md transition-all duration-200 bg-white text-gray-900 shadow-sm';
-                detailedBtn.className = 'px-3 py-1 text-sm rounded-md transition-all duration-200 text-gray-600 hover:text-gray-900';
+                compactBtn.classList.remove('text-gray-600', 'hover:text-gray-900');
+                compactBtn.classList.add('bg-white', 'text-gray-900', 'shadow-sm');
             } else {
-                detailedBtn.className = 'px-3 py-1 text-sm rounded-md transition-all duration-200 bg-white text-gray-900 shadow-sm';
-                compactBtn.className = 'px-3 py-1 text-sm rounded-md transition-all duration-200 text-gray-600 hover:text-gray-900';
+                detailedBtn.classList.remove('text-gray-600', 'hover:text-gray-900');
+                detailedBtn.classList.add('bg-white', 'text-gray-900', 'shadow-sm');
             }
             
             // Re-render table with new view
@@ -1839,6 +1890,133 @@
                 }
             });
         }
+        
+        // Pagination functions
+        function updatePagination() {
+            // Update pagination info
+            const start = totalItems === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
+            const end = Math.min(currentPage * itemsPerPage, totalItems);
+            
+            document.getElementById('items-start').textContent = start;
+            document.getElementById('items-end').textContent = end;
+            document.getElementById('items-total').textContent = totalItems;
+            
+            // Update items per page selector
+            document.getElementById('items-per-page').value = itemsPerPage;
+            
+            // Update navigation buttons
+            const prevBtn = document.getElementById('prev-page');
+            const nextBtn = document.getElementById('next-page');
+            
+            prevBtn.disabled = currentPage <= 1;
+            nextBtn.disabled = currentPage >= totalPages;
+            
+            // Generate page numbers
+            generatePageNumbers();
+            
+            // Hide pagination if no items
+            const paginationContainer = document.getElementById('pagination-container');
+            if (totalItems === 0) {
+                paginationContainer.style.display = 'none';
+            } else {
+                paginationContainer.style.display = 'block';
+            }
+        }
+        
+        function generatePageNumbers() {
+            const pageNumbersContainer = document.getElementById('page-numbers');
+            pageNumbersContainer.innerHTML = '';
+            
+            if (totalPages <= 1) return;
+            
+            // Calculate which page numbers to show
+            let startPage = Math.max(1, currentPage - 2);
+            let endPage = Math.min(totalPages, currentPage + 2);
+            
+            // Adjust if we're near the beginning or end
+            if (currentPage <= 3) {
+                endPage = Math.min(5, totalPages);
+            }
+            if (currentPage >= totalPages - 2) {
+                startPage = Math.max(totalPages - 4, 1);
+            }
+            
+            // First page and ellipsis
+            if (startPage > 1) {
+                addPageNumber(1);
+                if (startPage > 2) {
+                    addEllipsis();
+                }
+            }
+            
+            // Page numbers
+            for (let i = startPage; i <= endPage; i++) {
+                addPageNumber(i);
+            }
+            
+            // Last page and ellipsis
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                    addEllipsis();
+                }
+                addPageNumber(totalPages);
+            }
+        }
+        
+        function addPageNumber(page) {
+            const pageNumbersContainer = document.getElementById('page-numbers');
+            const button = document.createElement('button');
+            button.textContent = page;
+            
+            // Set base classes
+            button.classList.add('px-3', 'py-1', 'text-sm', 'border', 'rounded');
+            
+            // Set conditional classes
+            if (page === currentPage) {
+                button.classList.add('bg-purple-600', 'text-white', 'border-purple-600');
+            } else {
+                button.classList.add('border-gray-300', 'hover:bg-gray-50');
+            }
+            
+            button.onclick = () => goToPage(page);
+            pageNumbersContainer.appendChild(button);
+        }
+        
+        function addEllipsis() {
+            const pageNumbersContainer = document.getElementById('page-numbers');
+            const span = document.createElement('span');
+            span.textContent = '...';
+            span.classList.add('px-2', 'py-1', 'text-sm', 'text-gray-500');
+            pageNumbersContainer.appendChild(span);
+        }
+        
+        function goToPage(page) {
+            if (page !== currentPage && page >= 1 && page <= totalPages) {
+                currentPage = page;
+                applyFilters();
+            }
+        }
+        
+        // Initialize pagination controls
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('items-per-page').addEventListener('change', function() {
+                itemsPerPage = parseInt(this.value);
+                currentPage = 1;
+                applyFilters();
+            });
+            
+            document.getElementById('prev-page').addEventListener('click', function() {
+                if (currentPage > 1) {
+                    goToPage(currentPage - 1);
+                }
+            });
+            
+            document.getElementById('next-page').addEventListener('click', function() {
+                if (currentPage < totalPages) {
+                    goToPage(currentPage + 1);
+                }
+            });
+        });
     </script>
 </body>
 </html>
