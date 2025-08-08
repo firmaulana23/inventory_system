@@ -3,15 +3,123 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Suppliers - Inventory System</title>
+    <title>Supplier Contacts - Inventory System</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Enhanced mobile responsiveness */
+        @media (max-width: 768px) {
+            .container {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+            
+            
+            .mobile-hidden {
+                display: none;
+            }
+            
+            button {
+                min-height: 44px;
+                min-width: 44px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .text-2xl {
+                font-size: 1.5rem;
+            }
+            
+            nav .container {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+        }
+        
+        /* Focus states for accessibility */
+        input:focus, select:focus, button:focus, textarea:focus {
+            outline: 2px solid #8b5cf6;
+            outline-offset: 2px;
+        }
+        
+        /* Card hover effects */
+        .supplier-card {
+            transition: all 0.3s ease;
+        }
+        
+        .supplier-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+        
+        /* Modal animations */
+        .modal-enter {
+            animation: modalEnter 0.3s ease-out;
+        }
+        
+        @keyframes modalEnter {
+            from {
+                opacity: 0;
+                transform: scale(0.9) translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+        
+        /* Status indicators */
+        .status-online {
+            background: linear-gradient(45deg, #10b981, #059669);
+        }
+        
+        .status-offline {
+            background: linear-gradient(45deg, #6b7280, #4b5563);
+        }
+        
+        /* Button animations */
+        .btn-hover {
+            transition: all 0.2s ease;
+        }
+        
+        .btn-hover:hover {
+            transform: scale(1.05);
+        }
+        
+        /* Loading animation */
+        .animate-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        /* Custom scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
 </head>
 <body class="bg-gray-100">
     <nav class="bg-purple-800 text-white p-4">
         <div class="container mx-auto flex justify-between items-center">
             <h1 class="text-xl font-bold">
-                <i class="fas fa-truck mr-2"></i>Suppliers
+                <i class="fas fa-address-book mr-2"></i>Supplier Contacts
             </h1>
             <div class="flex items-center space-x-4">
                 <span id="user-name" class="text-sm"></span>
@@ -41,10 +149,6 @@
                                 <i class="fas fa-chart-bar mr-3 text-purple-500"></i>
                                 Sales History
                             </a>
-                            <a href="/contact_supplier" class="flex items-center px-4 py-2 text-gray-800 hover:bg-gray-100">
-                                <i class="fas fa-address-book mr-3 text-orange-500"></i>
-                                Supplier Contacts
-                            </a>
                             <a href="/users" class="flex items-center px-4 py-2 text-gray-800 hover:bg-gray-100">
                                 <i class="fas fa-users mr-3 text-blue-500"></i>
                                 Manage Users
@@ -62,413 +166,853 @@
             </div>
         </div>
     </nav>
+    
     <div class="container mx-auto p-6">
-        <div class="flex justify-between items-center mb-4">
-            <h2 class="text-2xl font-bold">Supplier List</h2>
-            <button onclick="showAddSupplierModal()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">
-                <i class="fas fa-plus mr-1"></i>Add Supplier
-            </button>
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-4">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-900">Supplier Contact Directory</h2>
+                <p class="text-gray-600 text-sm mt-1">Manage and communicate with your suppliers</p>
+            </div>
+            <div class="flex items-center space-x-3">
+                <button onclick="exportSuppliers()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg transition-colors duration-200">
+                    <i class="fas fa-download mr-2"></i>Export
+                </button>
+                <button onclick="refreshSuppliers()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg transition-colors duration-200">
+                    <i class="fas fa-sync-alt mr-2"></i>Refresh
+                </button>
+                <button onclick="showAddSupplierModal()" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors duration-200">
+                    <i class="fas fa-plus mr-2"></i>Add Supplier
+                </button>
+            </div>
         </div>
-        <div class="bg-white rounded-lg shadow p-4 overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead>
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="supplier-table-body">
-                    <!-- Supplier rows will be injected here by JS -->
-                </tbody>
-            </table>
+        
+        <!-- Supplier Stats Cards -->
+        <!-- <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-purple-100 text-purple-600">
+                        <i class="fas fa-building text-2xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Total Suppliers</p>
+                        <p id="total-suppliers" class="text-2xl font-semibold text-gray-900">0</p>
+                    </div>
+                </div>
+            </div>
             
-            <!-- Enhanced Pagination -->
-            <div id="pagination-container" class="px-6 py-4 border-t border-gray-200 bg-gray-50">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center text-sm text-gray-700">
-                        <span>Showing <span id="items-start">0</span> to <span id="items-end">0</span> of <span id="items-total">0</span> results</span>
-                        <div class="ml-4 flex items-center">
-                            <select id="items-per-page" class="mx-2 border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500">
-                                <option value="5">5</option>
-                                <option value="10">10</option>
-                                <option value="20">20</option>
-                                <option value="50">50</option>
-                                <option value="100">100</option>
-                            </select>
-                            <span>items per page</span>
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-green-100 text-green-600">
+                        <i class="fas fa-check-circle text-2xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Active Suppliers</p>
+                        <p id="active-suppliers" class="text-2xl font-semibold text-gray-900">0</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+                        <i class="fas fa-globe text-2xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">With Website</p>
+                        <p id="suppliers-with-website" class="text-2xl font-semibold text-gray-900">0</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-orange-100 text-orange-600">
+                        <i class="fas fa-handshake text-2xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">New This Month</p>
+                        <p id="new-suppliers" class="text-2xl font-semibold text-gray-900">0</p>
+                    </div>
+                </div>
+            </div>
+        </div> -->
+        
+        <!-- Enhanced Search and Filters -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+            <div class="p-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">
+                    <i class="fas fa-search mr-2"></i>Search & Filter Suppliers
+                </h3>
+            </div>
+            <div class="p-4">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="relative col-span-2">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-search text-gray-400"></i>
+                        </div>
+                        <input type="text" id="search-input" 
+                               placeholder="Search by name, contact person, phone, or email..." 
+                               onkeyup="performSearch()" 
+                               class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200">
+                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                            <button onclick="clearSearch()" id="clear-search" class="text-gray-400 hover:text-gray-600 hidden">
+                                <i class="fas fa-times"></i>
+                            </button>
                         </div>
                     </div>
                     
-                    <div class="flex items-center space-x-2">
-                        <nav class="flex items-center space-x-1">
-                            <button id="prev-page" class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-                                Previous
-                            </button>
-                            <div id="page-numbers" class="flex space-x-1">
-                                <!-- Page numbers will be generated here -->
-                            </div>
-                            <button id="next-page" class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-                                Next
-                            </button>
-                        </nav>
+                    <div>
+                        <select id="status-filter" onchange="filterSuppliers()" 
+                                class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200">
+                            <option value="">All Status</option>
+                            <option value="true">✅ Active</option>
+                            <option value="false">❌ Inactive</option>
+                        </select>
+                    </div>
+                    
+                    <div class="flex space-x-2">
+                        <button onclick="filterSuppliers()" 
+                                class="flex-1 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors duration-200">
+                            <i class="fas fa-filter mr-2"></i>Filter
+                        </button>
+                        <button onclick="clearFilters()" 
+                                class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors duration-200">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="flex items-center justify-between mt-4 text-sm text-gray-600">
+                    <span id="supplier-count">0 suppliers found</span>
+                    <div class="flex items-center space-x-4">
+                        <span id="filter-status" class="hidden">Filters active</span>
                     </div>
                 </div>
             </div>
         </div>
+        
+        <!-- Loading State -->
+        <div id="loading-state" class="hidden flex items-center justify-center py-12">
+            <div class="text-center">
+                <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mb-3"></div>
+                <p class="text-gray-600">Loading suppliers...</p>
+            </div>
+        </div>
+        
+        <!-- Suppliers List View -->
+        <div id="suppliers-list" class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <div class="flex items-center">
+                                    <i class="fas fa-building mr-2"></i>Company
+                                </div>
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <div class="flex items-center">
+                                    <i class="fas fa-tags mr-2"></i>Category
+                                </div>
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <div class="flex items-center">
+                                    <i class="fas fa-user mr-2"></i>Contact Person
+                                </div>
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider mobile-hidden">
+                                <div class="flex items-center">
+                                    <i class="fas fa-phone mr-2"></i>Phone
+                                </div>
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider mobile-hidden">
+                                <div class="flex items-center">
+                                    <i class="fas fa-envelope mr-2"></i>Email
+                                </div>
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Status
+                            </th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Actions
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="suppliers-table-body" class="bg-white divide-y divide-gray-200">
+                        <!-- Table rows will be populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Empty State -->
+        <div id="empty-state" class="hidden text-center py-12">
+            <div class="text-gray-400 mb-4">
+                <i class="fas fa-building text-6xl"></i>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">No suppliers found</h3>
+            <p class="text-gray-600 mb-6">Try adjusting your search criteria or add a new supplier.</p>
+            <button onclick="showAddSupplierModal()" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg transition-colors duration-200">
+                <i class="fas fa-plus mr-2"></i>Add First Supplier
+            </button>
+        </div>
     </div>
-    <!-- Add/Edit Supplier Modal (hidden by default) -->
-    <div id="supplier-modal" class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center hidden">
-        <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
-            <h3 id="modal-title" class="text-xl font-bold mb-4">Add Supplier</h3>
-            <form id="supplier-form" class="space-y-4">
+    
+    <!-- Enhanced Add/Edit Supplier Modal -->
+    <div id="supplier-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 hidden">
+        <div class="relative top-10 mx-auto p-6 border w-full max-w-2xl shadow-lg rounded-lg bg-white modal-enter">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h3 id="modal-title" class="text-xl font-bold text-gray-800">Add New Supplier</h3>
+                    <p class="text-sm text-gray-600 mt-1">Add a new supplier to your directory</p>
+                </div>
+                <button onclick="hideSupplierModal()" class="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <!-- Success/Error Messages -->
+            <div id="modal-message" class="hidden mb-4 p-4 rounded-lg">
+                <div class="flex items-center">
+                    <i id="modal-message-icon" class="mr-2"></i>
+                    <span id="modal-message-text"></span>
+                </div>
+            </div>
+            
+            <form id="supplier-form" class="space-y-6">
                 <input type="hidden" id="supplier-id">
-                <div>
-                    <label for="supplier-name" class="block text-sm font-medium text-gray-700">Name <span class="text-red-500">*</span></label>
-                    <input id="supplier-name" name="name" type="text" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                
+                <!-- Basic Information Section -->
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h4 class="text-md font-medium text-gray-800 mb-3">
+                        <i class="fas fa-building mr-2"></i>Company Information
+                    </h4>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="supplier-name" class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-building mr-1"></i>Company Name <span class="text-red-500">*</span>
+                            </label>
+                            <input id="supplier-name" name="name" type="text" required 
+                                   placeholder="Enter company name..."
+                                   class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200">
+                        </div>
+                        
+                        <div>
+                            <label for="supplier-contact" class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-user mr-1"></i>Contact Person
+                            </label>
+                            <input id="supplier-contact" name="contact_person" type="text" 
+                                   placeholder="Enter contact person name..."
+                                   class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200">
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                        <div>
+                            <label for="supplier-category" class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-tags mr-1"></i>Category
+                            </label>
+                            <select id="supplier-category" name="category" 
+                                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200">
+                                <option value="">Select Category...</option>
+                                <option value="electronics">📱 Electronics</option>
+                                <option value="food">🍕 Food & Beverages</option>
+                                <option value="clothing">👕 Clothing & Textile</option>
+                                <option value="construction">🏗️ Construction Materials</option>
+                                <option value="office">🏢 Office Supplies</option>
+                                <option value="automotive">🚗 Automotive</option>
+                                <option value="packaging">📦 Packaging</option>
+                                <option value="other">🔧 Other</option>
+                            </select>
+                        </div>
+                        
+                    </div>
                 </div>
-                <div>
-                    <label for="supplier-contact" class="block text-sm font-medium text-gray-700">Contact Person</label>
-                    <input id="supplier-contact" name="contact_person" type="text" class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                
+                <!-- Contact Information Section -->
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h4 class="text-md font-medium text-gray-800 mb-3">
+                        <i class="fas fa-phone mr-2"></i>Contact Information
+                    </h4>
+                    
+                    <div>
+                        <label for="supplier-phone" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-phone mr-1"></i>Phone Number
+                        </label>
+                        <input id="supplier-phone" name="phone" type="tel" 
+                               placeholder="e.g., +62 812-3456-7890"
+                               class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200">
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                        <div>
+                            <label for="supplier-email" class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-envelope mr-1"></i>Email Address
+                            </label>
+                            <input id="supplier-email" name="email" type="email" 
+                                   placeholder="supplier@company.com"
+                                   class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200">
+                        </div>
+                        
+                        <div>
+                            <label for="supplier-website" class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-globe mr-1"></i>Website
+                            </label>
+                            <input id="supplier-website" name="website" type="url" 
+                                   placeholder="https://www.company.com"
+                                   class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200">
+                        </div>
+                    </div>
                 </div>
-                <div>
-                    <label for="supplier-email" class="block text-sm font-medium text-gray-700">Email</label>
-                    <input id="supplier-email" name="email" type="email" class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                
+                <!-- Address & Additional Info Section -->
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h4 class="text-md font-medium text-gray-800 mb-3">
+                        <i class="fas fa-map-marker-alt mr-2"></i>Address & Additional Information
+                    </h4>
+                    
+                    <div class="grid grid-cols-1 gap-4">
+                        <div>
+                            <label for="supplier-address" class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-map-marker-alt mr-1"></i>Address
+                            </label>
+                            <textarea id="supplier-address" name="address" rows="3" 
+                                      placeholder="Enter complete address..."
+                                      class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200"></textarea>
+                        </div>
+                        
+                        <div>
+                            <label for="supplier-notes" class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-sticky-note mr-1"></i>Notes
+                            </label>
+                            <textarea id="supplier-notes" name="notes" rows="3" 
+                                      placeholder="Additional notes about this supplier..."
+                                      class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200"></textarea>
+                        </div>
+                    </div>
                 </div>
-                <div>
-                    <label for="supplier-phone" class="block text-sm font-medium text-gray-700">Phone</label>
-                    <input id="supplier-phone" name="phone" type="text" class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                
+                <!-- Status Section -->
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h4 class="text-md font-medium text-gray-800 mb-3">
+                        <i class="fas fa-toggle-on mr-2"></i>Status
+                    </h4>
+                    
+                    <div class="flex items-center">
+                        <input id="supplier-is-active" name="is_active" type="checkbox" checked 
+                               class="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded">
+                        <label for="supplier-is-active" class="ml-2 block text-sm text-gray-700">
+                            Active Supplier
+                        </label>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">Inactive suppliers will not be shown in product supplier lists</p>
                 </div>
-                <div>
-                    <label for="supplier-address" class="block text-sm font-medium text-gray-700">Address</label>
-                    <textarea id="supplier-address" name="address" rows="2" class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"></textarea>
-                </div>
-                <div>
-                    <label for="supplier-website" class="block text-sm font-medium text-gray-700">Website</label>
-                    <input id="supplier-website" name="website" type="url" class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
-                </div>
-                <div class="flex justify-end space-x-2">
-                    <button type="button" onclick="hideSupplierModal()" class="bg-gray-300 px-4 py-2 rounded">Cancel</button>
-                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">Save</button>
+                
+                <!-- Form Actions -->
+                <div class="flex flex-col sm:flex-row sm:justify-end sm:space-x-3 space-y-2 sm:space-y-0 pt-6 border-t border-gray-200">
+                    <button type="button" onclick="hideSupplierModal()" 
+                            class="w-full sm:w-auto bg-gray-100 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-200 transition-colors duration-200 font-medium">
+                        <i class="fas fa-times mr-2"></i>Cancel
+                    </button>
+                    <button type="submit" id="submit-btn"
+                            class="w-full sm:w-auto bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors duration-200 font-medium flex items-center justify-center">
+                        <i class="fas fa-save mr-2"></i>
+                        <span id="submit-text">Save Supplier</span>
+                        <div id="submit-loading" class="hidden ml-2">
+                            <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        </div>
+                    </button>
                 </div>
             </form>
         </div>
     </div>
+    
+    <!-- Delete Confirmation Modal -->
+    <div id="delete-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+        <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+            <h3 class="text-xl font-bold mb-4 text-red-600">Delete Supplier</h3>
+            <p class="text-gray-700 mb-4">Are you sure you want to delete this supplier? This action cannot be undone.</p>
+            <div class="flex justify-end space-x-2">
+                <button type="button" onclick="hideDeleteModal()" class="bg-gray-300 hover:bg-gray-400 px-4 py-2 rounded">Cancel</button>
+                <button type="button" onclick="confirmDelete()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded">Delete</button>
+            </div>
+        </div>
+    </div>
+    
     <script>
-        // Global variables
-        const API_BASE = '/api/v1';
-        const token = localStorage.getItem('token');
-        let allSuppliers = [];
-        let currentPage = 1;
-        let totalPages = 1;
-        let totalItems = 0;
-        let itemsPerPage = 5;
-
-        // Check authentication
-        if (!token) {
-            window.location.href = '/login.html';
-        }
-
-        // Set authorization header for all requests
-        function makeRequest(url, options = {}) {
-            return fetch(url, {
-                ...options,
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                    ...options.headers
+        // Suppliers data (loaded from API)
+        let suppliers = [];
+        
+        // Load suppliers on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSuppliersFromAPI();
+            
+            // Add form submission handler after DOM is loaded
+            document.getElementById('supplier-form').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(this);
+                const supplierData = {
+                    name: formData.get('name'),
+                    category: formData.get('category'),
+                    contact_person: formData.get('contact_person'),
+                    phone: formData.get('phone'),
+                    email: formData.get('email'),
+                    address: formData.get('address'),
+                    website: formData.get('website'),
+                    is_active: document.getElementById('supplier-is-active').checked
+                };
+                
+                try {
+                    let response;
+                    if (editingSupplierIndex !== -1) {
+                        // Update existing supplier
+                        const supplierId = suppliers[editingSupplierIndex].id;
+                        response = await fetch(`/api/v1/suppliers/${supplierId}`, {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': 'Bearer ' + localStorage.getItem('token')
+                            },
+                            body: JSON.stringify(supplierData)
+                        });
+                    } else {
+                        // Add new supplier
+                        response = await fetch('/api/v1/suppliers', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': 'Bearer ' + localStorage.getItem('token')
+                            },
+                            body: JSON.stringify(supplierData)
+                        });
+                    }
+                    
+                    if (response.ok) {
+                        const result = await response.json();
+                        if (result.success) {
+                            showAlert(result.message, 'success');
+                            loadSuppliersFromAPI(); // Reload suppliers from API
+                            hideSupplierModal();
+                        } else {
+                            showAlert('Error: ' + result.error, 'error');
+                        }
+                    } else {
+                        showAlert('Failed to save supplier', 'error');
+                    }
+                } catch (error) {
+                    showAlert('Error saving supplier: ' + error.message, 'error');
                 }
             });
-        }
-
-        // Fetch and display suppliers with pagination
-        async function fetchSuppliers(page = 1, limit = itemsPerPage) {
+        });
+        
+        // Load suppliers from API
+        async function loadSuppliersFromAPI() {
             try {
-                const response = await makeRequest(`${API_BASE}/suppliers?page=${page}&limit=${limit}`);
-                if (!response.ok) {
-                    if (response.status === 401) {
-                        localStorage.removeItem('token');
-                        localStorage.removeItem('user');
-                        window.location.href = '/login.html';
-                        return;
+                const response = await fetch('/api/v1/suppliers', {
+                    headers: {
+                        'Authorization': 'Bearer ' + localStorage.getItem('token')
                     }
-                    throw new Error('Failed to fetch suppliers');
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success) {
+                        suppliers = result.data;
+                        loadSuppliers();
+                    } else {
+                        showAlert('Failed to load suppliers: ' + result.error, 'error');
+                    }
+                } else {
+                    showAlert('Failed to load suppliers', 'error');
                 }
-                
-                const data = await response.json();
-                allSuppliers = data.success ? data.data : data.suppliers || data;
-                
-                // Update pagination data
-                currentPage = data.page || page;
-                totalItems = data.total || allSuppliers.length;
-                totalPages = Math.ceil(totalItems / limit);
-                
-                displaySuppliers(allSuppliers);
-                updatePagination();
             } catch (error) {
-                console.error('Error fetching suppliers:', error);
-                alert('Failed to load suppliers. Please refresh the page.');
+                showAlert('Error loading suppliers: ' + error.message, 'error');
             }
         }
-
-        // Display suppliers in table
-        function displaySuppliers(suppliers) {
-            const tbody = document.getElementById('supplier-table-body');
-            if (!tbody) return;
-
-            tbody.innerHTML = '';
-
-            if (suppliers.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-gray-500">No suppliers found</td></tr>';
+        
+        // Load and display suppliers
+        function loadSuppliers(filteredSuppliers = null) {
+            const emptyState = document.getElementById('empty-state');
+            const suppliersToShow = filteredSuppliers || suppliers;
+            
+            // Update supplier count
+            updateSupplierCount(suppliersToShow.length);
+            
+            if (suppliersToShow.length === 0) {
+                document.getElementById('suppliers-list').classList.add('hidden');
+                emptyState.classList.remove('hidden');
                 return;
+            } else {
+                document.getElementById('suppliers-list').classList.remove('hidden');
+                emptyState.classList.add('hidden');
             }
+            
+            // Load suppliers into table view only
+            loadSuppliersIntoTable(suppliersToShow);
+        }
 
-            suppliers.forEach((supplier, index) => {
+        function loadSuppliersIntoTable(suppliersToShow) {
+            const tableBody = document.getElementById('suppliers-table-body');
+            tableBody.innerHTML = '';
+            
+            suppliersToShow.forEach(supplier => {
                 const row = document.createElement('tr');
                 row.className = 'hover:bg-gray-50';
                 
                 row.innerHTML = `
-                    <td class="px-6 py-4 text-sm font-medium text-gray-900">${(currentPage - 1) * itemsPerPage + index + 1}</td>
-                    <td class="px-6 py-4 text-sm text-gray-900">${supplier.name}</td>
-                    <td class="px-6 py-4 text-sm text-gray-900">${supplier.contact_person || supplier.contact || 'N/A'}</td>
-                    <td class="px-6 py-4 text-sm text-gray-900">${supplier.email || 'N/A'}</td>
-                    <td class="px-6 py-4 text-sm text-gray-900">${supplier.phone || 'N/A'}</td>
-                    <td class="px-6 py-4 text-sm text-gray-900">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-building text-purple-600"></i>
+                            </div>
+                            <div class="ml-4">
+                                <div class="text-sm font-medium text-gray-900">${supplier.name}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">
+                            ${supplier.category ? `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">${supplier.category}</span>` : 'N/A'}
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">${supplier.contact_person || 'N/A'}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">${supplier.phone || 'N/A'}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">${supplier.email || 'N/A'}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        ${supplier.is_active 
+                        ? '<span class="inline-flex items-center text-green-600 font-medium"><svg class="w-4 h-4 mr-1 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.707a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414L9 13.414l4.707-4.707z" clip-rule="evenodd" /></svg>Active</span>'
+                        : '<span class="inline-flex items-center text-red-600 font-medium"><svg class="w-4 h-4 mr-1 text-red-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm2.828-10.828a1 1 0 00-1.414-1.414L10 8.586 8.586 7.172a1 1 0 00-1.414 1.414L8.586 10l-1.414 1.414a1 1 0 001.414 1.414L10 11.414l1.414 1.414a1 1 0 001.414-1.414L11.414 10l1.414-1.414z" clip-rule="evenodd"/></svg>Not Active</span>'}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div class="flex space-x-2">
-                            <button onclick="editSupplier(${JSON.stringify(supplier).replace(/"/g, '&quot;')})" 
-                                    class="text-blue-600 hover:text-blue-800" title="Edit">
+                            <button onclick="whatsappSupplier('${supplier.phone}')" 
+                                    class="text-green-600 hover:text-green-900" title="WhatsApp Message">
+                                <i class="fab fa-whatsapp"></i>
+                            </button>
+                            <button onclick="editSupplier(${supplier.id})" 
+                                    class="text-indigo-600 hover:text-indigo-900" title="Edit">
                                 <i class="fas fa-edit"></i>
                             </button>
-                            <button onclick="deleteSupplier(${supplier.id}, '${supplier.name}')" 
-                                    class="text-red-600 hover:text-red-800" title="Delete">
+                            <button onclick="deleteSupplier(${supplier.id})" 
+                                    class="text-red-600 hover:text-red-900" title="Delete">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </div>
                     </td>
                 `;
                 
-                tbody.appendChild(row);
+                tableBody.appendChild(row);
             });
         }
-
-        // Enhanced pagination functions
-        function updatePagination() {
-            // Update pagination info
-            const start = totalItems === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
-            const end = Math.min(currentPage * itemsPerPage, totalItems);
+        
+        // Refresh suppliers function
+        function refreshSuppliers() {
+            const refreshBtn = document.querySelector('button[onclick="refreshSuppliers()"] i');
+            refreshBtn.classList.add('fa-spin');
             
-            document.getElementById('items-start').textContent = start;
-            document.getElementById('items-end').textContent = end;
-            document.getElementById('items-total').textContent = totalItems;
-            
-            // Update items per page selector
-            document.getElementById('items-per-page').value = itemsPerPage;
-            
-            // Update navigation buttons
-            const prevBtn = document.getElementById('prev-page');
-            const nextBtn = document.getElementById('next-page');
-            
-            prevBtn.disabled = currentPage <= 1;
-            nextBtn.disabled = currentPage >= totalPages;
-            
-            // Generate page numbers
-            generatePageNumbers();
-            
-            // Hide pagination only if no items exist
-            const paginationContainer = document.getElementById('pagination-container');
-            if (totalItems === 0) {
-                paginationContainer.style.display = 'none';
-            } else {
-                paginationContainer.style.display = 'block';
-            }
+            loadSuppliersFromAPI().finally(() => {
+                refreshBtn.classList.remove('fa-spin');
+            });
         }
         
-        function generatePageNumbers() {
-            const pageNumbersContainer = document.getElementById('page-numbers');
-            pageNumbersContainer.innerHTML = '';
-            
-            if (totalPages <= 1) {
-                // Still show current page for single page
-                addPageNumber(1);
+        // Export suppliers function
+        function exportSuppliers() {
+            if (suppliers.length === 0) {
+                showAlert('No suppliers to export', 'error');
                 return;
             }
             
-            // Calculate which page numbers to show
-            let startPage = Math.max(1, currentPage - 2);
-            let endPage = Math.min(totalPages, currentPage + 2);
+            // Create CSV content
+            const csvHeaders = ['Name', 'Category', 'Contact Person', 'Phone', 'Email', 'Address', 'Website'];
+            const csvData = suppliers.map(supplier => [
+                supplier.name,
+                supplier.category || '',
+                supplier.contact_person,
+                supplier.phone,
+                supplier.email,
+                supplier.address,
+                supplier.website || ''
+            ]);
             
-            // Adjust if we're near the beginning or end
-            if (currentPage <= 3) {
-                endPage = Math.min(5, totalPages);
-            }
-            if (currentPage >= totalPages - 2) {
-                startPage = Math.max(totalPages - 4, 1);
+            const csvContent = [csvHeaders, ...csvData]
+                .map(row => row.map(field => `"${field}"`).join(','))
+                .join('\n');
+            
+            // Download CSV file
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `suppliers_${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            
+            showAlert('Suppliers exported successfully', 'success');
+        }
+        
+        // Search suppliers
+        async function searchSuppliers() {
+            const searchTerm = document.getElementById('search-input').value.trim();
+            
+            if (searchTerm === '') {
+                loadSuppliersFromAPI();
+                return;
             }
             
-            // First page and ellipsis
-            if (startPage > 1) {
-                addPageNumber(1);
-                if (startPage > 2) {
-                    addEllipsis();
+            try {
+                const response = await fetch(`/api/v1/suppliers/search?q=${encodeURIComponent(searchTerm)}`, {
+                    headers: {
+                        'Authorization': 'Bearer ' + localStorage.getItem('token')
+                    }
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success) {
+                        suppliers = result.data;
+                        loadSuppliers();
+                    } else {
+                        showAlert('Search failed: ' + result.error, 'error');
+                    }
+                } else {
+                    showAlert('Search failed', 'error');
                 }
+            } catch (error) {
+                showAlert('Error searching suppliers: ' + error.message, 'error');
+            }
+        }
+        
+        // Handle Enter key in search input
+        document.getElementById('search-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchSuppliers();
+            }
+        });
+        
+        // Perform search function called by the input
+        function performSearch() {
+            const searchTerm = document.getElementById('search-input').value.trim();
+            const clearButton = document.getElementById('clear-search');
+            
+            // Show/hide clear button
+            if (searchTerm) {
+                clearButton.classList.remove('hidden');
+            } else {
+                clearButton.classList.add('hidden');
             }
             
-            // Page numbers
-            for (let i = startPage; i <= endPage; i++) {
-                addPageNumber(i);
+            // Perform local search if no API search is available
+            if (searchTerm === '') {
+                loadSuppliers();
+                updateSupplierCount(suppliers.length);
+                return;
             }
             
-            // Last page and ellipsis
-            if (endPage < totalPages) {
-                if (endPage < totalPages - 1) {
-                    addEllipsis();
-                }
-                addPageNumber(totalPages);
-            }
-        }
-        
-        function addPageNumber(page) {
-            const pageNumbersContainer = document.getElementById('page-numbers');
-            const button = document.createElement('button');
-            button.textContent = page;
-            button.className = `px-3 py-1 text-sm border rounded ${
-                page === currentPage 
-                    ? 'bg-purple-600 text-white border-purple-600' 
-                    : 'border-gray-300 hover:bg-gray-50'
-            }`;
-            button.onclick = () => goToPage(page);
-            pageNumbersContainer.appendChild(button);
-        }
-        
-        function addEllipsis() {
-            const pageNumbersContainer = document.getElementById('page-numbers');
-            const span = document.createElement('span');
-            span.textContent = '...';
-            span.className = 'px-2 py-1 text-sm text-gray-500';
-            pageNumbersContainer.appendChild(span);
-        }
-        
-        function goToPage(page) {
-            if (page !== currentPage && page >= 1 && page <= totalPages) {
-                currentPage = page;
-                fetchSuppliers(currentPage, itemsPerPage);
-            }
-        }
-        
-        // Initialize pagination controls
-        function initializePaginationControls() {
-            document.getElementById('items-per-page').addEventListener('change', function() {
-                itemsPerPage = parseInt(this.value);
-                currentPage = 1;
-                fetchSuppliers(currentPage, itemsPerPage);
+            // Filter suppliers locally
+            const filteredSuppliers = suppliers.filter(supplier => {
+                return supplier.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                       (supplier.category && supplier.category.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                       supplier.contact_person.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                       supplier.phone.includes(searchTerm) ||
+                       supplier.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                       (supplier.address && supplier.address.toLowerCase().includes(searchTerm.toLowerCase()));
             });
             
-            document.getElementById('prev-page').addEventListener('click', function() {
-                if (currentPage > 1) {
-                    goToPage(currentPage - 1);
-                }
-            });
-            
-            document.getElementById('next-page').addEventListener('click', function() {
-                if (currentPage < totalPages) {
-                    goToPage(currentPage + 1);
-                }
-            });
+            loadSuppliers(filteredSuppliers);
+            updateSupplierCount(filteredSuppliers.length);
         }
-
+        
+        // Filter suppliers function
+        function filterSuppliers() {
+            const statusFilter = document.getElementById('status-filter').value;
+            const searchTerm = document.getElementById('search-input').value.trim();
+            
+            let filteredSuppliers = [...suppliers];
+            
+            // Apply search filter
+            if (searchTerm) {
+                filteredSuppliers = filteredSuppliers.filter(supplier => {
+                    return supplier.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           (supplier.category && supplier.category.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                           supplier.contact_person.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           supplier.phone.includes(searchTerm) ||
+                           supplier.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           (supplier.address && supplier.address.toLowerCase().includes(searchTerm.toLowerCase()));
+                });
+            }
+            
+            // Apply status filter
+            if (statusFilter) {
+                const isActive = statusFilter === 'true';
+                filteredSuppliers = filteredSuppliers.filter(supplier => {
+                    return supplier.is_active === isActive;
+                });
+            }
+            
+            loadSuppliers(filteredSuppliers);
+            updateSupplierCount(filteredSuppliers.length);
+            
+            // Show filter status
+            const filterStatus = document.getElementById('filter-status');
+            if (statusFilter || searchTerm) {
+                filterStatus.classList.remove('hidden');
+            } else {
+                filterStatus.classList.add('hidden');
+            }
+        }
+        
+        // Clear search function
+        function clearSearch() {
+            document.getElementById('search-input').value = '';
+            document.getElementById('clear-search').classList.add('hidden');
+            performSearch();
+        }
+        
+        // Clear filters function
+        function clearFilters() {
+            document.getElementById('search-input').value = '';
+            document.getElementById('status-filter').value = '';
+            document.getElementById('clear-search').classList.add('hidden');
+            document.getElementById('filter-status').classList.add('hidden');
+            
+            loadSuppliers();
+            updateSupplierCount(suppliers.length);
+        }
+        
+        // Update supplier count display
+        function updateSupplierCount(count) {
+            const countElement = document.getElementById('supplier-count');
+            countElement.textContent = `${count} supplier${count !== 1 ? 's' : ''} found`;
+        }
+        
+        // WhatsApp supplier function
+        function whatsappSupplier(phone) {
+            if (!phone) {
+                showAlert('No phone number available for WhatsApp', 'error');
+                return;
+            }
+            
+            // Clean phone number - remove spaces, dashes, and other non-numeric characters except +
+            let cleanPhone = phone.replace(/[^\d+]/g, '');
+            
+            // Ensure phone number starts with country code
+            if (!cleanPhone.startsWith('+')) {
+                // Assume Indonesian number if no country code
+                if (cleanPhone.startsWith('0')) {
+                    cleanPhone = '+62' + cleanPhone.substring(1);
+                } else {
+                    cleanPhone = '+62' + cleanPhone;
+                }
+            }
+            
+            // Open WhatsApp Web
+            const whatsappUrl = `https://wa.me/${cleanPhone}`;
+            window.open(whatsappUrl, '_blank');
+        }
+        
+        // Variables for modal operations
+        let editingSupplierIndex = -1;
+        let deletingSupplierIndex = -1;
+        
         // Show add supplier modal
         function showAddSupplierModal() {
-            document.getElementById('modal-title').innerText = 'Add Supplier';
+            document.getElementById('modal-title').textContent = 'Add New Supplier';
             document.getElementById('supplier-form').reset();
             document.getElementById('supplier-id').value = '';
+            editingSupplierIndex = -1;
             document.getElementById('supplier-modal').classList.remove('hidden');
         }
-
-        // Show edit supplier modal
-        function editSupplier(supplier) {
-            document.getElementById('modal-title').innerText = 'Edit Supplier';
-            document.getElementById('supplier-id').value = supplier.id;
-            document.getElementById('supplier-name').value = supplier.name;
-            document.getElementById('supplier-contact').value = supplier.contact_person || '';
-            document.getElementById('supplier-email').value = supplier.email || '';
-            document.getElementById('supplier-phone').value = supplier.phone || '';
-            document.getElementById('supplier-address').value = supplier.address || '';
-            document.getElementById('supplier-website').value = supplier.website || '';
-            document.getElementById('supplier-modal').classList.remove('hidden');
-        }
-
+        
         // Hide supplier modal
         function hideSupplierModal() {
             document.getElementById('supplier-modal').classList.add('hidden');
         }
-
-        // Handle form submission
-        document.getElementById('supplier-form').onsubmit = async function(e) {
-            e.preventDefault();
+        
+        // Edit supplier
+        function editSupplier(supplierId) {
+            const supplier = suppliers.find(s => s.id === supplierId);
+            if (!supplier) return;
             
-            const id = document.getElementById('supplier-id').value;
-            const payload = {
-                name: document.getElementById('supplier-name').value.trim(),
-                contact_person: document.getElementById('supplier-contact').value.trim(),
-                email: document.getElementById('supplier-email').value.trim(),
-                phone: document.getElementById('supplier-phone').value.trim(),
-                address: document.getElementById('supplier-address').value.trim(),
-                website: document.getElementById('supplier-website').value.trim()
-            };
-
-            try {
-                let url = `${API_BASE}/suppliers`;
-                let method = 'POST';
-                if (id) {
-                    url += '/' + id;
-                    method = 'PUT';
-                }
-
-                const response = await makeRequest(url, {
-                    method,
-                    body: JSON.stringify(payload)
-                });
-
-                if (response.ok) {
-                    const message = id ? 'Supplier updated successfully!' : 'Supplier created successfully!';
-                    alert(message);
-                    hideSupplierModal();
-                    fetchSuppliers();
-                } else {
-                    const errorData = await response.json();
-                    alert(errorData.error || 'Failed to save supplier');
-                }
-            } catch (error) {
-                console.error('Error saving supplier:', error);
-                alert('Network error. Please try again.');
-            }
-        };
-
+            editingSupplierIndex = suppliers.findIndex(s => s.id === supplierId);
+            
+            document.getElementById('modal-title').textContent = 'Edit Supplier';
+            document.getElementById('supplier-id').value = supplier.id;
+            document.getElementById('supplier-name').value = supplier.name;
+            document.getElementById('supplier-category').value = supplier.category || '';
+            document.getElementById('supplier-contact').value = supplier.contact_person;
+            document.getElementById('supplier-phone').value = supplier.phone;
+            document.getElementById('supplier-email').value = supplier.email;
+            document.getElementById('supplier-address').value = supplier.address;
+            document.getElementById('supplier-website').value = supplier.website;
+            document.getElementById('supplier-is-active').checked = supplier.is_active;
+            
+            document.getElementById('supplier-modal').classList.remove('hidden');
+        }
+        
         // Delete supplier
-        async function deleteSupplier(id, name) {
-            if (!confirm(`Are you sure you want to delete supplier "${name}"?`)) {
-                return;
-            }
-
-            try {
-                const response = await makeRequest(`${API_BASE}/suppliers/${id}`, {
-                    method: 'DELETE'
-                });
-
-                if (response.ok) {
-                    alert('Supplier deleted successfully!');
-                    fetchSuppliers();
-                } else {
-                    const errorData = await response.json();
-                    alert(errorData.error || 'Failed to delete supplier');
+        function deleteSupplier(supplierId) {
+            deletingSupplierIndex = suppliers.findIndex(s => s.id === supplierId);
+            document.getElementById('delete-modal').classList.remove('hidden');
+        }
+        
+        // Hide delete modal
+        function hideDeleteModal() {
+            document.getElementById('delete-modal').classList.add('hidden');
+            deletingSupplierIndex = -1;
+        }
+        
+        // Confirm delete
+        async function confirmDelete() {
+            if (deletingSupplierIndex !== -1) {
+                try {
+                    const supplierId = suppliers[deletingSupplierIndex].id;
+                    const response = await fetch(`/api/v1/suppliers/${supplierId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': 'Bearer ' + localStorage.getItem('token')
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        const result = await response.json();
+                        if (result.success) {
+                            showAlert(result.message, 'success');
+                            loadSuppliersFromAPI(); // Reload suppliers from API
+                            hideDeleteModal();
+                        } else {
+                            showAlert('Error: ' + result.error, 'error');
+                        }
+                    } else {
+                        showAlert('Failed to delete supplier', 'error');
+                    }
+                } catch (error) {
+                    showAlert('Error deleting supplier: ' + error.message, 'error');
                 }
-            } catch (error) {
-                console.error('Error deleting supplier:', error);
-                alert('Network error. Please try again.');
             }
+        }
+        
+        
+        // Show alert function
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `fixed top-4 right-4 max-w-md z-50 p-4 rounded-lg ${type === 'success' ? 'bg-green-100 border border-green-400 text-green-700' : 'bg-red-100 border border-red-400 text-red-700'}`;
+            alertDiv.textContent = message;
+            
+            document.body.appendChild(alertDiv);
+            
+            setTimeout(() => {
+                document.body.removeChild(alertDiv);
+            }, 3000);
         }
 
         // Initialize burger menu functionality
@@ -506,7 +1050,7 @@
             window.location.href = '/login.html';
         }
 
-        // Initialize everything when page loads
+        // Initialize page when loaded
         document.addEventListener('DOMContentLoaded', function() {
             // Set user name if available
             const userInfo = JSON.parse(localStorage.getItem('user') || '{}');
@@ -517,11 +1061,8 @@
             // Initialize burger menu
             initializeBurgerMenu();
             
-            // Initialize pagination controls
-            initializePaginationControls();
-            
-            // Load suppliers
-            fetchSuppliers();
+            // Load suppliers when page loads
+            loadSuppliersFromAPI();
         });
     </script>
 </body>

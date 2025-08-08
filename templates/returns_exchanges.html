@@ -81,9 +81,9 @@
                         <div class="text-2xl font-bold text-yellow-600" id="avgReturnAmount">Rp 0</div>
                         <div class="text-sm text-gray-600">Average Amount</div>
                     </div>
-                    <div class="bg-purple-50 p-4 rounded-lg">
-                        <div class="text-2xl font-bold text-purple-600" id="returnsToday">0</div>
-                        <div class="text-sm text-gray-600">Today's Returns</div>
+                    <div class="bg-red-50 p-4 rounded-lg">
+                        <div class="text-2xl font-bold text-red-600" id="totalProfitLoss">Rp 0</div>
+                        <div class="text-sm text-gray-600">Profit Loss</div>
                     </div>
                 </div>
             </div>
@@ -139,9 +139,9 @@
                         <div class="text-2xl font-bold text-blue-600" id="totalDifference">Rp 0</div>
                         <div class="text-sm text-gray-600">Net Difference</div>
                     </div>
-                    <div class="bg-purple-50 p-4 rounded-lg">
-                        <div class="text-2xl font-bold text-purple-600" id="exchangesToday">0</div>
-                        <div class="text-sm text-gray-600">Today's Exchanges</div>
+                    <div class="bg-indigo-50 p-4 rounded-lg">
+                        <div class="text-2xl font-bold text-indigo-600" id="totalProfitImpact">Rp 0</div>
+                        <div class="text-sm text-gray-600">Profit Impact</div>
                     </div>
                 </div>
             </div>
@@ -365,13 +365,12 @@
             const total = returns.length;
             const totalAmount = returns.reduce((sum, r) => sum + r.total, 0);
             const avgAmount = total > 0 ? totalAmount / total : 0;
-            const today = new Date().toDateString();
-            const todayReturns = returns.filter(r => new Date(r.created_at).toDateString() === today).length;
+            const totalProfitLoss = returns.reduce((sum, r) => sum + (r.profit_loss || 0), 0);
 
             document.getElementById('totalReturns').textContent = total;
             document.getElementById('totalReturnAmount').textContent = `Rp ${formatNumber(totalAmount)}`;
             document.getElementById('avgReturnAmount').textContent = `Rp ${formatNumber(avgAmount)}`;
-            document.getElementById('returnsToday').textContent = todayReturns;
+            document.getElementById('totalProfitLoss').textContent = `Rp ${formatNumber(Math.abs(totalProfitLoss))}`;
         }
 
         function updateReturnsPagination(response) {
@@ -469,7 +468,7 @@
                 <!-- Return Summary -->
                 <div class="mt-6 bg-gray-50 p-4 rounded-lg">
                     <h4 class="font-semibold mb-3">Return Summary</h4>
-                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 text-center">
+                    <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 text-center">
                         <div class="bg-white p-3 rounded">
                             <div class="text-lg font-bold text-gray-900">Rp ${formatNumber(returnData.subtotal)}</div>
                             <div class="text-sm text-gray-600">Subtotal</div>
@@ -485,6 +484,10 @@
                         <div class="bg-white p-3 rounded">
                             <div class="text-lg font-bold text-green-600">Rp ${formatNumber(returnData.total)}</div>
                             <div class="text-sm text-gray-600">Total Refund</div>
+                        </div>
+                        <div class="bg-white p-3 rounded">
+                            <div class="text-lg font-bold text-red-600">Rp ${formatNumber(Math.abs(returnData.profit_loss || 0))}</div>
+                            <div class="text-sm text-gray-600">Profit Loss</div>
                         </div>
                     </div>
                 </div>
@@ -624,13 +627,16 @@
             const total = exchanges.length;
             const totalValue = exchanges.reduce((sum, e) => sum + e.total_new_value, 0);
             const totalDifference = exchanges.reduce((sum, e) => sum + e.difference, 0);
-            const today = new Date().toDateString();
-            const todayExchanges = exchanges.filter(e => new Date(e.created_at).toDateString() === today).length;
+            const totalProfitImpact = exchanges.reduce((sum, e) => sum + (e.profit_impact || 0), 0);
 
             document.getElementById('totalExchanges').textContent = total;
             document.getElementById('totalExchangeValue').textContent = `Rp ${formatNumber(totalValue)}`;
             document.getElementById('totalDifference').textContent = `Rp ${formatNumber(totalDifference)}`;
-            document.getElementById('exchangesToday').textContent = todayExchanges;
+            
+            const impactClass = totalProfitImpact >= 0 ? 'text-green-600' : 'text-red-600';
+            const impactElement = document.getElementById('totalProfitImpact');
+            impactElement.textContent = `Rp ${formatNumber(Math.abs(totalProfitImpact))}`;
+            impactElement.className = `text-2xl font-bold ${impactClass}`;
         }
 
         function updateExchangesPagination(response) {
@@ -728,7 +734,7 @@
                 <!-- Exchange Summary -->
                 <div class="mt-6 bg-gray-50 p-4 rounded-lg">
                     <h4 class="font-semibold mb-3">Exchange Summary</h4>
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 text-center">
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 text-center">
                         <div class="bg-white p-3 rounded">
                             <div class="text-lg font-bold text-red-600">Rp ${formatNumber(exchangeData.total_old_value)}</div>
                             <div class="text-sm text-gray-600">Old Items Value</div>
@@ -740,6 +746,12 @@
                         <div class="bg-white p-3 rounded">
                             <div class="text-lg font-bold ${differenceClass}">${differenceText}</div>
                             <div class="text-sm text-gray-600">Price Difference</div>
+                        </div>
+                        <div class="bg-white p-3 rounded">
+                            <div class="text-lg font-bold ${exchangeData.profit_impact >= 0 ? 'text-green-600' : 'text-red-600'}">
+                                ${exchangeData.profit_impact >= 0 ? '+' : ''}Rp ${formatNumber(Math.abs(exchangeData.profit_impact || 0))}
+                            </div>
+                            <div class="text-sm text-gray-600">Profit Impact</div>
                         </div>
                     </div>
                 </div>

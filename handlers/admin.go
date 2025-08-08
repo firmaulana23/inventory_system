@@ -65,25 +65,37 @@ func GetDashboardStats(c *gin.Context) {
 	// Count today's sales
 	database.DB.Model(&models.Sale{}).Where("created_at::date = ?", today).Count(&stats.TodaySales)
 
-	// Calculate total revenue
-	database.DB.Model(&models.Sale{}).Select("COALESCE(SUM(total), 0)").Scan(&stats.TotalRevenue)
+	// Calculate total revenue (sales total - returns refund amount)
+	var totalSalesRevenue, totalReturnsRefund float64
+	database.DB.Model(&models.Sale{}).Select("COALESCE(SUM(total), 0)").Scan(&totalSalesRevenue)
+	database.DB.Model(&models.Return{}).Select("COALESCE(SUM(refund_amount), 0)").Scan(&totalReturnsRefund)
+	stats.TotalRevenue = totalSalesRevenue - totalReturnsRefund
 
-	// Calculate today's revenue
-	database.DB.Model(&models.Sale{}).Where("created_at::date = ?", today).Select("COALESCE(SUM(total), 0)").Scan(&stats.TodayRevenue)
+	// Calculate today's revenue (sales total - returns refund amount)
+	var todaySalesRevenue, todayReturnsRefund float64
+	database.DB.Model(&models.Sale{}).Where("created_at::date = ?", today).Select("COALESCE(SUM(total), 0)").Scan(&todaySalesRevenue)
+	database.DB.Model(&models.Return{}).Where("created_at::date = ?", today).Select("COALESCE(SUM(refund_amount), 0)").Scan(&todayReturnsRefund)
+	stats.TodayRevenue = todaySalesRevenue - todayReturnsRefund
 
-	// Calculate total profit (revenue - cost)
+	// Calculate total profit (sales profit - returns profit loss)
+	var totalSalesProfit, totalReturnsProfitLoss float64
 	database.DB.Raw(`
 		SELECT COALESCE(SUM(si.quantity * (si.price - si.cost)), 0) 
 		FROM sale_items si
-	`).Scan(&stats.TotalProfit)
+	`).Scan(&totalSalesProfit)
+	database.DB.Model(&models.Return{}).Select("COALESCE(SUM(ABS(profit_loss)), 0)").Scan(&totalReturnsProfitLoss)
+	stats.TotalProfit = totalSalesProfit - totalReturnsProfitLoss
 
-	// Calculate today's profit
+	// Calculate today's profit (sales profit - returns profit loss)
+	var todaySalesProfit, todayReturnsProfitLoss float64
 	database.DB.Raw(`
 		SELECT COALESCE(SUM(si.quantity * (si.price - si.cost)), 0) 
 		FROM sale_items si
 		JOIN sales s ON si.sale_id = s.id
 		WHERE s.created_at::date = ?
-	`, today).Scan(&stats.TodayProfit)
+	`, today).Scan(&todaySalesProfit)
+	database.DB.Model(&models.Return{}).Where("created_at::date = ?", today).Select("COALESCE(SUM(ABS(profit_loss)), 0)").Scan(&todayReturnsProfitLoss)
+	stats.TodayProfit = todaySalesProfit - todayReturnsProfitLoss
 
 	// Calculate total purchasing price
 	database.DB.Model(&models.PurchaseOrder{}).Select("COALESCE(SUM(total), 0)").Scan(&stats.TotalPurchasing)
@@ -94,12 +106,12 @@ func GetDashboardStats(c *gin.Context) {
 	// Calculate total purchasing amount due
 	database.DB.Model(&models.PurchaseOrder{}).Select("COALESCE(SUM(amount_due), 0)").Scan(&stats.TotalPurchasingDue)
 
-	// Count low stock products (products where any supplier has stock <= min_stock)
+	// Count low stock products (products where any supplier has stock <= min_stock, excluding deleted products)
 	database.DB.Raw(`
 		SELECT COUNT(DISTINCT p.id) 
 		FROM products p 
 		JOIN product_suppliers ps ON p.id = ps.product_id 
-		WHERE ps.is_active = true AND ps.stock <= ps.min_stock
+		WHERE ps.is_active = true AND ps.stock <= ps.min_stock AND p.deleted_at IS NULL
 	`).Scan(&stats.LowStockProducts)
 
 	// Get recent sales (last 10)

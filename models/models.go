@@ -152,6 +152,7 @@ type SaleItem struct {
 type Supplier struct {
 	ID            uint           `json:"id" gorm:"primaryKey"`
 	Name          string         `json:"name" gorm:"not null"`
+	Category      string         `json:"category"`
 	Email         string         `json:"email"`
 	Phone         string         `json:"phone"`
 	Address       string         `json:"address"`
@@ -246,6 +247,8 @@ type Return struct {
 	Reason       string       `json:"reason"`                           // Reason for return
 	RefundMethod string       `json:"refund_method" gorm:"not null"`    // cash, card, transfer, store_credit
 	RefundAmount float64      `json:"refund_amount" gorm:"not null"`    // Amount to be refunded
+	TotalCost    float64      `json:"total_cost" gorm:"default:0"`       // Total cost of returned items
+	ProfitLoss   float64      `json:"profit_loss" gorm:"default:0"`      // Profit loss (negative value)
 	Items        []ReturnItem `json:"items" gorm:"foreignKey:ReturnID"`
 	CreatedAt    time.Time    `json:"created_at"`
 	UpdatedAt    time.Time    `json:"updated_at"`
@@ -262,8 +265,10 @@ type ReturnItem struct {
 	Product    Product `json:"product" gorm:"foreignKey:ProductID"`
 	Quantity   int     `json:"quantity" gorm:"not null"`
 	Price      float64 `json:"price" gorm:"not null"`
+	Cost       float64 `json:"cost" gorm:"default:0"`      // Cost per unit (for profit calculation)
 	Total      float64 `json:"total" gorm:"not null"`
-	Condition  string  `json:"condition" gorm:"not null"` // good, damaged, expired
+	TotalCost  float64 `json:"total_cost" gorm:"default:0"` // Total cost for this line
+	Condition  string  `json:"condition" gorm:"not null"`  // good, damaged, expired
 }
 
 // Exchange represents a product exchange transaction
@@ -277,7 +282,10 @@ type Exchange struct {
 	Reason         string         `json:"reason"`                               // Reason for exchange
 	TotalOldValue  float64        `json:"total_old_value" gorm:"not null"`      // Total value of returned items
 	TotalNewValue  float64        `json:"total_new_value" gorm:"not null"`      // Total value of new items
+	TotalOldCost   float64        `json:"total_old_cost" gorm:"default:0"`       // Total cost of returned items
+	TotalNewCost   float64        `json:"total_new_cost" gorm:"default:0"`       // Total cost of new items
 	Difference     float64        `json:"difference" gorm:"not null"`           // Price difference (+ customer pays, - customer gets refund)
+	ProfitImpact   float64        `json:"profit_impact" gorm:"default:0"`        // Net profit impact (can be positive or negative)
 	PaymentMethod  string         `json:"payment_method"`                       // Method for difference payment/refund
 	OldItems       []ExchangeOldItem `json:"old_items" gorm:"foreignKey:ExchangeID"`
 	NewItems       []ExchangeNewItem `json:"new_items" gorm:"foreignKey:ExchangeID"`
@@ -296,8 +304,10 @@ type ExchangeOldItem struct {
 	Product    Product  `json:"product" gorm:"foreignKey:ProductID"`
 	Quantity   int      `json:"quantity" gorm:"not null"`
 	Price      float64  `json:"price" gorm:"not null"`
+	Cost       float64  `json:"cost" gorm:"default:0"`      // Cost per unit
 	Total      float64  `json:"total" gorm:"not null"`
-	Condition  string   `json:"condition" gorm:"not null"` // good, damaged, expired
+	TotalCost  float64  `json:"total_cost" gorm:"default:0"` // Total cost for this line
+	Condition  string   `json:"condition" gorm:"not null"`  // good, damaged, expired
 }
 
 // ExchangeNewItem represents new items given in an exchange
@@ -308,7 +318,9 @@ type ExchangeNewItem struct {
 	Product    Product `json:"product" gorm:"foreignKey:ProductID"`
 	Quantity   int     `json:"quantity" gorm:"not null"`
 	Price      float64 `json:"price" gorm:"not null"`
+	Cost       float64 `json:"cost" gorm:"default:0"`      // Cost per unit
 	Total      float64 `json:"total" gorm:"not null"`
+	TotalCost  float64 `json:"total_cost" gorm:"default:0"` // Total cost for this line
 }
 
 // ProductSupplier represents the relationship between products and suppliers with pricing

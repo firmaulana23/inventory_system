@@ -20,7 +20,7 @@ func GetSuppliers(c *gin.Context) {
 	offset := (page - 1) * limit
 
 	// Build base query
-	query := database.DB.Where("is_active = ?", true)
+	query := database.DB.Where("deleted_at IS NULL")
 
 	// Count total records
 	query.Model(&models.Supplier{}).Count(&total)
@@ -48,7 +48,7 @@ func GetSupplier(c *gin.Context) {
 	id := c.Param("id")
 	var supplier models.Supplier
 	
-	if err := database.DB.Where("id = ? AND is_active = ?", id, true).First(&supplier).Error; err != nil {
+	if err := database.DB.Where("id = ?", id).First(&supplier).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"success": false,
 			"error":   "Supplier not found",
@@ -107,7 +107,7 @@ func UpdateSupplier(c *gin.Context) {
 	var supplier models.Supplier
 	
 	// Check if supplier exists
-	if err := database.DB.Where("id = ? AND is_active = ?", id, true).First(&supplier).Error; err != nil {
+	if err := database.DB.Where("id = ?", id).First(&supplier).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"success": false,
 			"error":   "Supplier not found",
@@ -136,11 +136,13 @@ func UpdateSupplier(c *gin.Context) {
 
 	// Update fields
 	supplier.Name = updateData.Name
+	supplier.Category = updateData.Category
 	supplier.Email = updateData.Email
 	supplier.Phone = updateData.Phone
 	supplier.Address = updateData.Address
 	supplier.ContactPerson = updateData.ContactPerson
 	supplier.Website = updateData.Website
+	supplier.IsActive = updateData.IsActive
 
 	if err := database.DB.Save(&supplier).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -163,7 +165,7 @@ func DeleteSupplier(c *gin.Context) {
 	var supplier models.Supplier
 	
 	// Check if supplier exists
-	if err := database.DB.Where("id = ? AND is_active = ?", id, true).First(&supplier).Error; err != nil {
+	if err := database.DB.Where("id = ?", id).First(&supplier).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"success": false,
 			"error":   "Supplier not found",
@@ -171,9 +173,8 @@ func DeleteSupplier(c *gin.Context) {
 		return
 	}
 
-	// Soft delete by setting is_active to false
-	supplier.IsActive = false
-	if err := database.DB.Save(&supplier).Error; err != nil {
+	// Soft delete using GORM's soft delete (sets deleted_at timestamp)
+	if err := database.DB.Delete(&supplier).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
 			"error":   "Failed to delete supplier: " + err.Error(),
@@ -210,5 +211,54 @@ func SearchSuppliers(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"data":    suppliers,
+	})
+}
+
+// ChangeSupplierStatus changes the IsActive status of a supplier
+func ChangeSupplierStatus(c *gin.Context) {
+	id := c.Param("id")
+	var supplier models.Supplier
+	
+	// Check if supplier exists
+	if err := database.DB.Where("id = ?", id).First(&supplier).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"success": false,
+			"error":   "Supplier not found",
+		})
+		return
+	}
+
+	// Get the new status from request body
+	var statusRequest struct {
+		IsActive bool `json:"is_active" binding:"required"`
+	}
+	
+	if err := c.ShouldBindJSON(&statusRequest); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Invalid input data: " + err.Error(),
+		})
+		return
+	}
+
+	// Update the status
+	supplier.IsActive = statusRequest.IsActive
+	if err := database.DB.Save(&supplier).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"error":   "Failed to update supplier status: " + err.Error(),
+		})
+		return
+	}
+
+	statusText := "deactivated"
+	if statusRequest.IsActive {
+		statusText = "activated"
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "Supplier " + statusText + " successfully",
+		"data":    supplier,
 	})
 }

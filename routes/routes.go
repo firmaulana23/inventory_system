@@ -18,17 +18,16 @@ func SetupRoutes() *gin.Engine {
 	router.Static("/static", "./templates")
 	router.StaticFile("/login.html", "./templates/login.html")
 	router.StaticFile("/admin-dashboard.html", "./templates/admin_dashboard.html")
-	router.StaticFile("/dashboard.html", "./templates/employee_dashboard.html")
+	router.StaticFile("/dashboard.html", "./templates/pos_dashboard.html")
 	// Add routes for new pages
 	router.StaticFile("/manage_products", "./templates/manage_products.html")
 	router.StaticFile("/sales_history", "./templates/sales_history.html")
 	router.StaticFile("/stock_movements", "./templates/stock_movements.html")
-	router.StaticFile("/suppliers", "./templates/suppliers.html")
 	router.StaticFile("/purchase_orders", "./templates/purchase_orders.html")
 	router.StaticFile("/users", "./templates/users.html")
 	router.StaticFile("/activity_logs", "./templates/activity_logs.html")
 	router.StaticFile("/settings", "./templates/settings.html")
-	router.StaticFile("/contact_supplier", "./templates/contact_supplier.html")
+	router.StaticFile("/suppliers", "./templates/suppliers.html")
 	router.StaticFile("/returns_exchanges", "./templates/returns_exchanges.html")
 	router.StaticFile("/404.html", "./templates/404.html")
 
@@ -83,13 +82,13 @@ func SetupRoutes() *gin.Engine {
 			pos.GET("/sales/export-excel", handlers.ExportSalesExcel)
 			pos.GET("/reports", handlers.GetSalesReport)
 			pos.GET("/sales/overdue", handlers.GetOverdueSales)
-			
+
 			// Return operations
 			pos.POST("/returns", handlers.CreateReturn)
 			pos.GET("/returns", handlers.GetReturns)
 			pos.GET("/returns/:id", handlers.GetReturn)
 			pos.GET("/sales/:id/for-return", handlers.GetSaleForReturn)
-			
+
 			// Exchange operations
 			pos.POST("/exchanges", handlers.CreateExchange)
 			pos.GET("/exchanges", handlers.GetExchanges)
@@ -98,10 +97,10 @@ func SetupRoutes() *gin.Engine {
 
 		// Stock movements (view only for employees)
 		protected.GET("/stock-movements", handlers.GetStockMovements)
-		
+
 		// Company profile for invoices (accessible to all authenticated users)
 		protected.GET("/company-profile/invoice", handlers.GetCompanyProfileForInvoice)
-		
+
 		// Suppliers (view only for employees)
 		suppliers := protected.Group("/suppliers")
 		{
@@ -121,7 +120,7 @@ func SetupRoutes() *gin.Engine {
 			manager.PUT("/products/:id/suppliers/:supplier_id", handlers.UpdateProductSupplier)
 			manager.DELETE("/products/:id/suppliers/:supplier_id", handlers.RemoveProductSupplier)
 			manager.POST("/products/:id/suppliers/:supplier_id/adjust-stock", handlers.AdjustSupplierStock)
-			
+
 			// Supplier management
 			manager.POST("/suppliers", handlers.CreateSupplier)
 			manager.PUT("/suppliers/:id", handlers.UpdateSupplier)
@@ -157,7 +156,7 @@ func SetupRoutes() *gin.Engine {
 
 			// System management
 			admin.PUT("/system/settings", handlers.UpdateSystemSettings)
-			
+
 			// Company profile management
 			admin.GET("/company-profile", handlers.GetCompanyProfile)
 			admin.POST("/company-profile", handlers.CreateOrUpdateCompanyProfile)

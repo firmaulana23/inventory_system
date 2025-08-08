@@ -102,7 +102,7 @@ func CreateReturn(c *gin.Context) {
 	returnNumber := fmt.Sprintf("RET-%d-%d", time.Now().Year(), time.Now().Unix()%100000)
 
 	// Calculate totals
-	var subtotal, total float64
+	var subtotal, total, totalCost float64
 	returnItems := make([]models.ReturnItem, len(request.Items))
 
 	for i, itemReq := range request.Items {
@@ -147,14 +147,18 @@ func CreateReturn(c *gin.Context) {
 		}
 
 		itemTotal := float64(itemReq.Quantity) * itemReq.Price
+		itemTotalCost := float64(itemReq.Quantity) * saleItem.Cost // Use original cost from sale
 		subtotal += itemTotal
+		totalCost += itemTotalCost
 
 		returnItems[i] = models.ReturnItem{
 			SaleItemID: itemReq.SaleItemID,
 			ProductID:  itemReq.ProductID,
 			Quantity:   itemReq.Quantity,
 			Price:      itemReq.Price,
+			Cost:       saleItem.Cost,
 			Total:      itemTotal,
+			TotalCost:  itemTotalCost,
 			Condition:  itemReq.Condition,
 		}
 	}
@@ -164,6 +168,9 @@ func CreateReturn(c *gin.Context) {
 	tax := sale.Tax * originalRatio
 	discount := sale.Discount * originalRatio
 	total = subtotal + tax - discount
+
+	// Calculate profit loss (negative value since it's a loss)
+	profitLoss := -(total - totalCost) // Original profit that is now lost
 
 	// Create return record
 	returnRecord := models.Return{
@@ -177,6 +184,8 @@ func CreateReturn(c *gin.Context) {
 		Reason:       request.Reason,
 		RefundMethod: request.RefundMethod,
 		RefundAmount: total,
+		TotalCost:    totalCost,
+		ProfitLoss:   profitLoss,
 	}
 
 	if err := tx.Create(&returnRecord).Error; err != nil {
@@ -417,7 +426,7 @@ func CreateExchange(c *gin.Context) {
 	exchangeNumber := fmt.Sprintf("EXC-%d-%d", time.Now().Year(), time.Now().Unix()%100000)
 
 	// Validate and calculate old items total
-	var totalOldValue float64
+	var totalOldValue, totalOldCost float64
 	exchangeOldItems := make([]models.ExchangeOldItem, len(request.OldItems))
 
 	for i, oldItemReq := range request.OldItems {
@@ -462,20 +471,24 @@ func CreateExchange(c *gin.Context) {
 		}
 
 		itemTotal := float64(oldItemReq.Quantity) * oldItemReq.Price
+		itemTotalCost := float64(oldItemReq.Quantity) * saleItem.Cost
 		totalOldValue += itemTotal
+		totalOldCost += itemTotalCost
 
 		exchangeOldItems[i] = models.ExchangeOldItem{
 			SaleItemID: oldItemReq.SaleItemID,
 			ProductID:  oldItemReq.ProductID,
 			Quantity:   oldItemReq.Quantity,
 			Price:      oldItemReq.Price,
+			Cost:       saleItem.Cost,
 			Total:      itemTotal,
+			TotalCost:  itemTotalCost,
 			Condition:  oldItemReq.Condition,
 		}
 	}
 
 	// Validate and calculate new items total
-	var totalNewValue float64
+	var totalNewValue, totalNewCost float64
 	exchangeNewItems := make([]models.ExchangeNewItem, len(request.NewItems))
 
 	for i, newItemReq := range request.NewItems {
@@ -487,11 +500,17 @@ func CreateExchange(c *gin.Context) {
 			return
 		}
 
-		// Check stock availability
+		// Check stock availability and get cost from active supplier
 		totalStock := 0
+		var lowestCost float64
+		firstCost := true
 		for _, supplier := range product.Suppliers {
 			if supplier.IsActive {
 				totalStock += supplier.Stock
+				if firstCost || supplier.Cost < lowestCost {
+					lowestCost = supplier.Cost
+					firstCost = false
+				}
 			}
 		}
 
@@ -505,18 +524,28 @@ func CreateExchange(c *gin.Context) {
 		}
 
 		itemTotal := float64(newItemReq.Quantity) * newItemReq.Price
+		itemTotalCost := float64(newItemReq.Quantity) * lowestCost
 		totalNewValue += itemTotal
+		totalNewCost += itemTotalCost
 
 		exchangeNewItems[i] = models.ExchangeNewItem{
 			ProductID: newItemReq.ProductID,
 			Quantity:  newItemReq.Quantity,
 			Price:     newItemReq.Price,
+			Cost:      lowestCost,
 			Total:     itemTotal,
+			TotalCost: itemTotalCost,
 		}
 	}
 
 	// Calculate price difference
 	difference := totalNewValue - totalOldValue
+
+	// Calculate profit impact
+	// Old profit (lost): (totalOldValue - totalOldCost) * -1 (negative because it's lost)
+	// New profit (gained): totalNewValue - totalNewCost
+	// Net profit impact = New profit - Lost profit = (totalNewValue - totalNewCost) - (totalOldValue - totalOldCost)
+	profitImpact := (totalNewValue - totalNewCost) - (totalOldValue - totalOldCost)
 
 	// Create exchange record
 	exchange := models.Exchange{
@@ -526,7 +555,10 @@ func CreateExchange(c *gin.Context) {
 		Reason:         request.Reason,
 		TotalOldValue:  totalOldValue,
 		TotalNewValue:  totalNewValue,
+		TotalOldCost:   totalOldCost,
+		TotalNewCost:   totalNewCost,
 		Difference:     difference,
+		ProfitImpact:   profitImpact,
 		PaymentMethod:  request.PaymentMethod,
 	}
 
