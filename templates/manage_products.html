@@ -6,6 +6,7 @@
     <title>Manage Products - Inventory System</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         /* mobile responsiveness */
         @media (max-width: 768px) {
@@ -269,9 +270,37 @@
                 <p class="text-gray-600 text-sm mt-1">Manage inventory, pricing, and product information</p>
             </div>
             <div class="flex items-center space-x-3">
-                <button onclick="exportProducts()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg transition-colors duration-200">
-                    <i class="fas fa-download mr-2"></i>Export
-                </button>
+                <div class="relative">
+                    <button id="export-dropdown-btn" onclick="toggleExportDropdown()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg transition-colors duration-200 flex items-center">
+                        <i class="fas fa-download mr-2"></i>Export
+                        <i class="fas fa-chevron-down ml-2 text-sm"></i>
+                    </button>
+                    <div id="export-dropdown" class="hidden absolute right-0 mt-2 w-64 bg-white rounded-md shadow-lg z-50 border border-gray-200">
+                        <div class="py-2">
+                            <button onclick="exportProducts()" class="w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-100 flex items-center">
+                                <i class="fas fa-file-csv mr-3 text-green-500"></i>
+                                <div>
+                                    <div class="font-medium">Detailed Export</div>
+                                    <div class="text-xs text-gray-500">Include supplier stock details</div>
+                                </div>
+                            </button>
+                            <button onclick="exportProductsSimple()" class="w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-100 flex items-center">
+                                <i class="fas fa-file-alt mr-3 text-blue-500"></i>
+                                <div>
+                                    <div class="font-medium">Simple Export</div>
+                                    <div class="text-xs text-gray-500">Basic product information only</div>
+                                </div>
+                            </button>
+                            <button onclick="exportProductsExcel()" class="w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-100 flex items-center">
+                                <i class="fas fa-file-excel mr-3 text-green-600"></i>
+                                <div>
+                                    <div class="font-medium">Excel Export</div>
+                                    <div class="text-xs text-gray-500">Multi-sheet Excel workbook</div>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
                 <button onclick="refreshProducts()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg transition-colors duration-200">
                     <i class="fas fa-sync-alt mr-2"></i>Refresh
                 </button>
@@ -2279,30 +2308,299 @@
         
         
         function exportProducts() {
-            // Simple CSV export
-            const headers = ['Name', 'SKU', 'Category', 'Stock', 'Price', 'Cost'];
-            const csvContent = [
-                headers.join(','),
-                ...filteredProducts.map(p => [
-                    `"${p.name}"`,
-                    `"${p.sku || ''}"`,
-                    `"${p.category || ''}"`,
-                    p.quantity ?? p.stock ?? 0,
-                    p.price,
-                    p.cost || 0
-                ].join(','))
-            ].join('\n');
+            // Enhanced CSV export with supplier stock details
+            const rows = [];
             
-            const blob = new Blob([csvContent], { type: 'text/csv' });
+            // Add headers
+            const headers = [
+                'Product Name', 'SKU', 'Category', 'Description', 'Location', 'Is Active',
+                'Total Stock', 'Lowest Price', 'Lowest Cost',
+                'Supplier Name', 'Supplier Contact', 'Supplier Stock', 'Supplier Min Stock', 
+                'Supplier Price', 'Supplier Cost', 'Supplier Status'
+            ];
+            rows.push(headers.join(','));
+            
+            // Process each product
+            filteredProducts.forEach(product => {
+                const baseProductData = [
+                    `"${product.name || ''}"`,
+                    `"${product.sku || ''}"`,
+                    `"${product.category || ''}"`,
+                    `"${(product.description || '').replace(/"/g, '""')}"`, // Escape quotes
+                    `"${product.location || ''}"`,
+                    product.is_active ? 'Active' : 'Inactive',
+                    getTotalStock(product),
+                    getLowestPrice(product),
+                    getLowestCost(product)
+                ];
+                
+                // If product has suppliers, create a row for each supplier
+                if (product.suppliers && product.suppliers.length > 0) {
+                    product.suppliers.forEach(supplierData => {
+                        const supplier = supplierData.supplier || {};
+                        const supplierRow = [
+                            ...baseProductData,
+                            `"${supplier.name || 'Unknown Supplier'}"`,
+                            `"${supplier.email || ''} | ${supplier.phone || ''}"`,
+                            supplierData.stock || 0,
+                            supplierData.min_stock || 0,
+                            supplierData.price || 0,
+                            supplierData.cost || 0,
+                            supplierData.is_active ? 'Active' : 'Inactive'
+                        ];
+                        rows.push(supplierRow.join(','));
+                    });
+                } else {
+                    // Product without suppliers
+                    const noSupplierRow = [
+                        ...baseProductData,
+                        '"No Supplier"', '""', '0', '0', '0', '0', 'N/A'
+                    ];
+                    rows.push(noSupplierRow.join(','));
+                }
+            });
+            
+            const csvContent = rows.join('\n');
+            
+            // Create and download file
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
             const url = window.URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = `products_${new Date().toISOString().split('T')[0]}.csv`;
+            link.download = `products_with_suppliers_${new Date().toISOString().split('T')[0]}.csv`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
             window.URL.revokeObjectURL(url);
+            
+            // Show success message
+            showMessage(`Exported ${filteredProducts.length} products with supplier details`, 'success');
+            
+            // Hide dropdown
+            hideExportDropdown();
         }
+        
+        function exportProductsSimple() {
+            // Simple CSV export (original format)
+            const headers = ['Product Name', 'SKU', 'Category', 'Description', 'Total Stock', 'Lowest Price', 'Lowest Cost', 'Status'];
+            const csvContent = [
+                headers.join(','),
+                ...filteredProducts.map(p => [
+                    `"${p.name || ''}"`,
+                    `"${p.sku || ''}"`,
+                    `"${p.category || ''}"`,
+                    `"${(p.description || '').replace(/"/g, '""')}"`,
+                    getTotalStock(p),
+                    getLowestPrice(p),
+                    getLowestCost(p),
+                    p.is_active ? 'Active' : 'Inactive'
+                ].join(','))
+            ].join('\n');
+            
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `products_simple_${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+            
+            // Show success message
+            showMessage(`Exported ${filteredProducts.length} products (simple format)`, 'success');
+            
+            // Hide dropdown
+            hideExportDropdown();
+        }
+        
+        function exportProductsExcel() {
+            // Create a new workbook
+            const wb = XLSX.utils.book_new();
+            
+            // Sheet 1: Product Summary
+            const productSummaryData = [
+                ['Product Name', 'SKU', 'Category', 'Description', 'Location', 'Status', 'Total Stock', 'Suppliers Count', 'Lowest Price', 'Lowest Cost']
+            ];
+            
+            filteredProducts.forEach(product => {
+                productSummaryData.push([
+                    product.name || '',
+                    product.sku || '',
+                    product.category || '',
+                    product.description || '',
+                    product.location || '',
+                    product.is_active ? 'Active' : 'Inactive',
+                    getTotalStock(product),
+                    (product.suppliers && product.suppliers.length) || 0,
+                    getLowestPrice(product),
+                    getLowestCost(product)
+                ]);
+            });
+            
+            const ws1 = XLSX.utils.aoa_to_sheet(productSummaryData);
+            
+            // Auto-width columns
+            const ws1_cols = [
+                { width: 25 }, { width: 15 }, { width: 15 }, { width: 30 }, 
+                { width: 15 }, { width: 10 }, { width: 12 }, { width: 12 }, 
+                { width: 12 }, { width: 12 }
+            ];
+            ws1['!cols'] = ws1_cols;
+            
+            // Add the sheet to workbook
+            XLSX.utils.book_append_sheet(wb, ws1, 'Product Summary');
+            
+            // Sheet 2: Detailed Supplier Information
+            const supplierDetailData = [
+                ['Product Name', 'Product SKU', 'Category', 'Supplier Name', 'Supplier Email', 'Supplier Phone', 
+                 'Supplier Stock', 'Min Stock', 'Supplier Price', 'Supplier Cost', 'Supplier Status', 'Last Updated']
+            ];
+            
+            filteredProducts.forEach(product => {
+                if (product.suppliers && product.suppliers.length > 0) {
+                    product.suppliers.forEach(supplierData => {
+                        const supplier = supplierData.supplier || {};
+                        supplierDetailData.push([
+                            product.name || '',
+                            product.sku || '',
+                            product.category || '',
+                            supplier.name || 'Unknown Supplier',
+                            supplier.email || '',
+                            supplier.phone || '',
+                            supplierData.stock || 0,
+                            supplierData.min_stock || 0,
+                            supplierData.price || 0,
+                            supplierData.cost || 0,
+                            supplierData.is_active ? 'Active' : 'Inactive',
+                            supplierData.updated_at ? new Date(supplierData.updated_at).toLocaleDateString() : ''
+                        ]);
+                    });
+                } else {
+                    // Product without suppliers
+                    supplierDetailData.push([
+                        product.name || '', product.sku || '', product.category || '',
+                        'No Supplier', '', '', 0, 0, 0, 0, 'N/A', ''
+                    ]);
+                }
+            });
+            
+            const ws2 = XLSX.utils.aoa_to_sheet(supplierDetailData);
+            
+            // Auto-width columns for supplier sheet
+            const ws2_cols = [
+                { width: 25 }, { width: 15 }, { width: 15 }, { width: 20 }, 
+                { width: 25 }, { width: 15 }, { width: 12 }, { width: 12 }, 
+                { width: 12 }, { width: 12 }, { width: 10 }, { width: 12 }
+            ];
+            ws2['!cols'] = ws2_cols;
+            
+            XLSX.utils.book_append_sheet(wb, ws2, 'Supplier Details');
+            
+            // Sheet 3: Low Stock Alert
+            const lowStockProducts = filteredProducts.filter(product => isLowStock(product));
+            const lowStockData = [
+                ['Product Name', 'SKU', 'Category', 'Supplier', 'Current Stock', 'Min Stock', 'Stock Needed', 'Supplier Contact']
+            ];
+            
+            lowStockProducts.forEach(product => {
+                if (product.suppliers && product.suppliers.length > 0) {
+                    product.suppliers.forEach(supplierData => {
+                        if (supplierData.stock <= supplierData.min_stock) {
+                            const supplier = supplierData.supplier || {};
+                            lowStockData.push([
+                                product.name || '',
+                                product.sku || '',
+                                product.category || '',
+                                supplier.name || 'Unknown',
+                                supplierData.stock || 0,
+                                supplierData.min_stock || 0,
+                                Math.max(0, (supplierData.min_stock || 0) - (supplierData.stock || 0)),
+                                `${supplier.email || ''} | ${supplier.phone || ''}`
+                            ]);
+                        }
+                    });
+                }
+            });
+            
+            const ws3 = XLSX.utils.aoa_to_sheet(lowStockData);
+            const ws3_cols = [
+                { width: 25 }, { width: 15 }, { width: 15 }, { width: 20 }, 
+                { width: 12 }, { width: 12 }, { width: 12 }, { width: 30 }
+            ];
+            ws3['!cols'] = ws3_cols;
+            
+            XLSX.utils.book_append_sheet(wb, ws3, 'Low Stock Alert');
+            
+            // Sheet 4: Statistics
+            const totalProducts = filteredProducts.length;
+            const activeProducts = filteredProducts.filter(p => p.is_active).length;
+            const totalValue = filteredProducts.reduce((sum, p) => sum + (getTotalStock(p) * getLowestPrice(p)), 0);
+            const categories = [...new Set(filteredProducts.map(p => p.category).filter(Boolean))];
+            const uniqueSuppliers = new Set();
+            
+            filteredProducts.forEach(product => {
+                if (product.suppliers && product.suppliers.length > 0) {
+                    product.suppliers.forEach(supplier => {
+                        if (supplier.is_active && supplier.supplier && supplier.supplier.name) {
+                            uniqueSuppliers.add(supplier.supplier.name);
+                        }
+                    });
+                }
+            });
+            
+            const statsData = [
+                ['Inventory Statistics', ''],
+                ['Export Date', new Date().toLocaleDateString()],
+                ['Export Time', new Date().toLocaleTimeString()],
+                [''],
+                ['Total Products', totalProducts],
+                ['Active Products', activeProducts],
+                ['Inactive Products', totalProducts - activeProducts],
+                ['Total Categories', categories.length],
+                ['Total Suppliers', uniqueSuppliers.size],
+                ['Low Stock Items', lowStockProducts.length],
+                ['Total Inventory Value', `Rp ${totalValue.toLocaleString()}`],
+                [''],
+                ['Categories:', ''],
+                ...categories.map(cat => ['', cat])
+            ];
+            
+            const ws4 = XLSX.utils.aoa_to_sheet(statsData);
+            const ws4_cols = [{ width: 25 }, { width: 30 }];
+            ws4['!cols'] = ws4_cols;
+            
+            XLSX.utils.book_append_sheet(wb, ws4, 'Statistics');
+            
+            // Generate filename and save
+            const filename = `inventory_report_${new Date().toISOString().split('T')[0]}.xlsx`;
+            XLSX.writeFile(wb, filename);
+            
+            // Show success message
+            showMessage(`Excel report exported with ${totalProducts} products across ${uniqueSuppliers.size} suppliers`, 'success');
+            
+            // Hide dropdown
+            hideExportDropdown();
+        }
+        
+        function toggleExportDropdown() {
+            const dropdown = document.getElementById('export-dropdown');
+            dropdown.classList.toggle('hidden');
+        }
+        
+        function hideExportDropdown() {
+            const dropdown = document.getElementById('export-dropdown');
+            dropdown.classList.add('hidden');
+        }
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('export-dropdown');
+            const button = document.getElementById('export-dropdown-btn');
+            if (!dropdown?.contains(event.target) && !button?.contains(event.target)) {
+                hideExportDropdown();
+            }
+        });
         
         function setView(view) {
             currentView = view;

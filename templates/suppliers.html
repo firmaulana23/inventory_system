@@ -6,6 +6,7 @@
     <title>Supplier Contacts - Inventory System</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         /* Enhanced mobile responsiveness */
         @media (max-width: 768px) {
@@ -116,7 +117,7 @@
     </style>
 </head>
 <body class="bg-gray-100">
-    <nav class="bg-purple-800 text-white p-4">
+    <nav class="bg-blue-800 text-white p-4">
         <div class="container mx-auto flex justify-between items-center">
             <h1 class="text-xl font-bold">
                 <i class="fas fa-address-book mr-2"></i>Supplier Contacts
@@ -178,9 +179,30 @@
                 <p class="text-gray-600 text-sm mt-1">Manage and communicate with your suppliers</p>
             </div>
             <div class="flex items-center space-x-3">
-                <button onclick="exportSuppliers()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg transition-colors duration-200">
-                    <i class="fas fa-download mr-2"></i>Export
-                </button>
+                <div class="relative">
+                    <button id="export-dropdown-btn" onclick="toggleExportDropdown()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg transition-colors duration-200 flex items-center">
+                        <i class="fas fa-download mr-2"></i>Export
+                        <i class="fas fa-chevron-down ml-2 text-sm"></i>
+                    </button>
+                    <div id="export-dropdown" class="hidden absolute right-0 mt-2 w-64 bg-white rounded-md shadow-lg z-50 border border-gray-200">
+                        <div class="py-2">
+                            <button onclick="exportSuppliers()" class="w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-100 flex items-center">
+                                <i class="fas fa-file-csv mr-3 text-green-500"></i>
+                                <div>
+                                    <div class="font-medium">CSV Export</div>
+                                    <div class="text-xs text-gray-500">Basic supplier information</div>
+                                </div>
+                            </button>
+                            <button onclick="exportSuppliersExcel()" class="w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-100 flex items-center">
+                                <i class="fas fa-file-excel mr-3 text-green-600"></i>
+                                <div>
+                                    <div class="font-medium">Excel Export</div>
+                                    <div class="text-xs text-gray-500">Detailed multi-sheet report</div>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
                 <button onclick="refreshSuppliers()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg transition-colors duration-200">
                     <i class="fas fa-sync-alt mr-2"></i>Refresh
                 </button>
@@ -727,7 +749,7 @@
             });
         }
         
-        // Export suppliers function
+        // Export suppliers function (CSV)
         function exportSuppliers() {
             if (suppliers.length === 0) {
                 showAlert('No suppliers to export', 'error');
@@ -735,7 +757,7 @@
             }
             
             // Create CSV content
-            const csvHeaders = ['Name', 'Category', 'Contact Person', 'Phone', 'Email', 'Address', 'Website'];
+            const csvHeaders = ['Name', 'Category', 'Contact Person', 'Phone', 'Email', 'Address', 'Website', 'Status'];
             const csvData = suppliers.map(supplier => [
                 supplier.name,
                 supplier.category || '',
@@ -743,7 +765,8 @@
                 supplier.phone,
                 supplier.email,
                 supplier.address,
-                supplier.website || ''
+                supplier.website || '',
+                supplier.is_active ? 'Active' : 'Inactive'
             ]);
             
             const csvContent = [csvHeaders, ...csvData]
@@ -751,7 +774,7 @@
                 .join('\n');
             
             // Download CSV file
-            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
@@ -761,8 +784,152 @@
             document.body.removeChild(a);
             window.URL.revokeObjectURL(url);
             
-            showAlert('Suppliers exported successfully', 'success');
+            showAlert('Suppliers exported successfully (CSV)', 'success');
+            hideExportDropdown();
         }
+        
+        // Export suppliers function (Excel)
+        function exportSuppliersExcel() {
+            if (suppliers.length === 0) {
+                showAlert('No suppliers to export', 'error');
+                return;
+            }
+            
+            // Create a new workbook
+            const wb = XLSX.utils.book_new();
+            
+            // Sheet 1: Supplier Directory
+            const supplierData = [
+                ['Name', 'Category', 'Contact Person', 'Phone', 'Email', 'Address', 'Website', 'Status', 'Created Date']
+            ];
+            
+            suppliers.forEach(supplier => {
+                supplierData.push([
+                    supplier.name || '',
+                    supplier.category || '',
+                    supplier.contact_person || '',
+                    supplier.phone || '',
+                    supplier.email || '',
+                    supplier.address || '',
+                    supplier.website || '',
+                    supplier.is_active ? 'Active' : 'Inactive',
+                    supplier.created_at ? new Date(supplier.created_at).toLocaleDateString() : ''
+                ]);
+            });
+            
+            const ws1 = XLSX.utils.aoa_to_sheet(supplierData);
+            
+            // Auto-width columns
+            const ws1_cols = [
+                { width: 25 }, { width: 15 }, { width: 20 }, { width: 15 }, 
+                { width: 30 }, { width: 40 }, { width: 25 }, { width: 10 }, { width: 12 }
+            ];
+            ws1['!cols'] = ws1_cols;
+            
+            XLSX.utils.book_append_sheet(wb, ws1, 'Supplier Directory');
+            
+            // Sheet 2: Categories Summary
+            const categories = suppliers.reduce((acc, supplier) => {
+                const category = supplier.category || 'Uncategorized';
+                acc[category] = (acc[category] || 0) + 1;
+                return acc;
+            }, {});
+            
+            const categoryData = [
+                ['Category', 'Supplier Count', 'Percentage']
+            ];
+            
+            const totalSuppliers = suppliers.length;
+            Object.entries(categories).forEach(([category, count]) => {
+                const percentage = ((count / totalSuppliers) * 100).toFixed(1);
+                categoryData.push([category, count, `${percentage}%`]);
+            });
+            
+            const ws2 = XLSX.utils.aoa_to_sheet(categoryData);
+            const ws2_cols = [{ width: 20 }, { width: 15 }, { width: 12 }];
+            ws2['!cols'] = ws2_cols;
+            
+            XLSX.utils.book_append_sheet(wb, ws2, 'Categories Summary');
+            
+            // Sheet 3: Contact Information
+            const contactData = [
+                ['Supplier Name', 'Primary Contact', 'Phone', 'Email', 'Full Address']
+            ];
+            
+            suppliers.forEach(supplier => {
+                contactData.push([
+                    supplier.name || '',
+                    supplier.contact_person || 'Not specified',
+                    supplier.phone || 'Not provided',
+                    supplier.email || 'Not provided',
+                    supplier.address || 'Address not available'
+                ]);
+            });
+            
+            const ws3 = XLSX.utils.aoa_to_sheet(contactData);
+            const ws3_cols = [
+                { width: 25 }, { width: 20 }, { width: 15 }, { width: 30 }, { width: 50 }
+            ];
+            ws3['!cols'] = ws3_cols;
+            
+            XLSX.utils.book_append_sheet(wb, ws3, 'Contact Information');
+            
+            // Sheet 4: Statistics
+            const activeSuppliers = suppliers.filter(s => s.is_active).length;
+            const inactiveSuppliers = suppliers.filter(s => !s.is_active).length;
+            const suppliersWithWebsite = suppliers.filter(s => s.website && s.website.trim()).length;
+            const suppliersWithEmail = suppliers.filter(s => s.email && s.email.trim()).length;
+            
+            const statsData = [
+                ['Supplier Statistics', ''],
+                ['Export Date', new Date().toLocaleDateString()],
+                ['Export Time', new Date().toLocaleTimeString()],
+                [''],
+                ['Total Suppliers', totalSuppliers],
+                ['Active Suppliers', activeSuppliers],
+                ['Inactive Suppliers', inactiveSuppliers],
+                ['Suppliers with Website', suppliersWithWebsite],
+                ['Suppliers with Email', suppliersWithEmail],
+                ['Total Categories', Object.keys(categories).length],
+                [''],
+                ['Category Breakdown:', ''],
+                ...Object.entries(categories).map(([cat, count]) => [cat, count])
+            ];
+            
+            const ws4 = XLSX.utils.aoa_to_sheet(statsData);
+            const ws4_cols = [{ width: 25 }, { width: 20 }];
+            ws4['!cols'] = ws4_cols;
+            
+            XLSX.utils.book_append_sheet(wb, ws4, 'Statistics');
+            
+            // Generate filename and save
+            const filename = `suppliers_report_${new Date().toISOString().split('T')[0]}.xlsx`;
+            XLSX.writeFile(wb, filename);
+            
+            // Show success message
+            showAlert(`Excel report exported with ${totalSuppliers} suppliers across ${Object.keys(categories).length} categories`, 'success');
+            hideExportDropdown();
+        }
+        
+        // Dropdown functions
+        function toggleExportDropdown() {
+            const dropdown = document.getElementById('export-dropdown');
+            dropdown.classList.toggle('hidden');
+        }
+        
+        function hideExportDropdown() {
+            const dropdown = document.getElementById('export-dropdown');
+            dropdown.classList.add('hidden');
+        }
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('export-dropdown');
+            const button = document.getElementById('export-dropdown-btn');
+            if (!dropdown?.contains(event.target) && !button?.contains(event.target)) {
+                hideExportDropdown();
+            }
+        });
         
         // Search suppliers
         async function searchSuppliers() {

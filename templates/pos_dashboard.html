@@ -1424,19 +1424,65 @@
                     companyProfile = await response.json();
                 }
             } catch (error) {
-                console.error('Error loading company profile:', error);
-                // Keep default values if API fails
+                // Silently handle error, use default profile
             }
+        }
+
+        // Calculate content height for dynamic PDF sizing
+        function calculateContentHeight(doc, saleResult, saleData) {
+            let height = 0;
+            
+            // Header area (company info, title, invoice details)
+            height += 70; // Company header, title, invoice details
+            
+            // Items table header
+            height += 15;
+            
+            // Items (5mm per item for better spacing)
+            const itemCount = saleData.items ? saleData.items.length : 1;
+            height += itemCount * 5;
+            
+            // Space after items
+            height += 10;
+            
+            // Subtotal, tax, total section
+            height += 25;
+            
+            // Additional lines for discount and down payment
+            if (saleData.discount > 0) height += 5;
+            if (saleData.down_payment > 0) height += 5;
+            if (saleData.tax > 0) height += 5;
+            
+            // Payment info section
+            if (saleData.payment_method === 'credit') {
+                height += 10; // Credit terms
+            }
+            height += 5; // Payment method
+            
+            // Footer
+            height += 20;
+            
+            return height;
         }
 
         // Generate invoice PDF
         async function generateInvoicePDF(saleResult, saleData) {
-            console.log(saleData)
             // Load latest company profile from database
             await loadCompanyProfileForInvoice();
             
             const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
+            
+            // Calculate dynamic height based on content
+            const contentHeight = calculateContentHeight(null, saleResult, saleData);
+
+            const dynamicHeight = Math.max(contentHeight + 40, 210); // Add margin, min A5 height
+            const pageWidth = 210; // Increased width to fit all content including totals
+            
+            // Create PDF with dynamic dimensions
+            const doc = new jsPDF({
+                unit: 'mm',
+                format: [pageWidth, dynamicHeight]
+            });
             
             // Add logo as background watermark first (so it appears behind all content)
             if (companyProfile.logo_base64) {
@@ -1444,25 +1490,43 @@
                     const pageWidth = doc.internal.pageSize.getWidth();
                     const pageHeight = doc.internal.pageSize.getHeight();
                     
-                    // Set background logo size (larger watermark)
-                    const logoWidth = 120;
-                    const logoHeight = 120;
-                    const logoX = (pageWidth - logoWidth) / 2;
-                    const logoY = (pageHeight - logoHeight) / 2;
+                    // Force JPEG format for better jsPDF compatibility
+                    let imageFormat = 'JPEG';
+                    let processedLogoData = companyProfile.logo_base64;
                     
-                    // Save current graphics state
-                    doc.saveGraphicsState();
+                    // If it's PNG, use JPEG format for better rendering
+                    if (companyProfile.logo_base64.includes('data:image/png')) {
+                        processedLogoData = companyProfile.logo_base64;
+                    }
                     
-                    // Set opacity to 15% for subtle watermark effect
-                    doc.setGState(doc.GState({opacity: 0.15}));
+                    // Validate base64 format
+                    if (!processedLogoData.startsWith('data:image/')) {
+                        throw new Error('Invalid image data format');
+                    }
                     
-                    // Add logo as background watermark centered on page
-                    doc.addImage(companyProfile.logo_base64, 'JPEG', logoX, logoY, logoWidth, logoHeight);
+                    // Additional validation - check if base64 data seems valid
+                    const base64Data = processedLogoData.split(',')[1];
+                    if (!base64Data || base64Data.length < 100) {
+                        throw new Error('Logo data too small or corrupted');
+                    }
                     
-                    // Restore graphics state
-                    doc.restoreGraphicsState();
+                    // Add small logo in header (top-right corner)
+                    const headerLogoSize = 20;
+                    const headerLogoX = pageWidth - headerLogoSize - 10;
+                    const headerLogoY = 10;
+                    
+                    // Add header logo (top-right corner)
+                    doc.addImage(processedLogoData, imageFormat, headerLogoX, headerLogoY, headerLogoSize, headerLogoSize);
                 } catch (error) {
-                    console.error('Error adding background logo watermark to PDF:', error);
+                    // Try alternative approach - use simplified format
+                    try {
+                        doc.addImage(companyProfile.logo_base64, 'PNG', pageWidth - 30, 10, 20, 20);
+                    } catch (fallbackError) {
+                        // Add text instead of logo if all image attempts fail
+                        doc.setFontSize(8);
+                        doc.setTextColor(100, 100, 100);
+                        doc.text(companyProfile.company_name, pageWidth - 10, 15, { align: 'right' });
+                    }
                 }
             }
             
@@ -1544,7 +1608,7 @@
                 doc.text(item.quantity.toString(), 120, y);
                 doc.text(`Rp ${formatNumber(item.price)}`, 140, y);
                 doc.text(`Rp ${formatNumber(itemTotal)}`, 170, y);
-                y += 3;
+                y += 5;
             });
             
             y += 7; // Add some space after the last item
@@ -1583,7 +1647,50 @@
             doc.setFont(undefined, 'normal');
             doc.setFontSize(8);
             doc.text(companyProfile.invoice_footer || 'Thank you for your business!', 105, y, { align: 'center' });
-            doc.text('This is a computer-generated invoice.', 105, y + 5, { align: 'center' });
+            doc.text('Inventory System By Zona System', 105, y + 5, { align: 'center' });
+            
+            // Add watermark logo after content is complete
+            if (companyProfile.logo_base64 && companyProfile.logo_base64.trim() !== '') {
+                try {
+                    // Force JPEG format for better compatibility
+                    let imageFormat = 'JPEG';
+                    let processedLogoData = companyProfile.logo_base64;
+                    
+                    if (companyProfile.logo_base64.includes('data:image/png')) {
+                        processedLogoData = companyProfile.logo_base64;
+                    }
+                    
+                    // Calculate content area based on actual content
+                    const pageWidth = doc.internal.pageSize.getWidth();
+                    const contentStartY = 45; // After header
+                    const contentEndY = footerStartY - 10; // Before footer
+                    const contentHeight = contentEndY - contentStartY;
+                    const contentWidth = pageWidth - 40; // Leave margins
+                    
+                    // Size logo to be 30% of content area, but max 80px
+                    const logoSize = Math.min(160, Math.min(contentWidth, contentHeight) * 0.8);
+                    const logoWidth = logoSize;
+                    const logoHeight = logoSize;
+                    
+                    // Center in actual content area
+                    const logoX = (pageWidth - logoWidth) / 2;
+                    const logoY = contentStartY + (contentHeight - logoHeight) / 2;
+                    
+                    // Save current graphics state
+                    doc.saveGraphicsState();
+                    
+                    // Set opacity to 10% for very subtle watermark effect
+                    doc.setGState(doc.GState({opacity: 0.10}));
+                    
+                    // Add logo as background watermark
+                    doc.addImage(processedLogoData, imageFormat, logoX, logoY, logoWidth, logoHeight);
+                    
+                    // Restore graphics state
+                    doc.restoreGraphicsState();
+                } catch (error) {
+                    // Silently handle watermark error
+                }
+            }
             
             // Auto download
             const fileName = `Invoice_${saleResult.sale_number}_${new Date().toISOString().split('T')[0]}.pdf`;
@@ -1786,6 +1893,11 @@
             setInterval(loadDashboard, 2 * 60 * 1000);
         });
 
+        // ========================
+        // DEBUG FUNCTIONS
+        // ========================
+        
+        
         // ========================
         // RETURN FUNCTIONS
         // ========================
