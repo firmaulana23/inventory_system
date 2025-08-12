@@ -83,6 +83,35 @@ func GetProducts(c *gin.Context) {
 		query = query.Where("is_active = ?", isActive)
 	}
 
+	// Add sorting
+	if sortBy := c.Query("sort_by"); sortBy != "" {
+		sortOrder := c.DefaultQuery("sort_order", "asc")
+		if sortOrder != "asc" && sortOrder != "desc" {
+			sortOrder = "asc"
+		}
+		
+		// Map frontend field names to database columns
+		switch sortBy {
+		case "name":
+			query = query.Order("name " + strings.ToUpper(sortOrder))
+		case "stock":
+			// Sort by total stock (sum of all supplier stocks)
+			query = query.Joins("LEFT JOIN product_suppliers ON products.id = product_suppliers.product_id").
+				Group("products.id").
+				Order("COALESCE(SUM(product_suppliers.stock), 0) " + strings.ToUpper(sortOrder))
+		case "price":
+			// Sort by minimum price across all suppliers
+			query = query.Joins("LEFT JOIN product_suppliers ON products.id = product_suppliers.product_id").
+				Group("products.id").
+				Order("COALESCE(MIN(product_suppliers.price), 0) " + strings.ToUpper(sortOrder))
+		default:
+			query = query.Order("name ASC")
+		}
+	} else {
+		// Default sorting
+		query = query.Order("name ASC")
+	}
+
 	// Pagination
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "50"))

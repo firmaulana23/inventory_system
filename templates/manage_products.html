@@ -7,7 +7,7 @@
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        /* Enhanced mobile responsiveness */
+        /* mobile responsiveness */
         @media (max-width: 768px) {
             .container {
                 padding-left: 1rem;
@@ -120,6 +120,91 @@
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
             background: #94a3b8;
         }
+
+        /* Product Modal Animations */
+        .modal-enter {
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* Input Focus States */
+        .form-input {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .form-input:focus {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+        }
+
+        /* Progress Step Animation */
+        .progress-step {
+            transition: all 0.3s ease-in-out;
+        }
+
+        .progress-step.active {
+            transform: scale(1.1);
+        }
+
+        /* Card Hover Effects */
+        .info-card {
+            transition: all 0.2s ease-in-out;
+        }
+
+        .info-card:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Custom Scrollbar for Modal */
+        .modal-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .modal-scroll::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 10px;
+        }
+
+        .modal-scroll::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        .modal-scroll::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Image Upload Hover Effect */
+        .upload-area {
+            transition: all 0.3s ease-in-out;
+        }
+
+        .upload-area:hover {
+            background-color: #f8fafc;
+            border-color: #3b82f6;
+            transform: scale(1.02);
+        }
+
+        /* Button Press Animation */
+        .btn-press:active {
+            transform: scale(0.98);
+        }
+
+        /* Smooth backdrop blur animation */
+        .backdrop-blur-sm {
+            backdrop-filter: blur(4px);
+            transition: backdrop-filter 0.3s ease-in-out;
+        }
     </style>
 </head>
 <body class="bg-gray-100">
@@ -156,6 +241,10 @@
                                 <i class="fas fa-address-book mr-3 text-orange-500"></i>
                                 Supplier Contacts
                             </a>
+                            <a href="/returns_exchanges" class="flex items-center px-4 py-2 text-gray-800 hover:bg-gray-100">
+                                <i class="fas fa-sync-alt mr-3 text-indigo-500"></i>
+                                Returns & Exchanges
+                            </a>
                             <a href="/users" class="flex items-center px-4 py-2 text-gray-800 hover:bg-gray-100">
                                 <i class="fas fa-users mr-3 text-blue-500"></i>
                                 Manage Users
@@ -163,7 +252,7 @@
                             <a href="/settings" class="flex items-center px-4 py-2 text-gray-800 hover:bg-gray-100">
                                 <i class="fas fa-cog mr-3 text-gray-500"></i>
                                 System Settings
-                            </a>
+                            </a>    
                             <button onclick="logout()" class="flex items-center w-full px-4 py-2 text-gray-800 hover:bg-gray-100 text-left">
                                 <i class="fas fa-sign-out-alt mr-3"></i>Logout
                             </button>
@@ -243,7 +332,7 @@
             </div>
         </div>
         
-        <!-- Enhanced Search and Filters -->
+        <!-- Search and Filters -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
             <div class="p-4 border-b border-gray-200">
                 <h3 class="text-lg font-medium text-gray-900">
@@ -251,14 +340,14 @@
                 </h3>
             </div>
             <div class="p-4">
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
                     <div class="relative">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <i class="fas fa-search text-gray-400"></i>
                         </div>
                         <input type="text" id="product-search" 
                                placeholder="Search by name, SKU, or barcode..." 
-                               onkeyup="performSearch()" 
+                               oninput="performSearchEnhanced()" 
                                class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
                         <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
                             <button onclick="clearSearch()" id="clear-search" class="text-gray-400 hover:text-gray-600 hidden">
@@ -268,27 +357,21 @@
                     </div>
                     
                     <div>
-                        <select id="category-filter" onchange="filterProducts()" 
+                        <select id="category-filter" onchange="filterProductsEnhanced()" 
                                 class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
                             <option value="">All Categories</option>
                         </select>
                     </div>
                     
-                    <div>
-                        <select id="stock-filter" onchange="filterProducts()" 
-                                class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
-                            <option value="">All Stock Levels</option>
-                            <option value="critical">🔴 Critical (≤5)</option>
-                            <option value="low">🟡 Low (6-20)</option>
-                            <option value="good">🟢 Good (>20)</option>
-                            <option value="out">❌ Out of Stock</option>
-                        </select>
-                    </div>
                     
                     <div class="flex space-x-2">
-                        <button onclick="filterProducts()" 
+                        <button onclick="filterProductsEnhanced()" 
                                 class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200">
                             <i class="fas fa-filter mr-2"></i>Filter
+                        </button>
+                        <button onclick="showLowStockProducts()" id="low-stock-btn"
+                                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200">
+                            <i class="fas fa-exclamation-triangle mr-2"></i>Low Stock
                         </button>
                         <button onclick="clearFilters()" 
                                 class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors duration-200">
@@ -320,7 +403,7 @@
             </div>
         </div>
         
-        <!-- Enhanced Product Table -->
+        <!-- Product Table -->
         <div id="table-view-container" class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
             <!-- Table Header -->
             <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
@@ -342,7 +425,7 @@
                         <tr>
                             <th class="px-6 py-3 text-left text-xs text-gray-500 uppercase tracking-wider">
                                 <div class="flex items-center">
-                                    <i class="fas fa-hashtag mr-2"></i>#
+                                    <i class="fas fa-hashtag mr-2"></i>
                                 </div>
                             </th>
                             <th class="px-6 py-3 text-left text-xs text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-150" onclick="sortBy('name')">
@@ -396,7 +479,7 @@
                 </div>
                 <h3 class="text-lg font-medium text-gray-900 mb-2">No products found</h3>
                 <p class="text-gray-600 mb-6">Try adjusting your search criteria or add a new product.</p>
-                <button onclick="showAddProductModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors duration-200">
+                <button class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors duration-200">
                     <i class="fas fa-plus mr-2"></i>Add First Product
                 </button>
             </div>
@@ -413,7 +496,7 @@
                             <option value="100">100</option>
                         </select>
                         <span>items per page</span>
-                        <span class="ml-4">
+                        <span class="ml-4" id="pagination-info">
                             Showing <span id="items-start">0</span> to <span id="items-end">0</span> of <span id="items-total">0</span> results
                         </span>
                     </div>
@@ -437,180 +520,324 @@
             <!-- Grid items will be populated by JavaScript -->
         </div>
     </div>
-    <!-- Enhanced Add/Edit Product Modal -->
-    <div id="product-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 hidden">
-        <div class="relative top-10 mx-auto p-6 border w-full max-w-4xl shadow-lg rounded-lg bg-white modal-enter">
-            <div class="flex justify-between items-center mb-6">
-                <div>
-                    <h3 id="modal-title" class="text-xl font-bold text-gray-800">Add Product</h3>
-                    <p class="text-sm text-gray-600 mt-1">Create a new product in your inventory</p>
+    <!-- Add/Edit Product Modal -->
+    <div id="product-modal" class="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto h-full w-full z-50 hidden backdrop-blur-sm">
+        <div class="relative top-4 mx-auto p-0 border-0 w-full max-w-5xl shadow-2xl rounded-xl bg-white modal-enter min-h-[90vh] md:min-h-0">
+            <!-- Header with Gradient -->
+            <div class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white px-6 py-4 rounded-t-xl">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h3 id="modal-title" class="text-2xl font-bold">Add Product</h3>
+                        <p class="text-blue-100 mt-1 text-sm">Create a new product in your inventory</p>
+                    </div>
+                    <button onclick="hideProductModal()" class="text-white hover:text-blue-200 p-2 hover:bg-white hover:bg-opacity-20 rounded-lg transition-all duration-200">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
                 </div>
-                <button onclick="hideProductModal()" class="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded">
-                    <i class="fas fa-times text-xl"></i>
-                </button>
-            </div>
-            
-            <!-- Success/Error Messages -->
-            <div id="modal-message" class="hidden mb-4 p-4 rounded-lg">
-                <div class="flex items-center">
-                    <i id="modal-message-icon" class="mr-2"></i>
-                    <span id="modal-message-text"></span>
-                </div>
-            </div>
-            
-            <form id="product-form" class="space-y-6">
-                <input type="hidden" id="product-id">
                 
-                <!-- Basic Information Section -->
-                <div class="bg-gray-50 p-4 rounded-lg">
-                    <h4 class="text-md font-medium text-gray-800 mb-3">
-                        <i class="fas fa-info-circle mr-2"></i>Basic Information
-                    </h4>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label for="product-name" class="block text-sm font-medium text-gray-700 mb-2">
-                                <i class="fas fa-tag mr-1"></i>Product Name <span class="text-red-500">*</span>
-                            </label>
-                            <input id="product-name" name="name" type="text" required 
-                                   placeholder="Enter product name..."
-                                   class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
-                            <p class="text-xs text-gray-500 mt-1">Enter a descriptive product name</p>
+                <!-- Progress Steps (for better UX) -->
+                <div class="flex items-center space-x-4 mt-4">
+                    <div class="flex items-center text-blue-100">
+                        <div class="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center mr-2">
+                            <i class="fas fa-info-circle text-sm"></i>
                         </div>
-                        
-                        <div>
-                            <label for="product-sku" class="block text-sm font-medium text-gray-700 mb-2">
-                                <i class="fas fa-barcode mr-1"></i>SKU <span class="text-red-500">*</span>
-                            </label>
-                            <div class="relative">
-                                <input id="product-sku" name="sku" type="text" required 
-                                       placeholder="e.g., PROD-001"
-                                       class="w-full p-3 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
-                                <button type="button" onclick="generateSKU()" 
-                                        class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
-                                        title="Generate SKU">
-                                    <i class="fas fa-magic"></i>
+                        <span class="text-sm font-medium">Basic Info</span>
+                    </div>
+                    <div class="w-8 h-px bg-white bg-opacity-30"></div>
+                    <div class="flex items-center text-blue-200">
+                        <div class="w-8 h-8 bg-white bg-opacity-10 rounded-full flex items-center justify-center mr-2">
+                            <i class="fas fa-image text-sm"></i>
+                        </div>
+                        <span class="text-sm font-medium">Media</span>
+                    </div>
+                    <div class="w-8 h-px bg-white bg-opacity-30"></div>
+                    <div class="flex items-center text-blue-200">
+                        <div class="w-8 h-8 bg-white bg-opacity-10 rounded-full flex items-center justify-center mr-2">
+                            <i class="fas fa-cog text-sm"></i>
+                        </div>
+                        <span class="text-sm font-medium">Settings</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Scrollable Content -->
+            <div class="max-h-[calc(90vh-120px)] md:max-h-[600px] overflow-y-auto px-6 py-6 modal-scroll">
+                
+                <!-- Success/Error Messages -->
+                <div id="modal-message" class="hidden mb-6 p-4 rounded-lg border-l-4">
+                    <div class="flex items-center">
+                        <i id="modal-message-icon" class="mr-3 text-lg"></i>
+                        <span id="modal-message-text" class="font-medium"></span>
+                    </div>
+                </div>
+                
+                <form id="product-form" class="space-y-8">
+                    <input type="hidden" id="product-id">
+                    
+                    <!-- Basic Information Card -->
+                    <div class="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 info-card">
+                        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b border-gray-200 rounded-t-xl">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center mr-3">
+                                    <i class="fas fa-info-circle text-white"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-lg font-semibold text-gray-800">Basic Information</h4>
+                                    <p class="text-sm text-gray-600">Enter the fundamental product details</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-6">
+                    
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div class="space-y-2">
+                                    <label for="product-name" class="block text-sm font-semibold text-gray-700">
+                                        <i class="fas fa-tag mr-2 text-blue-500"></i>Product Name <span class="text-red-500">*</span>
+                                    </label>
+                                    <div class="relative">
+                                        <input id="product-name" name="name" type="text" required 
+                                               placeholder="Enter a descriptive product name..."
+                                               class="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-gray-900 placeholder-gray-400 form-input">
+                                        <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                                            <i class="fas fa-edit text-gray-300"></i>
+                                        </div>
+                                    </div>
+                                    <p class="text-xs text-gray-500 flex items-center">
+                                        <i class="fas fa-lightbulb mr-1 text-yellow-500"></i>
+                                        Use a clear, searchable name
+                                    </p>
+                                </div>
+                                
+                                <div class="space-y-2">
+                                    <label for="product-sku" class="block text-sm font-semibold text-gray-700">
+                                        <i class="fas fa-barcode mr-2 text-green-500"></i>SKU <span class="text-red-500">*</span>
+                                    </label>
+                                    <div class="relative">
+                                        <input id="product-sku" name="sku" type="text" required 
+                                               placeholder="e.g., PROD-2024-001"
+                                               class="w-full p-4 pr-12 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-gray-900 placeholder-gray-400">
+                                        <button type="button" onclick="generateSKU()" 
+                                                class="absolute inset-y-0 right-0 pr-4 flex items-center text-blue-500 hover:text-blue-700 transition-colors duration-200"
+                                                title="Generate SKU">
+                                            <i class="fas fa-magic"></i>
+                                        </button>
+                                    </div>
+                                    <p class="text-xs text-gray-500 flex items-center">
+                                        <i class="fas fa-shield-alt mr-1 text-green-500"></i>
+                                        Must be unique across all products
+                                    </p>
+                                </div>
+                            </div>
+                    
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                                <div class="space-y-2">
+                                    <label for="product-category" class="block text-sm font-semibold text-gray-700">
+                                        <i class="fas fa-folder-open mr-2 text-purple-500"></i>Category <span class="text-red-500">*</span>
+                                    </label>
+                                    <div class="relative">
+                                        <select id="product-category" name="category" required 
+                                                class="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-gray-900 appearance-none">
+                                            <option value="">Choose a category...</option>
+                                            <option value="electronics">📱 Electronics</option>
+                                            <option value="clothing">👕 Clothing & Fashion</option>
+                                            <option value="food">🍕 Food & Beverages</option>
+                                            <option value="books">📚 Books & Media</option>
+                                            <option value="home">🏠 Home & Garden</option>
+                                            <option value="sports">⚽ Sports & Outdoors</option>
+                                            <option value="toys">🧸 Toys & Games</option>
+                                            <option value="health">🏥 Health & Beauty</option>
+                                            <option value="automotive">🚗 Automotive</option>
+                                            <option value="other">📦 Other</option>
+                                        </select>
+                                        <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                                            <i class="fas fa-chevron-down text-gray-400"></i>
+                                        </div>
+                                        <input id="product-category-custom" name="category_custom" type="text" 
+                                               placeholder="Enter custom category..." 
+                                               class="hidden w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 mt-2">
+                                    </div>
+                                    <p class="text-xs text-gray-500 flex items-center">
+                                        <i class="fas fa-tags mr-1 text-purple-500"></i>
+                                        Helps organize your inventory
+                                    </p>
+                                </div>
+                                
+                                <div class="space-y-2">
+                                    <label for="product-description" class="block text-sm font-semibold text-gray-700">
+                                        <i class="fas fa-align-left mr-2 text-indigo-500"></i>Description
+                                    </label>
+                                    <textarea id="product-description" name="description" rows="4"
+                                              placeholder="Describe your product in detail..."
+                                              class="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-gray-900 placeholder-gray-400 resize-none"></textarea>
+                                    <p class="text-xs text-gray-500 flex items-center">
+                                        <i class="fas fa-info-circle mr-1 text-indigo-500"></i>
+                                        Optional but helps with search and sales
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Product Image Upload Card -->
+                    <div class="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 info-card">
+                        <div class="bg-gradient-to-r from-green-50 to-emerald-50 px-6 py-4 border-b border-gray-200 rounded-t-xl">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center mr-3">
+                                    <i class="fas fa-image text-white"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-lg font-semibold text-gray-800">Product Images</h4>
+                                    <p class="text-sm text-gray-600">Upload photos to showcase your product</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-6">
+                            <!-- Image Upload Area -->
+                            <div class="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-blue-400 transition-colors duration-200 bg-gray-50 upload-area">
+                                <div class="space-y-4">
+                                    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto">
+                                        <i class="fas fa-cloud-upload-alt text-2xl text-blue-500"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="text-lg font-medium text-gray-700 mb-2">Upload Product Images</h5>
+                                        <p class="text-sm text-gray-500 mb-4">Drag and drop images here, or click to browse</p>
+                                        <div class="flex items-center justify-center space-x-4">
+                                            <button type="button" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200">
+                                                <i class="fas fa-plus mr-2"></i>Choose Files
+                                            </button>
+                                            <span class="text-xs text-gray-400">PNG, JPG, GIF up to 5MB each</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Image Preview Area -->
+                            <div id="image-previews" class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4 hidden">
+                                <!-- Image previews will be added here -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Info Banner -->
+                    <div class="bg-gradient-to-r from-blue-50 to-indigo-100 border border-blue-200 rounded-xl p-6 mb-8">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0">
+                                <div class="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-info-circle text-white text-sm"></i>
+                                </div>
+                            </div>
+                            <div class="ml-4">
+                                <h4 class="text-lg font-semibold text-blue-900 mb-2">
+                                    💡 Pricing & Stock Management
+                                </h4>
+                                <p class="text-blue-800 text-sm leading-relaxed">
+                                    Stock levels, pricing, and costs are managed per supplier. After creating the product, 
+                                    you can add suppliers with their specific pricing and inventory details for better 
+                                    cost tracking and multi-supplier support.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Additional Details Card -->
+                    <div class="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 info-card">
+                        <div class="bg-gradient-to-r from-orange-50 to-amber-50 px-6 py-4 border-b border-gray-200 rounded-t-xl">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center mr-3">
+                                    <i class="fas fa-cog text-white"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-lg font-semibold text-gray-800">Additional Details</h4>
+                                    <p class="text-sm text-gray-600">Optional fields for better inventory tracking</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-6">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div class="space-y-2">
+                                    <label for="product-barcode" class="block text-sm font-semibold text-gray-700">
+                                        <i class="fas fa-qrcode mr-2 text-orange-500"></i>Barcode / QR Code
+                                    </label>
+                                    <div class="relative">
+                                        <input id="product-barcode" name="barcode" type="text" 
+                                               placeholder="Scan or enter barcode..."
+                                               class="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-gray-900 placeholder-gray-400 form-input">
+                                        <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                                            <i class="fas fa-scan text-gray-300"></i>
+                                        </div>
+                                    </div>
+                                    <p class="text-xs text-gray-500 flex items-center">
+                                        <i class="fas fa-mobile-alt mr-1 text-orange-500"></i>
+                                        For quick scanning and identification
+                                    </p>
+                                </div>
+                                
+                                <div class="space-y-2">
+                                    <label for="product-location" class="block text-sm font-semibold text-gray-700">
+                                        <i class="fas fa-map-marker-alt mr-2 text-red-500"></i>Storage Location
+                                    </label>
+                                    <div class="relative">
+                                        <input id="product-location" name="location" type="text" 
+                                               placeholder="e.g., Warehouse A, Section B, Shelf 3"
+                                               class="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-gray-900 placeholder-gray-400 form-input">
+                                        <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                                            <i class="fas fa-warehouse text-gray-300"></i>
+                                        </div>
+                                    </div>
+                                    <p class="text-xs text-gray-500 flex items-center">
+                                        <i class="fas fa-search-location mr-1 text-red-500"></i>
+                                        Helps locate items in your warehouse
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Supplier Management Card (hidden by default) -->
+                    <div class="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 hidden" id="supplier-management-section">
+                        <div class="bg-gradient-to-r from-teal-50 to-cyan-50 px-6 py-4 border-b border-gray-200 rounded-t-xl">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <div class="w-10 h-10 bg-teal-500 rounded-lg flex items-center justify-center mr-3">
+                                        <i class="fas fa-truck text-white"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-lg font-semibold text-gray-800">Supplier Management</h4>
+                                        <p class="text-sm text-gray-600">Manage suppliers and their pricing</p>
+                                    </div>
+                                </div>
+                                <button type="button" onclick="showAddSupplierModal()" 
+                                        class="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 shadow-sm">
+                                    <i class="fas fa-plus mr-2"></i>Add Supplier
                                 </button>
                             </div>
-                            <p class="text-xs text-gray-500 mt-1">Stock Keeping Unit - must be unique</p>
                         </div>
-                    </div>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                        <div>
-                            <label for="product-category" class="block text-sm font-medium text-gray-700 mb-2">
-                                <i class="fas fa-folder mr-1"></i>Category <span class="text-red-500">*</span>
-                            </label>
-                            <div class="relative">
-                                <select id="product-category" name="category" required 
-                                        class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
-                                    <option value="">Select Category...</option>
-                                    <option value="electronics">📱 Electronics</option>
-                                    <option value="clothing">👕 Clothing</option>
-                                    <option value="food">🍕 Food & Beverages</option>
-                                    <option value="books">📚 Books</option>
-                                    <option value="home">🏠 Home & Garden</option>
-                                    <option value="sports">⚽ Sports & Outdoors</option>
-                                    <option value="toys">🧸 Toys & Games</option>
-                                    <option value="other">📦 Other</option>
-                                </select>
-                                <input id="product-category-custom" name="category_custom" type="text" 
-                                       placeholder="Enter custom category..." 
-                                       class="hidden w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 mt-2">
+                        <div class="p-6">
+                            <div id="product-suppliers-list" class="space-y-4 max-h-80 overflow-y-auto">
+                                <!-- Suppliers will be loaded here -->
                             </div>
-                            <p class="text-xs text-gray-500 mt-1">Product category for organization</p>
-                        </div>
-                        
-                        <div>
-                            <label for="product-description" class="block text-sm font-medium text-gray-700 mb-2">
-                                <i class="fas fa-align-left mr-1"></i>Description
-                            </label>
-                            <textarea id="product-description" name="description" rows="3"
-                                      placeholder="Enter product description..."
-                                      class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"></textarea>
-                            <p class="text-xs text-gray-500 mt-1">Optional product description</p>
                         </div>
                     </div>
-                </div>
-                
-                <!-- Note Section -->
-                <div class="bg-blue-50 p-4 rounded-lg">
-                    <div class="flex items-start">
-                        <div class="flex-shrink-0">
-                            <i class="fas fa-info-circle text-blue-500 mt-1"></i>
-                        </div>
-                        <div class="ml-3">
-                            <h4 class="text-sm font-medium text-blue-800">Pricing & Stock Management</h4>
-                            <p class="text-sm text-blue-700 mt-1">
-                                Stock levels, pricing, and costs are now managed per supplier. 
-                                After creating the product, you can add suppliers with their specific pricing and inventory.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Additional Information Section -->
-                <div class="bg-gray-50 p-4 rounded-lg">
-                    <h4 class="text-md font-medium text-gray-800 mb-3">
-                        <i class="fas fa-plus-circle mr-2"></i>Additional Information
-                    </h4>
+                </form>
+            </div>
                     
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label for="product-barcode" class="block text-sm font-medium text-gray-700 mb-2">
-                                <i class="fas fa-qrcode mr-1"></i>Barcode
-                            </label>
-                            <input id="product-barcode" name="barcode" type="text" 
-                                   placeholder="Enter barcode..."
-                                   class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
-                            <p class="text-xs text-gray-500 mt-1">Product barcode if available</p>
-                        </div>
-                        
-                        <div>
-                            <label for="product-location" class="block text-sm font-medium text-gray-700 mb-2">
-                                <i class="fas fa-map-marker-alt mr-1"></i>Storage Location
-                            </label>
-                            <input id="product-location" name="location" type="text" 
-                                   placeholder="e.g., Aisle A, Shelf 3"
-                                   class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
-                            <p class="text-xs text-gray-500 mt-1">Warehouse location</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Supplier Management Section -->
-                <div class="bg-gray-50 p-4 rounded-lg" id="supplier-management-section" style="display: none;">
-                    <div class="flex justify-between items-center mb-3">
-                        <h4 class="text-md font-medium text-gray-800">
-                            <i class="fas fa-truck mr-2"></i>Supplier Management
-                        </h4>
-                        <button type="button" onclick="showAddSupplierModal()" 
-                                class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm transition-colors duration-200">
-                            <i class="fas fa-plus mr-1"></i>Add Supplier
-                        </button>
-                    </div>
-                    
-                    <div id="product-suppliers-list" class="space-y-2 max-h-60 overflow-y-auto">
-                        <!-- Suppliers will be loaded here -->
-                    </div>
-                </div>
-                
-                <!-- Form Actions -->
-                <div class="flex flex-col sm:flex-row sm:justify-end sm:space-x-3 space-y-2 sm:space-y-0 pt-6 border-t border-gray-200">
+            <!-- Form Actions Footer -->
+            <div class="bg-gray-50 px-6 py-4 border-t border-gray-200 rounded-b-xl">
+                <div class="flex flex-col sm:flex-row sm:justify-end sm:space-x-4 space-y-3 sm:space-y-0">
                     <button type="button" onclick="hideProductModal()" 
-                            class="w-full sm:w-auto bg-gray-100 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-200 transition-colors duration-200 font-medium">
+                            class="w-full sm:w-auto px-6 py-3 border-2 border-gray-300 text-gray-700 font-medium rounded-xl hover:bg-gray-100 hover:border-gray-400 transition-all duration-200 flex items-center justify-center">
                         <i class="fas fa-times mr-2"></i>Cancel
                     </button>
-                    <button type="submit" id="submit-btn"
-                            class="w-full sm:w-auto bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium flex items-center justify-center">
+                    <button type="submit" id="submit-btn" form="product-form"
+                            class="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-3 rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-semibold shadow-lg hover:shadow-xl flex items-center justify-center transform hover:scale-105">
                         <i class="fas fa-save mr-2"></i>
                         <span id="submit-text">Save Product</span>
-                        <div id="submit-loading" class="hidden ml-2">
-                            <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        <div id="submit-loading" class="hidden ml-3">
+                            <div class="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
                         </div>
                     </button>
                 </div>
-            </form>
+            </div>
         </div>
     </div>
 
@@ -809,6 +1036,7 @@
         let currentPage = 1;
         let itemsPerPage = 50;
         let totalItems = 0;
+        let totalProducts = 0;  // Total products for context in filters
         let totalPages = 0;
 
         // Check authentication
@@ -828,7 +1056,7 @@
             });
         }
 
-        // Enhanced fetch and display products with pagination
+        // fetch and display products with pagination
         async function fetchProducts(page = currentPage, limit = itemsPerPage, filters = {}) {
             try {
                 showLoading();
@@ -842,45 +1070,60 @@
                 
                 const response = await makeRequest(`${API_BASE}/products?${params}`);
                 
-                if (!response.ok) {
-                    if (response.status === 401) {
-                        localStorage.removeItem('token');
-                        localStorage.removeItem('user');
-                        window.location.href = '/login.html';
-                        return;
-                    }
-                    throw new Error('Failed to fetch products');
+                if (response.ok) {
+                    const data = await response.json();
+                    allProducts = data.products || [];
+                    totalItems = data.total || 0;
+                    totalProducts = data.total || 0;  // Set totalProducts for pagination context
+                    currentPage = data.page || 1;
+                    itemsPerPage = data.limit || 50;
+                    totalPages = Math.ceil(totalItems / itemsPerPage);
+                } else {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to fetch products');
                 }
                 
-                const data = await response.json();
-                allProducts = data.products || [];
-                totalItems = data.total || 0;
-                currentPage = data.page || 1;
-                itemsPerPage = data.limit || 50;
-                totalPages = Math.ceil(totalItems / itemsPerPage);
+                console.log('Products fetched:', {
+                    total: totalItems,
+                    products: allProducts.length,
+                    sampleProduct: allProducts[0]
+                });
                 
                 filteredProducts = [...allProducts];
                 
                 displayProducts(filteredProducts);
                 updatePagination();
-                updateProductStats();
-                updateCategoryFilter();
+                fetchAndUpdateProductStats();
                 updateProductCount();
             } catch (error) {
                 console.error('Error fetching products:', error);
                 showMessage('Failed to load products. Please refresh the page.', 'error');
-                showEmptyState();
+                showEmptyState(false, 0); // Error case - treat as no products
             } finally {
                 hideLoading();
             }
         }
         
-        // Enhanced display products function
+        // display products function
         function displayProducts(products) {
+            console.log('displayProducts called with:', products.length, 'products');
             hideLoading();
             
             if (products.length === 0) {
-                showEmptyState();
+                // Check if we're in a filtered state
+                const isFiltered = document.getElementById('product-search').value.trim() !== '' ||
+                                 document.getElementById('category-filter').value !== '' ||
+                                 document.getElementById('low-stock-btn').innerHTML.includes('Active');
+                                 
+                console.log('displayProducts - empty state:', { 
+                    isFiltered, 
+                    totalProducts, 
+                    searchValue: document.getElementById('product-search').value,
+                    categoryValue: document.getElementById('category-filter').value,
+                    lowStockActive: document.getElementById('low-stock-btn').innerHTML.includes('Active')
+                });
+                
+                showEmptyState(isFiltered, totalProducts);
                 return;
             }
             
@@ -923,10 +1166,9 @@
                 row.className = 'hover:bg-gray-50 transition-colors duration-150';
                 
                 const stock = getTotalStock(product);
-                const stockBadge = getStockBadge(stock, 5);
                 
                 row.innerHTML = `
-                    <td class="px-6 py-3 text-sm font-medium text-gray-900">${index + 1}</td>
+                    <td class="px-6 py-3 text-sm font-medium text-gray-900">${(currentPage - 1) * itemsPerPage + index + 1}</td>
                     <td class="px-6 py-3">
                         <div class="flex items-center">
                             <div class="flex-shrink-0 h-10 w-10">
@@ -948,16 +1190,11 @@
                             ${getCategoryIcon(product.category)} ${product.category || 'Uncategorized'}
                         </span>
                     </td>
-                    <td class="px-6 py-3">${stockBadge}</td>
+                    <td class="px-6 py-3 text-sm font-medium text-gray-900">${stock}</td>
                     <td class="px-6 py-3 text-sm font-semibold text-green-600">Rp ${formatNumber(getLowestPrice(product))}</td>
                     <td class="px-6 py-3 text-sm text-gray-600 mobile-hidden">Rp ${formatNumber(getLowestCost(product))}</td>
                     <td class="px-6 py-3 text-right">
                         <div class="flex items-center justify-end space-x-2">
-                            <button onclick='viewProduct(${JSON.stringify(product)})' 
-                                    class="inline-flex items-center px-2.5 py-1.5 text-xs font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 transition-colors duration-150"
-                                    title="View Details">
-                                <i class="fas fa-eye"></i>
-                            </button>
                             <button onclick='editProduct(${JSON.stringify(product)})' 
                                     class="inline-flex items-center px-2.5 py-1.5 text-xs font-medium rounded-md text-green-700 bg-green-100 hover:bg-green-200 transition-colors duration-150"
                                     title="Edit Product">
@@ -992,20 +1229,25 @@
             
             products.forEach((product, index) => {
                 const stock = getTotalStock(product);
-                const stockBadge = getStockBadge(stock, 5);
                 
                 const card = document.createElement('div');
                 card.className = 'bg-white rounded-lg shadow-sm border border-gray-200 p-6 product-card';
                 
                 card.innerHTML = `
                     <div class="flex items-center justify-between mb-4">
-                        <div class="flex-shrink-0">
-                            <div class="h-12 w-12 rounded-lg bg-gradient-to-r from-blue-400 to-blue-600 flex items-center justify-center">
-                                <i class="fas fa-box text-white text-lg"></i>
+                        <div class="flex items-center space-x-3">
+                            <div class="flex-shrink-0 h-6 w-6 bg-gray-100 rounded-full flex items-center justify-center">
+                                <span class="text-xs font-medium text-gray-600">${(currentPage - 1) * itemsPerPage + index + 1}</span>
+                            </div>
+                            <div class="flex-shrink-0">
+                                <div class="h-12 w-12 rounded-lg bg-gradient-to-r from-blue-400 to-blue-600 flex items-center justify-center">
+                                    <i class="fas fa-box text-white text-lg"></i>
+                                </div>
                             </div>
                         </div>
                         <div class="text-right">
-                            ${stockBadge}
+                            <span class="text-lg font-semibold text-gray-900">${stock}</span>
+                            <div class="text-xs text-gray-500">Stock</div>
                         </div>
                     </div>
                     
@@ -1031,10 +1273,6 @@
                     
                     <div class="flex items-center justify-between pt-4 border-t border-gray-200">
                         <div class="flex space-x-2">
-                            <button onclick='viewProduct(${JSON.stringify(product)})' 
-                                    class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 transition-colors duration-150">
-                                <i class="fas fa-eye mr-1"></i>View
-                            </button>
                             <button onclick='editProduct(${JSON.stringify(product)})' 
                                     class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md text-green-700 bg-green-100 hover:bg-green-200 transition-colors duration-150">
                                 <i class="fas fa-edit mr-1"></i>Edit
@@ -1052,17 +1290,7 @@
         }
 
         // Helper functions
-        function getStockBadge(stock, minStock = 5) {
-            if (stock === 0) {
-                return '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">❌ Out of Stock</span>';
-            } else if (stock <= minStock) {
-                return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">🔴 Critical (${stock})</span>`;
-            } else if (stock <= minStock * 2) {
-                return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">🟡 Low (${stock})</span>`;
-            } else {
-                return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">🟢 Good (${stock})</span>`;
-            }
-        }
+        // Removed getStockBadge function - now displaying simple stock numbers
         
         function getCategoryIcon(category) {
             const icons = {
@@ -1123,7 +1351,7 @@
                 .some(s => s.stock <= s.min_stock);
         }
         
-        // Enhanced modal functions
+        // modal functions
         function showAddProductModal() {
             document.getElementById('modal-title').innerText = 'Add New Product';
             document.querySelector('#modal-title').nextElementSibling.innerText = 'Create a new product in your inventory';
@@ -1166,39 +1394,6 @@
             // Show supplier management section for existing products
             document.getElementById('supplier-management-section').style.display = 'block';
             loadProductSuppliers(product.id);
-        }
-        
-        function viewProduct(product) {
-            const modal = document.createElement('div');
-            modal.className = 'fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50';
-            modal.innerHTML = `
-                <div class="relative top-20 mx-auto p-6 border w-full max-w-2xl shadow-lg rounded-lg bg-white">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-lg font-bold text-gray-800">Product Details</h3>
-                        <button onclick="this.parentElement.parentElement.parentElement.remove()" class="text-gray-400 hover:text-gray-600">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="space-y-3">
-                            <div><strong>Name:</strong> ${product.name}</div>
-                            <div><strong>SKU:</strong> ${product.sku || 'N/A'}</div>
-                            <div><strong>Category:</strong> ${getCategoryIcon(product.category)} ${product.category || 'Uncategorized'}</div>
-                            <div><strong>Description:</strong> ${product.description || 'No description'}</div>
-                            <div><strong>Barcode:</strong> ${product.barcode || 'N/A'}</div>
-                        </div>
-                        <div class="space-y-3">
-                            <div><strong>Stock:</strong> ${getStockBadge(product.quantity ?? product.stock ?? 0, product.min_stock || 5)}</div>
-                            <div><strong>Min Stock:</strong> ${product.min_stock || 'Not set'}</div>
-                            <div><strong>Max Stock:</strong> ${product.max_stock || 'Not set'}</div>
-                            <div><strong>Cost Price:</strong> Rp ${formatNumber(product.cost || 0)}</div>
-                            <div><strong>Selling Price:</strong> Rp ${formatNumber(product.price)}</div>
-                            <div><strong>Location:</strong> ${product.location || 'Not specified'}</div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            document.body.appendChild(modal);
         }
         
         function generateSKU() {
@@ -1437,7 +1632,7 @@
             }
         };
 
-        // Enhanced form submission
+        // form submission
         document.getElementById('product-form').onsubmit = async function(e) {
             e.preventDefault();
             
@@ -1510,7 +1705,7 @@
                 customInput.value = '';
             }
         };
-        // Enhanced delete product
+        // delete product
         async function deleteProduct(id, name) {
             if (!confirm(`Are you sure you want to delete product "${name}"?\n\nThis action cannot be undone and will:\n- Remove the product from inventory\n- Clear all associated sales data\n- Remove from purchase orders`)) {
                 return;
@@ -1636,7 +1831,7 @@
             window.location.href = '/login.html';
         }
 
-        // Enhanced utility functions
+        // utility functions
         function showLoading() {
             isLoading = true;
             document.getElementById('table-loading').classList.remove('hidden');
@@ -1650,13 +1845,34 @@
             document.getElementById('table-container').classList.remove('hidden');
         }
         
-        function showEmptyState() {
+        function showEmptyState(isFiltered = false, totalProductCount = 0) {
             document.getElementById('table-container').classList.add('hidden');
-            document.getElementById('empty-state').classList.remove('hidden');
+            const emptyStateEl = document.getElementById('empty-state');
+            emptyStateEl.classList.remove('hidden');
+            
+            // Update content based on context
+            const titleEl = emptyStateEl.querySelector('h3');
+            const descriptionEl = emptyStateEl.querySelector('p');
+            const buttonEl = emptyStateEl.querySelector('button');
+            
+            if (isFiltered && totalProductCount > 0) {
+                // This is a filtered empty state (products exist but none match filter)
+                titleEl.textContent = 'No products match your filters';
+                descriptionEl.textContent = 'Try adjusting your search criteria or clear filters to see all products.';
+                buttonEl.innerHTML = '<i class="fas fa-filter mr-2"></i>Clear Filters';
+                buttonEl.onclick = function() { clearFilters(); };
+            } else {
+                // This is a true empty state (no products in system)
+                titleEl.textContent = 'No products found';
+                descriptionEl.textContent = 'Get started by adding your first product to the inventory.';
+                buttonEl.innerHTML = '<i class="fas fa-plus mr-2"></i>Add First Product';
+                buttonEl.onclick = function() { showAddProductModal(); };
+            }
         }
         
         function hideEmptyState() {
             document.getElementById('empty-state').classList.add('hidden');
+            document.getElementById('table-container').classList.remove('hidden');
         }
         
         function showMessage(message, type) {
@@ -1691,31 +1907,108 @@
             // Hide any global messages
         }
         
+        // Global variable to store all products for stats calculation
+        let allProductsForStats = [];
+
+        async function fetchAndUpdateProductStats() {
+            try {
+                // Fetch all products for stats calculation (without pagination)
+                const response = await makeRequest(`${API_BASE}/products?limit=10000&page=1`);
+                if (response.ok) {
+                    const data = await response.json();
+                    allProductsForStats = data.products || [];
+                    updateProductStats();
+                }
+            } catch (error) {
+                console.error('Error fetching product stats:', error);
+                // Fallback to current page stats if fetch fails
+                updateProductStatsFromCurrentPage();
+            }
+        }
+
         function updateProductStats() {
-            const totalProducts = allProducts.length;
-            const lowStockItems = allProducts.filter(p => isLowStock(p)).length;
-            const totalValue = allProducts.reduce((sum, p) => sum + (getTotalStock(p) * getLowestPrice(p)), 0);
-            const categories = [...new Set(allProducts.map(p => p.category).filter(Boolean))].length;
+            const productsForStats = allProductsForStats.length > 0 ? allProductsForStats : allProducts;
             
+            // Basic product counts
+            const totalProducts = productsForStats.length;
+            const activeProducts = productsForStats.filter(p => p.is_active !== false).length;
+            const inactiveProducts = totalProducts - activeProducts;
+            
+            // Stock analysis with enhanced categorization
+            let lowStockItems = 0;
+            let totalValue = 0;
+            
+            productsForStats.forEach(product => {
+                if (isLowStock(product)) {
+                    lowStockItems++;
+                }
+                
+                const stock = getTotalStock(product);
+                const price = getLowestPrice(product);
+                totalValue += stock * price;
+            });
+            
+            // Category and supplier analysis
+            const categories = [...new Set(productsForStats.map(p => p.category).filter(Boolean))].length;
+            const uniqueSuppliers = new Set();
+            
+            productsForStats.forEach(product => {
+                if (product.suppliers && product.suppliers.length > 0) {
+                    product.suppliers.forEach(supplier => {
+                        if (supplier.is_active && supplier.supplier && supplier.supplier.name) {
+                            uniqueSuppliers.add(supplier.supplier.name);
+                        }
+                    });
+                }
+            });
+            
+            // Update DOM elements
             document.getElementById('total-products').textContent = totalProducts;
             document.getElementById('low-stock-count').textContent = lowStockItems;
             document.getElementById('total-value').textContent = `Rp ${formatNumber(totalValue)}`;
             document.getElementById('total-categories').textContent = categories;
         }
+
+        function updateProductStatsFromCurrentPage() {
+            // Fallback function using only current page data
+            const totalProducts = allProducts.length;
+            const lowStockItems = allProducts.filter(p => isLowStock(p)).length;
+            const totalValue = allProducts.reduce((sum, p) => sum + (getTotalStock(p) * getLowestPrice(p)), 0);
+            const categories = [...new Set(allProducts.map(p => p.category).filter(Boolean))].length;
+            
+            document.getElementById('total-products').textContent = `${totalProducts}*`;
+            document.getElementById('low-stock-count').textContent = `${lowStockItems}*`;
+            document.getElementById('total-value').textContent = `Rp ${formatNumber(totalValue)}*`;
+            document.getElementById('total-categories').textContent = `${categories}*`;
+        }
         
+        // Load all categories once from server
+        async function loadAllCategories() {
+            try {
+                const response = await makeRequest(`${API_BASE}/products?limit=1000&page=1`);
+                if (response.ok) {
+                    const data = await response.json();
+                    const allProductsForCategories = data.products || [];
+                    const categories = [...new Set(allProductsForCategories.map(p => p.category).filter(Boolean))].sort();
+                    
+                    const categoryFilter = document.getElementById('category-filter');
+                    categoryFilter.innerHTML = '<option value="">All Categories</option>';
+                    
+                    categories.forEach(category => {
+                        const option = document.createElement('option');
+                        option.value = category;
+                        option.textContent = `${getCategoryIcon(category)} ${category}`;
+                        categoryFilter.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading categories:', error);
+            }
+        }
+
         function updateCategoryFilter() {
-            const categoryFilter = document.getElementById('category-filter');
-            const categories = [...new Set(allProducts.map(p => p.category).filter(Boolean))].sort();
-            
-            // Keep "All Categories" option
-            categoryFilter.innerHTML = '<option value="">All Categories</option>';
-            
-            categories.forEach(category => {
-                const option = document.createElement('option');
-                option.value = category;
-                option.textContent = `${getCategoryIcon(category)} ${category}`;
-                categoryFilter.appendChild(option);
-            });
+            // Categories are now loaded separately, this function is kept for compatibility
+            // but no longer rebuilds the dropdown on every filter
         }
         
         function updateProductCount() {
@@ -1727,21 +2020,40 @@
             document.getElementById('product-count').textContent = countText;
         }
         
-        // Enhanced search and filter functions
-        function performSearch() {
-            const searchTerm = document.getElementById('product-search').value.toLowerCase().trim();
+        // search and filter functions
+        function performSearchEnhanced() {
+            const searchTerm = document.getElementById('product-search').value.trim();
             const clearButton = document.getElementById('clear-search');
+            const searchCount = document.getElementById('search-count');
+            const searchIcon = document.getElementById('search-icon');
+            const searchLoading = document.getElementById('search-loading');
             
+            // Show loading state and clear button
             if (searchTerm.length > 0) {
                 clearButton.classList.remove('hidden');
-                // Show quick search results
-                showQuickSearchResults(searchTerm);
+                if (searchIcon && searchLoading) {
+                    searchIcon.classList.add('hidden');
+                    searchLoading.classList.remove('hidden');
+                }
             } else {
                 clearButton.classList.add('hidden');
+                if (searchCount) searchCount.classList.add('hidden');
                 hideQuickSearchResults();
+                if (searchIcon && searchLoading) {
+                    searchIcon.classList.remove('hidden');
+                    searchLoading.classList.add('hidden');
+                }
             }
             
-            filterProducts();
+            // Debounce search and use server-side filtering
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                if (searchIcon && searchLoading) {
+                    searchIcon.classList.remove('hidden');
+                    searchLoading.classList.add('hidden');
+                }
+                filterProductsEnhanced();
+            }, 300);
         }
         
         function showQuickSearchResults(searchTerm) {
@@ -1800,7 +2112,6 @@
         function filterProductsLocal() {
             const searchTerm = document.getElementById('product-search').value.toLowerCase().trim();
             const categoryFilter = document.getElementById('category-filter').value;
-            const stockFilter = document.getElementById('stock-filter').value;
             
             filteredProducts = allProducts.filter(product => {
                 const matchesSearch = !searchTerm || 
@@ -1842,22 +2153,130 @@
         function clearSearch() {
             document.getElementById('product-search').value = '';
             document.getElementById('clear-search').classList.add('hidden');
+            if (document.getElementById('search-count')) document.getElementById('search-count').classList.add('hidden');
             hideQuickSearchResults();
-            filterProducts();
+            filterProductsEnhanced();
         }
         
         function clearFilters() {
-            document.getElementById('product-search').value = '';
-            document.getElementById('category-filter').value = '';
-            document.getElementById('stock-filter').value = '';
-            document.getElementById('clear-search').classList.add('hidden');
-            hideQuickSearchResults();
-            filterProducts();
+            clearFiltersEnhanced();
+        }
+        
+        async function showLowStockProducts() {
+            try {
+                showLoading();
+                
+                console.log('=== LOW STOCK FUNCTION (CLIENT-SIDE LOGIC) ===');
+                
+                // Use already loaded products if available, otherwise fetch them
+                let productsToCheck = [];
+                
+                if (allProducts.length > 0) {
+                    console.log('Using already loaded products');
+                    productsToCheck = allProducts;
+                } else {
+                    console.log('Fetching all products...');
+                    const response = await makeRequest(`${API_BASE}/products?limit=1000`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        productsToCheck = data.products || [];
+                    } else {
+                        throw new Error('Could not fetch products');
+                    }
+                }
+                
+                console.log(`Checking ${productsToCheck.length} products for low stock...`);
+                
+                // Filter products where any supplier has stock <= their minimum stock level
+                const lowStockProducts = productsToCheck.filter(product => {
+                    if (!product.suppliers || product.suppliers.length === 0) {
+                        return false;
+                    }
+                    
+                    return product.suppliers.some(supplier => {
+                        // Check if this supplier is active and has low stock
+                        const isLowStock = supplier.is_active && supplier.stock <= supplier.min_stock;
+                        if (isLowStock) {
+                            console.log(`Low stock: ${product.name} - ${supplier.supplier?.name || 'Unknown'}: ${supplier.stock}/${supplier.min_stock}`);
+                        }
+                        return isLowStock;
+                    });
+                });
+                
+                console.log(`Found ${lowStockProducts.length} products with low stock (stock <= min_stock)`);
+                
+                // Update UI to show low stock filter is active
+                const lowStockBtn = document.getElementById('low-stock-btn');
+                lowStockBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+                lowStockBtn.classList.add('bg-blue-800', 'hover:bg-blue-900');
+                lowStockBtn.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i>Low Stock (Active)';
+                
+                // Clear existing filters
+                document.getElementById('product-search').value = '';
+                document.getElementById('category-filter').value = '';
+                
+                // Store original product count for context
+                const originalProductCount = productsToCheck.length;
+                
+                // Display the low stock products
+                allProducts = lowStockProducts;
+                filteredProducts = lowStockProducts;
+                
+                if (lowStockProducts.length === 0) {
+                    // Show empty state
+                    hideLoading();
+                    updatePagination(0, originalProductCount);
+                    document.getElementById('product-table-body').innerHTML = `
+                        <tr>
+                            <td colspan="7" class="px-6 py-8 text-center text-gray-500">
+                                <div class="flex flex-col items-center">
+                                    <i class="fas fa-check-circle text-green-500 text-4xl mb-2"></i>
+                                    <p class="text-lg font-medium">No Low Stock Items</p>
+                                    <p>All suppliers have stock above their minimum levels!</p>
+                                    <p class="text-sm text-gray-400 mt-2">Checked ${originalProductCount} products</p>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                    const gridContainer = document.getElementById('grid-view-container');
+                    if (gridContainer) {
+                        gridContainer.innerHTML = `
+                            <div class="col-span-full text-center py-12">
+                                <i class="fas fa-check-circle text-green-500 text-6xl mb-4"></i>
+                                <h3 class="text-xl font-medium text-gray-900 mb-2">No Low Stock Items</h3>
+                                <p class="text-gray-500">All suppliers have adequate stock levels!</p>
+                                <p class="text-sm text-gray-400 mt-2">Checked ${originalProductCount} products</p>
+                            </div>
+                        `;
+                    }
+                    showNotification('Great! All suppliers have stock above their minimum levels', 'success');
+                } else {
+                    // Display the products using the normal display function
+                    displayProducts(lowStockProducts);
+                    
+                    // Update pagination with context
+                    currentPage = 1;
+                    totalProducts = lowStockProducts.length;
+                    totalItems = lowStockProducts.length;
+                    totalPages = Math.ceil(lowStockProducts.length / itemsPerPage);
+                    
+                    // Update pagination with both filtered and total counts
+                    updatePagination(lowStockProducts.length, originalProductCount);
+                    
+                    showNotification(`Found ${lowStockProducts.length} products with suppliers below minimum stock`, 'warning');
+                }
+                
+            } catch (error) {
+                console.error('Error in low stock function:', error);
+                showNotification('Failed to check low stock: ' + error.message, 'error');
+                hideLoading();
+            }
         }
         
         function refreshProducts() {
             fetchProducts();
         }
+        
         
         function exportProducts() {
             // Simple CSV export
@@ -1923,7 +2342,9 @@
             }
             
             updateSortIcons();
-            displayProducts(filteredProducts);
+            // Reset to first page and fetch with new sort order
+            currentPage = 1;
+            fetchProducts(currentPage, itemsPerPage, getCurrentFilters());
         }
         
         function updateSortIcons() {
@@ -1948,31 +2369,72 @@
         }
         
         // Pagination functions
-        function updatePagination() {
+        function updatePagination(currentTotal = null, maxTotal = null) {
+            // Use provided parameters or fall back to global variables
+            const itemsToShow = currentTotal !== null ? currentTotal : totalItems;
+            const maxItems = maxTotal !== null ? maxTotal : totalProducts;
+            
+            // Calculate pagination values
+            totalPages = Math.ceil(itemsToShow / itemsPerPage);
+            
             // Update pagination info
-            const start = totalItems === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
-            const end = Math.min(currentPage * itemsPerPage, totalItems);
+            const start = itemsToShow === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
+            const end = Math.min(currentPage * itemsPerPage, itemsToShow);
             
-            document.getElementById('items-start').textContent = start;
-            document.getElementById('items-end').textContent = end;
-            document.getElementById('items-total').textContent = totalItems;
+            // Update the original span elements for backward compatibility
+            const startEl = document.getElementById('items-start');
+            const endEl = document.getElementById('items-end');
+            const totalEl = document.getElementById('items-total');
+            const itemsPerPageEl = document.getElementById('items-per-page');
             
-            // Update items per page selector
-            document.getElementById('items-per-page').value = itemsPerPage;
+            if (startEl) startEl.textContent = start;
+            if (endEl) endEl.textContent = end;
+            if (totalEl) totalEl.textContent = itemsToShow;
+            if (itemsPerPageEl) itemsPerPageEl.value = itemsPerPage;
             
             // Update navigation buttons
             const prevBtn = document.getElementById('prev-page');
             const nextBtn = document.getElementById('next-page');
             
-            prevBtn.disabled = currentPage <= 1;
-            nextBtn.disabled = currentPage >= totalPages;
+            if (prevBtn) prevBtn.disabled = currentPage <= 1;
+            if (nextBtn) nextBtn.disabled = currentPage >= totalPages;
+            
+            // Add pagination context info for filters
+            const paginationInfo = document.getElementById('pagination-info');
+            if (paginationInfo) {
+                // Check if we're in a filtered state (low stock, search, etc.)
+                const isLowStockActive = document.getElementById('low-stock-btn').innerHTML.includes('Active');
+                const hasSearchFilter = document.getElementById('product-search').value.trim() !== '';
+                const hasCategoryFilter = document.getElementById('category-filter').value !== '';
+                const isFiltered = isLowStockActive || hasSearchFilter || hasCategoryFilter;
+                
+                if (isFiltered && itemsToShow < maxItems) {
+                    let filterType = '';
+                    if (isLowStockActive) filterType = 'low stock';
+                    else if (hasSearchFilter) filterType = 'search';
+                    else if (hasCategoryFilter) filterType = 'category';
+                    
+                    paginationInfo.innerHTML = `
+                        <span class="text-sm text-gray-600">
+                            Showing ${start}-${end} of <span class="font-medium text-blue-600">${itemsToShow} ${filterType}</span> results
+                            <span class="text-gray-400">(${maxItems} total products)</span>
+                        </span>
+                    `;
+                } else {
+                    paginationInfo.innerHTML = `
+                        <span class="text-sm text-gray-600">
+                            Showing ${start}-${end} of ${itemsToShow} products
+                        </span>
+                    `;
+                }
+            }
             
             // Generate page numbers
             generatePageNumbers();
             
             // Hide pagination if no items
             const paginationContainer = document.getElementById('pagination-container');
-            if (totalItems === 0) {
+            if (itemsToShow === 0) {
                 paginationContainer.style.display = 'none';
             } else {
                 paginationContainer.style.display = 'block';
@@ -2023,18 +2485,16 @@
             const pageNumbersContainer = document.getElementById('page-numbers');
             const button = document.createElement('button');
             button.textContent = page;
-            
-            // Add base classes
-            button.classList.add('px-3', 'py-1', 'text-sm', 'border', 'rounded');
+            button.className = 'px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 transition-colors duration-150';
+            button.onclick = () => goToPage(page);
             
             // Add conditional classes
             if (page === currentPage) {
                 button.classList.add('bg-blue-600', 'text-white', 'border-blue-600');
             } else {
-                button.classList.add('border-gray-300', 'hover:bg-gray-50');
+                button.classList.add('bg-white', 'text-gray-700');
             }
             
-            button.onclick = () => goToPage(page);
             pageNumbersContainer.appendChild(button);
         }
         
@@ -2055,8 +2515,8 @@
         function getCurrentFilters() {
             const filters = {};
             
-            // Get search filter
-            const searchInput = document.getElementById('search-input');
+            // Get search filter from the search input
+            const searchInput = document.getElementById('product-search');
             if (searchInput && searchInput.value.trim()) {
                 filters.search = searchInput.value.trim();
             }
@@ -2067,13 +2527,79 @@
                 filters.category = categorySelect.value;
             }
             
-            // Get active filter
+            
+            // Get price filters
+            const minPrice = document.getElementById('min-price');
+            const maxPrice = document.getElementById('max-price');
+            if (minPrice && minPrice.value) {
+                filters.min_price = parseFloat(minPrice.value);
+            }
+            if (maxPrice && maxPrice.value) {
+                filters.max_price = parseFloat(maxPrice.value);
+            }
+            
+            // Get active filter (if exists)
             const activeSelect = document.getElementById('active-filter');
             if (activeSelect && activeSelect.value) {
                 filters.active = activeSelect.value;
             }
             
+            // Add sort parameters
+            if (currentSort.field) {
+                filters.sort_by = currentSort.field;
+                filters.sort_order = currentSort.direction;
+            }
+            
             return filters;
+        }
+        
+        // filter functions
+        function filterProductsEnhanced() {
+            // Reset to first page when filtering
+            currentPage = 1;
+            // Use server-side filtering
+            fetchProducts(currentPage, itemsPerPage, getCurrentFilters());
+            hideQuickSearchResults();
+        }
+        
+        function clearFiltersEnhanced() {
+            document.getElementById('product-search').value = '';
+            document.getElementById('category-filter').value = '';
+            if (document.getElementById('min-price')) document.getElementById('min-price').value = '';
+            if (document.getElementById('max-price')) document.getElementById('max-price').value = '';
+            if (document.getElementById('sort-filter')) document.getElementById('sort-filter').value = 'name-asc';
+            document.getElementById('clear-search').classList.add('hidden');
+            if (document.getElementById('search-count')) document.getElementById('search-count').classList.add('hidden');
+            
+            // Reset low stock button state
+            const lowStockBtn = document.getElementById('low-stock-btn');
+            if (lowStockBtn) {
+                lowStockBtn.classList.remove('bg-blue-800', 'hover:bg-blue-900');
+                lowStockBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+                lowStockBtn.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i>Low Stock';
+            }
+            
+            hideQuickSearchResults();
+            filterProductsEnhanced();
+        }
+        
+        function toggleAdvancedFilters() {
+            const advancedFilters = document.getElementById('advanced-filters');
+            const advancedBtn = document.getElementById('advanced-filter-btn');
+            
+            if (advancedFilters && advancedBtn) {
+                if (advancedFilters.classList.contains('hidden')) {
+                    advancedFilters.classList.remove('hidden');
+                    advancedBtn.classList.remove('bg-gray-100', 'text-gray-700');
+                    advancedBtn.classList.add('bg-blue-100', 'text-blue-700');
+                    advancedBtn.innerHTML = '<i class="fas fa-sliders-h mr-2"></i>Hide Advanced';
+                } else {
+                    advancedFilters.classList.add('hidden');
+                    advancedBtn.classList.remove('bg-blue-100', 'text-blue-700');
+                    advancedBtn.classList.add('bg-gray-100', 'text-gray-700');
+                    advancedBtn.innerHTML = '<i class="fas fa-sliders-h mr-2"></i>Advanced';
+                }
+            }
         }
         
         // Initialize page when loaded
@@ -2106,7 +2632,9 @@
                 }
             });
             
-            // Load products when page loads
+            // Load categories, stats, and products when page loads
+            loadAllCategories();
+            fetchAndUpdateProductStats();
             fetchProducts();
         });
         
