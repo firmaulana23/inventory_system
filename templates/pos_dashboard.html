@@ -1438,29 +1438,48 @@
             // Items table header
             height += 15;
             
-            // Items (5mm per item for better spacing)
+            // Items - calculate proper height based on content
             const itemCount = saleData.items ? saleData.items.length : 1;
-            height += itemCount * 5;
             
-            // Space after items
-            height += 10;
+            // Base height per item (increased from 5mm to 8mm for better spacing)
+            let itemHeight = itemCount * 8;
             
-            // Subtotal, tax, total section
+            // Additional height for items with long names or SKUs
+            if (saleData.items) {
+                saleData.items.forEach(item => {
+                    let productName = item.name;
+                    if (item.sku) {
+                        productName += ` (${item.sku})`;
+                    }
+                    
+                    // Add extra height if product name is long (>40 characters)
+                    if (productName.length > 40) {
+                        itemHeight += 3; // Add 3mm for text wrapping
+                    }
+                });
+            }
+            
+            height += itemHeight;
+            
+            // Space after items (increased for better separation)
+            height += 12;
+            
+            // Subtotal, tax, total section base
             height += 25;
             
             // Additional lines for discount and down payment
-            if (saleData.discount > 0) height += 5;
-            if (saleData.down_payment > 0) height += 5;
-            if (saleData.tax > 0) height += 5;
+            if (saleData.discount > 0) height += 8;
+            if (saleData.down_payment > 0) height += 8;
+            if (saleData.tax > 0) height += 8;
             
             // Payment info section
             if (saleData.payment_method === 'credit') {
-                height += 10; // Credit terms
+                height += 15; // Credit terms (increased for better spacing)
             }
-            height += 5; // Payment method
+            height += 8; // Payment method
             
-            // Footer
-            height += 20;
+            // Footer (increased for better spacing)
+            height += 25;
             
             return height;
         }
@@ -1475,7 +1494,8 @@
             // Calculate dynamic height based on content
             const contentHeight = calculateContentHeight(null, saleResult, saleData);
 
-            const dynamicHeight = Math.max(contentHeight + 40, 210); // Add margin, min A5 height
+            // Ensure adequate height with proper margins - increased minimum and margin
+            const dynamicHeight = Math.max(contentHeight + 50, 250); // Add 50mm margin, min 250mm height
             const pageWidth = 210; // Increased width to fit all content including totals
             
             // Create PDF with dynamic dimensions
@@ -1603,38 +1623,51 @@
                 if (item.sku) {
                     productName += ` (${item.sku})`;
                 }
-                doc.text(productName, 35, y);
+                
+                // Handle long product names with text wrapping
+                if (productName.length > 40) {
+                    // Split text if too long (max width approximately 80mm)
+                    const lines = doc.splitTextToSize(productName, 80);
+                    doc.text(lines, 35, y);
+                    // Add extra spacing for wrapped text
+                    y += (lines.length - 1) * 3;
+                } else {
+                    doc.text(productName, 35, y);
+                }
                 
                 doc.text(item.quantity.toString(), 120, y);
                 doc.text(`Rp ${formatNumber(item.price)}`, 140, y);
                 doc.text(`Rp ${formatNumber(itemTotal)}`, 170, y);
-                y += 5;
+                
+                // Increased spacing from 5mm to 8mm for better readability
+                y += 8;
             });
             
-            y += 7; // Add some space after the last item
+            y += 12; // Add more space after the last item for better separation
             // Summary section
             doc.line(120, y, 190, y);
-            y += 10;
+            y += 12;
             
             doc.text('Subtotal:', 140, y);
             doc.text(`Rp ${formatNumber(saleData.subtotal)}`, 170, y);
-            y += 10;
+            y += 12;
             
             if (saleData.discount > 0) {
                 doc.text('Discount:', 140, y);
                 doc.text(`-Rp ${formatNumber(saleData.discount)}`, 170, y);
-                y += 10;
+                y += 12;
             }
 
             if (saleData.down_payment > 0) {
                 doc.text('Down Payment:', 140, y);
                 doc.text(`-Rp ${formatNumber(saleData.down_payment)}`, 170, y);
-                y += 10;
+                y += 12;
             }
 
             if (saleData.tax > 0) {
-                doc.text(`Tax : Rp ${formatNumber(saleData.tax)}`, 170, y);
-                y += 10;
+                doc.text(`Tax:`, 140, y);
+                doc.text(`Rp ${formatNumber(saleData.tax)}`, 170, y);
+                y += 12;
             }
             
             doc.setFont(undefined, 'bold');
